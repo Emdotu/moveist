@@ -243,10 +243,10 @@ Payment received"
 
     <section class="right-panel">
       <div class="header-row">
-        <h2 data-i18n="dayDetailsTitle">Day Details</h2>
+        <h2 id="scheduleDayTitle" data-i18n="dayDetails">Day Details</h2>
       </div>
       <div id="scheduleDayDetails" class="detail-card">
-        <p data-i18n="hintSelectDay">Select a day in the calendar to see scheduled steps and extra jobs.</p>
+        <p id="scheduleDayHint" data-i18n="scheduleDayDetailsHint">Select a day in the calendar to see scheduled steps and extra jobs.</p>
       </div>
     </section>
 
@@ -256,21 +256,21 @@ Payment received"
   <div id="documentsView" class="layout hidden">
     <section class="left-panel">
       <div class="header-row">
-        <h2 data-i18n="documentsTitle">Documents</h2>
+        <h2 id="documentsHeader" data-i18n="documents">Documents</h2>
       </div>
 
       <div class="search-row">
         <input
           type="text"
           id="documentsSearchInput"
-          data-i18n-placeholder="searchDocumentsPlaceholder"
+          data-i18n-placeholder="searchDocsPh"
           placeholder="Search by job ID, client, document name, agent..."
         >
       </div>
 
       <div class="extra-filters">
         <select id="documentsJobFilter" aria-label="Documents job filter">
-          <option value="" data-i18n="docsAllMoves">All moves</option>
+          <option value="" data-i18n="allMovesFilter">All moves</option>
         </select>
       </div>
 
