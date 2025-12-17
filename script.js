@@ -674,7 +674,33 @@ const Validator = {
         State.scheduleExtraJobs[dateStr] = [];
         return;
       }
-      State.scheduleExtraJobs[dateStr] = arr.map(ej => this.normalizeExtraJob(ej, dateStr));
+      const normalized = arr.map(ej => this.normalizeExtraJob(ej, dateStr));
+      const keepForDay = [];
+
+      normalized.forEach(ej => {
+        if (ej.linkedJobId) {
+          const job = State.getJob(ej.linkedJobId);
+          if (job) {
+            if (!Array.isArray(job.additionalJobs)) job.additionalJobs = [];
+            job.additionalJobs.push({
+              id: ej.id || Utils.makeId('ajob'),
+              label: (ej.taskType === 'Custom' && ej.customTaskName) ? ej.customTaskName : (ej.taskType || ((State.lang === 'tr') ? 'Ek İş' : 'Additional Job')),
+              date: ej.date || dateStr,
+              time: ej.time || '',
+              personnel: ej.personnel || '',
+              vehicle: ej.vehicle || '',
+              address: ej.address || '',
+              notes: ej.notes || ''
+            });
+          } else {
+            keepForDay.push(ej);
+          }
+        } else {
+          keepForDay.push(ej);
+        }
+      });
+
+      State.scheduleExtraJobs[dateStr] = keepForDay;
     });
   },
 
@@ -685,6 +711,8 @@ const Validator = {
     if (!Array.isArray(job.modes)) job.modes = [];
     if (!Array.isArray(job.notes)) job.notes = [];
     if (!Array.isArray(job.documents)) job.documents = [];
+    // NEW: move-linked additional jobs live on the job so schedule + move details stay synced
+    if (!Array.isArray(job.additionalJobs)) job.additionalJobs = [];
     if (typeof job.paymentReceived !== 'boolean') job.paymentReceived = false;
     if (!job.packDate) job.packDate = '';
     if (!job.jobCode) job.jobCode = Utils.jobCode();
@@ -767,6 +795,21 @@ const Steps = {
       if (Array.isArray(job.steps)) {
         job.steps.forEach((step, idx) => {
           if (step.date === dateStr) result.push({ job, step, stepIndex: idx });
+        });
+      }
+    });
+    return result;
+  },
+
+  // NEW: Additional jobs are move-linked "extra steps" stored on each job
+  getAdditionalForDate(dateStr) {
+    const result = [];
+    State.jobs.forEach(job => {
+      if (Array.isArray(job.additionalJobs)) {
+        job.additionalJobs.forEach((aj, idx) => {
+          if (aj.date === dateStr) {
+            result.push({ job, extra: aj, extraIndex: idx });
+          }
         });
       }
     });
@@ -1276,424 +1319,198 @@ const JobsUI = {
     return section;
   },
 
-  // CHANGE: show linked “additional jobs” under move steps + add a form to create them
   stepsSection(job) {
     const section = $.el('div', { className: 'steps-section' });
-    section.appendChild($.el('h4', { textContent: I18n.t('moveSteps') }));
+
+    // Title row + Add Additional Job button (no separate section anymore)
+    const titleRow = $.el('div', { style: 'display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;' });
+    titleRow.appendChild($.el('h4', { textContent: I18n.t('moveSteps') }));
+
+    const addBtn = $.el('button', {
+      type: 'button',
+      textContent: (State.lang === 'tr') ? 'Ek İş Adımı Ekle' : 'Add Additional Job Step'
+    });
+
+    addBtn.addEventListener('click', () => {
+      // Create a new move-linked additional job (step-like)
+      if (!Array.isArray(job.additionalJobs)) job.additionalJobs = [];
+
+      job.additionalJobs.push({
+        id: Date.now(),               // stable id for this extra step
+        label: (State.lang === 'tr') ? 'Ek İş' : 'Additional Job',
+        date: '',
+        time: '',
+        personnel: '',
+        vehicle: '',
+        address: '',
+        notes: ''
+      });
+
+      Storage.saveJobs();
+      // Re-render both move details + schedule
+      this.showDetails(job);
+      ScheduleUI.render();
+      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    });
+
+    titleRow.appendChild(addBtn);
+    section.appendChild(titleRow);
 
     const container = $.el('div', { id: 'stepsContainer' });
 
     const steps = job.steps || [];
-    if (steps.length === 0) {
+    const additional = job.additionalJobs || [];
+
+    if (steps.length === 0 && additional.length === 0) {
       container.appendChild($.el('p', { textContent: I18n.t('noStepsDefined') }));
     } else {
-      steps.forEach((step, idx) => container.appendChild(this.stepCard(step, idx, job)));
+      // 1) Normal generated steps
+      steps.forEach((step, idx) => {
+        container.appendChild(this.compactStepCard(job, step, idx, false));
+      });
+
+      // 2) Additional jobs as steps (no divider / no separate section)
+      additional.forEach((extra, idx) => {
+        container.appendChild(this.compactStepCard(job, extra, idx, true));
+      });
     }
 
-    // Linked extra jobs for this move (show them as “steps”)
-    const linked = ScheduleExtraJobs.getLinkedToJob(job.id);
-    linked.forEach(item => {
-      container.appendChild(this.linkedExtraJobAsStepCard(job, item));
-    });
-
     section.appendChild(container);
-
-    // Form: Add Additional Job (linked to this move)
-    section.appendChild(this.addAdditionalJobForm(job));
-
     return section;
   },
 
-  // CHANGE: step cards include Office selection + save it
-  stepCard(step, idx, job) {
-    const def = CONFIG.STEP_DEFINITIONS[step.id] || { fields: [] };
+  // NEW: Compact step UI (same pattern as Schedule cards)
+  // isExtra=true means this is job.additionalJobs[] instead of job.steps[]
+  compactStepCard(job, step, idx, isExtra) {
     const card = $.el('div', { className: 'step-card' });
+
+    // Header (compact)
     const header = $.el('div', { className: 'step-card-header' });
-    header.appendChild($.el('div', { className: 'step-card-header-title', textContent: step.label }));
-    header.appendChild($.el('div', { innerHTML: `Step ${idx + 1}`, style: 'font-size: 11px; color:#6b7280;' }));
+    header.appendChild($.el('div', {
+      className: 'step-card-header-title',
+      textContent: step.label || (isExtra ? ((State.lang === 'tr') ? 'Ek İş' : 'Additional Job') : 'Step')
+    }));
+
+    const right = $.el('div', { style: 'display:flex; gap:8px; align-items:center;' });
+
+    // Optional delete for additional jobs only (steps are generated)
+    if (isExtra) {
+      const delBtn = $.el('button', {
+        type: 'button',
+        textContent: I18n.t('delete'),
+        style: 'padding:4px 10px; font-size:12px; background:#fee2e2; color:#991b1b; border-color:#fecaca;'
+      });
+      delBtn.addEventListener('click', () => {
+        if (!confirm((State.lang === 'tr') ? 'Bu ek iş silinsin mi?' : 'Delete this additional job?')) return;
+        job.additionalJobs.splice(idx, 1);
+        Storage.saveJobs();
+        JobsUI.showDetails(job);
+        ScheduleUI.render();
+        if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+      });
+      right.appendChild(delBtn);
+    }
+
+    const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit'), style: 'padding:4px 10px; font-size:12px;' });
+    header.appendChild(right);
     card.appendChild(header);
 
-    const body = $.el('div', { className: 'step-card-body' });
-    const fields = [
-      [(State.lang === 'tr') ? 'Tarih' : 'Date', 'date', 'date'],
-      [I18n.t('time'), 'time', 'time'],
-      [I18n.t('personnel'), 'personnel', 'text'],
-      [I18n.t('vehicle'), 'vehicle', 'text']
+    // View mode
+    const viewBox = $.el('div', { className: 'schedule-step-fields-view' }); // reuse your existing compact view style
+    const viewFields = [
+      [(State.lang === 'tr') ? 'Tarih' : 'Date', step.date ? Utils.formatDate(step.date) : '-'],
+      [I18n.t('time'), step.time || '-'],
+      [I18n.t('personnel'), step.personnel || '-'],
+      [I18n.t('vehicle'), step.vehicle || '-'],
+      [I18n.t('address'), step.address || '-'],
+      [I18n.t('notesLabel'), step.notes || '-']
     ];
 
-    fields.forEach(([label, field, type]) => {
-      const div = $.el('div');
-      div.appendChild($.el('label', { textContent: label }));
-      div.appendChild($.el('input', { type, className: `step-${field}-input`, value: step[field] || '' }));
-      body.appendChild(div);
+    viewFields.forEach(([label, value]) => {
+      const row = $.el('div', { className: 'schedule-field-row' });
+      row.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
+      row.appendChild($.el('span', { className: 'schedule-field-value', textContent: value }));
+      viewBox.appendChild(row);
     });
 
-    // Office select
-    const officeDiv = $.el('div');
-    officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
-    const officeSelect = $.el('select', { className: 'step-office-select' });
-    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
-    CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
-    officeSelect.value = step.office || '';
-    officeDiv.appendChild(officeSelect);
-    body.appendChild(officeDiv);
+    // Edit mode
+    const editBox = $.el('div', { className: 'schedule-step-fields-edit hidden' });
 
-    if (def.fields.includes('address')) {
-      const div = $.el('div', { className: 'full-width' });
-      div.appendChild($.el('label', { textContent: I18n.t('address') }));
-      div.appendChild($.el('textarea', {
-        rows: '2',
-        className: 'step-address-input',
-        textContent: step.address || ''
-      }));
-      body.appendChild(div);
-    }
-    if (def.fields.includes('portDetails')) {
-      const div = $.el('div', { className: 'full-width' });
-      div.appendChild($.el('label', { textContent: I18n.t('portDetails') }));
-      div.appendChild($.el('textarea', {
-        rows: '2',
-        className: 'step-port-input',
-        textContent: step.portDetails || ''
-      }));
-      body.appendChild(div);
-    }
-    if (def.fields.includes('pickupAirport')) {
+    // Date input (type=date)
+    const dateDiv = $.el('div');
+    dateDiv.appendChild($.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' }));
+    dateDiv.appendChild($.el('input', { type: 'date', className: 'ms-date', value: step.date || '' }));
+    editBox.appendChild(dateDiv);
+
+    // Time, personnel, vehicle
+    [
+      [I18n.t('time'), 'time', 'time', 'ms-time'],
+      [I18n.t('personnel'), 'personnel', 'text', 'ms-personnel'],
+      [I18n.t('vehicle'), 'vehicle', 'text', 'ms-vehicle']
+    ].forEach(([label, field, type, cls]) => {
       const div = $.el('div');
-      div.appendChild($.el('label', { textContent: I18n.t('pickupAirport') }));
-      div.appendChild($.el('input', {
-        type: 'text',
-        className: 'step-pickup-airport-input',
-        value: step.pickupAirport || ''
-      }));
-      body.appendChild(div);
-    }
-    if (def.fields.includes('deliveryAirport')) {
-      const div = $.el('div');
-      div.appendChild($.el('label', { textContent: I18n.t('deliveryAirport') }));
-      div.appendChild($.el('input', {
-        type: 'text',
-        className: 'step-delivery-airport-input',
-        value: step.deliveryAirport || ''
-      }));
-      body.appendChild(div);
-    }
-    if (def.fields.includes('pickupAddress')) {
-      const div = $.el('div', { className: 'full-width' });
-      div.appendChild($.el('label', { textContent: I18n.t('pickupAddress') }));
-      div.appendChild($.el('textarea', {
-        rows: '2',
-        className: 'step-pickup-address-input',
-        textContent: step.pickupAddress || ''
-      }));
-      body.appendChild(div);
-    }
-    if (def.fields.includes('deliveryAddress')) {
-      const div = $.el('div', { className: 'full-width' });
-      div.appendChild($.el('label', { textContent: I18n.t('deliveryAddress') }));
-      div.appendChild($.el('textarea', {
-        rows: '2',
-        className: 'step-delivery-address-input',
-        textContent: step.deliveryAddress || ''
-      }));
-      body.appendChild(div);
-    }
+      div.appendChild($.el('label', { textContent: label }));
+      div.appendChild($.el('input', { type, className: cls, value: step[field] || '' }));
+      editBox.appendChild(div);
+    });
+
+    // Address + Notes
+    const addrDiv = $.el('div', { className: 'full-width' });
+    addrDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
+    addrDiv.appendChild($.el('textarea', { rows: '2', className: 'ms-address', textContent: step.address || '' }));
+    editBox.appendChild(addrDiv);
 
     const notesDiv = $.el('div', { className: 'full-width' });
     notesDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
-    notesDiv.appendChild($.el('textarea', {
-      rows: '2',
-      className: 'step-notes-input',
-      textContent: step.notes || ''
-    }));
-    body.appendChild(notesDiv);
-    card.appendChild(body);
+    notesDiv.appendChild($.el('textarea', { rows: '2', className: 'ms-notes', textContent: step.notes || '' }));
+    editBox.appendChild(notesDiv);
 
-    const actions = $.el('div', {
-      style: 'margin-top:6px; display:flex; justify-content:flex-end; gap:8px;'
-    });
-    const saveBtn = $.el('button', {
-      type: 'button',
-      className: 'step-save-btn',
-      textContent: (State.lang === 'tr') ? 'Adımı Kaydet' : 'Save Step'
-    });
+    const actions = $.el('div', { style: 'display:flex; justify-content:flex-end; gap:8px; margin-top:10px;' });
+    const saveBtn = $.el('button', { type: 'button', textContent: I18n.t('save') });
+    const cancelBtn = $.el('button', { type: 'button', textContent: I18n.t('cancel') });
+
     saveBtn.addEventListener('click', () => {
-      step.date = card.querySelector('.step-date-input').value || '';
-      step.time = card.querySelector('.step-time-input').value || '';
-      step.personnel = card.querySelector('.step-personnel-input').value.trim();
-      step.vehicle = card.querySelector('.step-vehicle-input').value.trim();
-
-      // Office selection (blank means "auto")
-      step.office = card.querySelector('.step-office-select').value || '';
-
-      if (def.fields.includes('address')) step.address = card.querySelector('.step-address-input').value.trim();
-      if (def.fields.includes('portDetails')) step.portDetails = card.querySelector('.step-port-input').value.trim();
-      if (def.fields.includes('pickupAirport')) step.pickupAirport = card.querySelector('.step-pickup-airport-input').value.trim();
-      if (def.fields.includes('deliveryAirport')) step.deliveryAirport = card.querySelector('.step-delivery-airport-input').value.trim();
-      if (def.fields.includes('pickupAddress')) step.pickupAddress = card.querySelector('.step-pickup-address-input').value.trim();
-      if (def.fields.includes('deliveryAddress')) step.deliveryAddress = card.querySelector('.step-delivery-address-input').value.trim();
-
-      step.notes = card.querySelector('.step-notes-input').value.trim();
+      step.date = card.querySelector('.ms-date').value || '';
+      step.time = card.querySelector('.ms-time').value || '';
+      step.personnel = card.querySelector('.ms-personnel').value.trim();
+      step.vehicle = card.querySelector('.ms-vehicle').value.trim();
+      step.address = card.querySelector('.ms-address').value.trim();
+      step.notes = card.querySelector('.ms-notes').value.trim();
 
       Storage.saveJobs();
+
+      // Keep schedule in sync
       ScheduleUI.render();
       if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
-      alert(I18n.t('stepSaved'));
-    });
-    actions.appendChild(saveBtn);
-    card.appendChild(actions);
-    return card;
-  },
 
-  // CHANGE: show linked extra job as a “step card” under move details
-  linkedExtraJobAsStepCard(job, item) {
-    const { dateStr, ej } = item;
-    const card = $.el('div', { className: 'step-card' });
-
-    const header = $.el('div', { className: 'step-card-header' });
-    const taskName = (ej.taskType === 'Custom' && ej.customTaskName) ? ej.customTaskName : ej.taskType;
-    header.appendChild($.el('div', { className: 'step-card-header-title', textContent: taskName || 'Extra Job' }));
-    header.appendChild($.el('div', { innerHTML: Utils.formatDate(dateStr), style: 'font-size: 11px; color:#6b7280;' }));
-    card.appendChild(header);
-
-    const body = $.el('div', { className: 'step-card-body' });
-
-    // Date (read-only label)
-    const dateDiv = $.el('div');
-    dateDiv.appendChild($.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' }));
-    dateDiv.appendChild($.el('input', { type: 'text', value: Utils.formatDate(dateStr), disabled: true }));
-    body.appendChild(dateDiv);
-
-    // Time
-    const timeDiv = $.el('div');
-    timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
-    timeDiv.appendChild($.el('input', { type: 'time', className: 'lej-time', value: ej.time || '' }));
-    body.appendChild(timeDiv);
-
-    // Office
-    const officeDiv = $.el('div');
-    officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
-    const officeSelect = $.el('select', { className: 'lej-office' });
-    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
-    CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
-    officeSelect.value = ej.office || '';
-    officeDiv.appendChild(officeSelect);
-    body.appendChild(officeDiv);
-
-    // Personnel
-    const pDiv = $.el('div');
-    pDiv.appendChild($.el('label', { textContent: I18n.t('personnel') }));
-    pDiv.appendChild($.el('input', { type: 'text', className: 'lej-personnel', value: ej.personnel || '' }));
-    body.appendChild(pDiv);
-
-    // Vehicle
-    const vDiv = $.el('div');
-    vDiv.appendChild($.el('label', { textContent: I18n.t('vehicle') }));
-    vDiv.appendChild($.el('input', { type: 'text', className: 'lej-vehicle', value: ej.vehicle || '' }));
-    body.appendChild(vDiv);
-
-    // Address
-    const aDiv = $.el('div', { className: 'full-width' });
-    aDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
-    aDiv.appendChild($.el('textarea', { rows: '2', className: 'lej-address', textContent: ej.address || '' }));
-    body.appendChild(aDiv);
-
-    // Notes
-    const nDiv = $.el('div', { className: 'full-width' });
-    nDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
-    nDiv.appendChild($.el('textarea', { rows: '2', className: 'lej-notes', textContent: ej.notes || '' }));
-    body.appendChild(nDiv);
-
-    card.appendChild(body);
-
-    const actions = $.el('div', {
-      style: 'margin-top:6px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;'
+      // Re-render move details so view mode updates
+      JobsUI.showDetails(job);
     });
 
-    const saveBtn = $.el('button', { type: 'button', className: 'step-save-btn', textContent: I18n.t('save') });
-    saveBtn.addEventListener('click', () => {
-      ej.time = card.querySelector('.lej-time').value || '';
-      ej.office = card.querySelector('.lej-office').value || '';
-      ej.personnel = card.querySelector('.lej-personnel').value.trim();
-      ej.vehicle = card.querySelector('.lej-vehicle').value.trim();
-      ej.address = card.querySelector('.lej-address').value.trim();
-      ej.notes = card.querySelector('.lej-notes').value.trim();
-
-      Storage.saveScheduleExtraJobs();
-      ScheduleUI.render();
-      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
-      // Keep move details refreshed
-      const current = State.getJob(State.selectedJobId);
-      if (current) this.showDetails(current);
-    });
-
-    const deleteBtn = $.el('button', { type: 'button', textContent: I18n.t('delete') });
-    deleteBtn.addEventListener('click', () => {
-      if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
-      ScheduleExtraJobs.deleteById(dateStr, ej.id);
-      Storage.saveScheduleExtraJobs();
-      ScheduleUI.render();
-      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
-      const current = State.getJob(State.selectedJobId);
-      if (current) this.showDetails(current);
+    cancelBtn.addEventListener('click', () => {
+      JobsUI.showDetails(job);
     });
 
     actions.appendChild(saveBtn);
-    actions.appendChild(deleteBtn);
+    actions.appendChild(cancelBtn);
+
+    editBtn.addEventListener('click', () => {
+      $.hide(viewBox);
+      $.show(editBox);
+      $.hide(editBtn);
+      $.show(actions);
+    });
+
+    right.appendChild(editBtn);
+
+    card.appendChild(viewBox);
+    card.appendChild(editBox);
+
+    // Hide actions initially (only show in edit mode)
+    actions.classList.add('hidden');
     card.appendChild(actions);
 
     return card;
-  },
-
-  // CHANGE: add additional job form under move details
-  addAdditionalJobForm(job) {
-    const wrap = $.el('div', { style: 'margin-top:12px;' });
-
-    const title = $.el('h4', { textContent: I18n.t('addAdditionalJob') });
-    title.style.margin = '12px 0 8px 0';
-    title.style.fontSize = '14px';
-    title.style.fontWeight = '600';
-    wrap.appendChild(title);
-
-    const form = $.el('div', { className: 'schedule-extra-form' });
-
-    // Date
-    const dateDiv = $.el('div');
-    dateDiv.appendChild($.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' }));
-    const dateInput = $.el('input', { type: 'date', id: 'moveAddJobDate' });
-    dateDiv.appendChild(dateInput);
-    form.appendChild(dateDiv);
-
-    // Time
-    const timeDiv = $.el('div');
-    timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
-    const timeInput = $.el('input', { type: 'time', id: 'moveAddJobTime' });
-    timeDiv.appendChild(timeInput);
-    form.appendChild(timeDiv);
-
-    // Task type
-    const taskDiv = $.el('div');
-    taskDiv.appendChild($.el('label', { textContent: I18n.t('task') }));
-    const taskSelect = $.el('select', { id: 'moveAddJobType' });
-    CONFIG.EXTRA_JOB_TYPES.forEach(type => taskSelect.appendChild($.el('option', { value: type, textContent: type })));
-    taskDiv.appendChild(taskSelect);
-    form.appendChild(taskDiv);
-
-    // Custom name (shown only when Custom)
-    const customDiv = $.el('div');
-    customDiv.appendChild($.el('label', { textContent: I18n.t('customTaskName') }));
-    const customInput = $.el('input', { type: 'text', id: 'moveAddJobCustomName', placeholder: (State.lang === 'tr') ? 'Örn. Depo temizlik' : 'e.g. Warehouse cleaning' });
-    customDiv.appendChild(customInput);
-    form.appendChild(customDiv);
-
-    const toggleCustom = () => {
-      customDiv.style.display = (taskSelect.value === 'Custom') ? '' : 'none';
-      if (taskSelect.value !== 'Custom') customInput.value = '';
-    };
-    taskSelect.addEventListener('change', toggleCustom);
-    toggleCustom();
-
-    // Office
-    const officeDiv = $.el('div');
-    officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
-    const officeSelect = $.el('select', { id: 'moveAddJobOffice' });
-    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
-    CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
-    officeDiv.appendChild(officeSelect);
-    form.appendChild(officeDiv);
-
-    // Personnel
-    const pDiv = $.el('div');
-    pDiv.appendChild($.el('label', { textContent: I18n.t('personnel') }));
-    const pInput = $.el('input', { type: 'text', id: 'moveAddJobPersonnel' });
-    pDiv.appendChild(pInput);
-    form.appendChild(pDiv);
-
-    // Vehicle
-    const vDiv = $.el('div');
-    vDiv.appendChild($.el('label', { textContent: I18n.t('vehicle') }));
-    const vInput = $.el('input', { type: 'text', id: 'moveAddJobVehicle' });
-    vDiv.appendChild(vInput);
-    form.appendChild(vDiv);
-
-    // Address
-    const aDiv = $.el('div');
-    aDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
-    const aInput = $.el('textarea', { id: 'moveAddJobAddress', rows: '2' });
-    aDiv.appendChild(aInput);
-    form.appendChild(aDiv);
-
-    // Notes
-    const nDiv = $.el('div');
-    nDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
-    const nInput = $.el('textarea', { id: 'moveAddJobNotes', rows: '2' });
-    nDiv.appendChild(nInput);
-    form.appendChild(nDiv);
-
-    // Add button
-    const addBtn = $.el('button', { type: 'button', textContent: I18n.t('addJob') });
-    addBtn.addEventListener('click', () => {
-      const dateStr = dateInput.value || '';
-      const taskType = taskSelect.value || '';
-      const customTaskName = customInput.value.trim();
-      const time = timeInput.value || '';
-      const personnel = pInput.value.trim();
-      const vehicle = vInput.value.trim();
-      const address = aInput.value.trim();
-      const notes = nInput.value.trim();
-      const office = officeSelect.value || '';
-
-      if (!dateStr) {
-        alert((State.lang === 'tr') ? 'Lütfen tarih seçin.' : 'Please select a date.');
-        return;
-      }
-
-      if (!taskType && !customTaskName && !time && !personnel && !vehicle && !address && !notes && !office) {
-        alert(I18n.t('fillAtLeastOneField'));
-        return;
-      }
-
-      if (!Array.isArray(State.scheduleExtraJobs[dateStr])) State.scheduleExtraJobs[dateStr] = [];
-
-      State.scheduleExtraJobs[dateStr].push(Validator.normalizeExtraJob({
-        id: Utils.makeId('xjob'),
-        date: dateStr,
-        taskType,
-        customTaskName,
-        time,
-        address,
-        office,
-        personnel,
-        vehicle,
-        notes,
-        linkedJobId: String(job.id),
-        linkedJobCode: job.jobCode || ''
-      }, dateStr));
-
-      Storage.saveScheduleExtraJobs();
-      ScheduleUI.render();
-      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
-
-      // Reset inputs
-      timeInput.value = '';
-      pInput.value = '';
-      vInput.value = '';
-      aInput.value = '';
-      nInput.value = '';
-      officeSelect.value = '';
-      taskSelect.value = 'Custom';
-      toggleCustom();
-
-      // Refresh move details view so it appears under steps immediately
-      this.showDetails(job);
-    });
-
-    const actionsDiv = $.el('div', { className: 'schedule-extra-actions' });
-    actionsDiv.appendChild(addBtn);
-    form.appendChild(actionsDiv);
-
-    wrap.appendChild(form);
-    return wrap;
   },
 
   renderAgents(job) {
@@ -2311,7 +2128,12 @@ const ScheduleUI = {
     container.appendChild(topRow);
 
     const stepsForDay = Steps.getForDate(dateStr);
-    const extraJobs = (State.scheduleExtraJobs[dateStr] || []).map(ej => Validator.normalizeExtraJob(ej, dateStr));
+
+    // NEW: move-linked additional jobs (stored on job)
+    const moveAdditionalForDay = Steps.getAdditionalForDate(dateStr);
+
+    // Keep day-only tasks (non-move) for cleaning etc.
+    const dayTasks = (State.scheduleExtraJobs[dateStr] || []).map(ej => Validator.normalizeExtraJob(ej, dateStr));
     const dayNote = State.scheduleNotes[dateStr] || '';
 
     if (stepsForDay.length === 0) {
@@ -2321,12 +2143,21 @@ const ScheduleUI = {
       stepsForDay.forEach(({ job, step }) => container.appendChild(this.stepCard(job, step, dateStr)));
     }
 
-    container.appendChild(this.extraJobsSection(dateStr, extraJobs));
+    // Render move-linked additional jobs exactly like steps
+    if (moveAdditionalForDay.length) {
+      moveAdditionalForDay
+        .sort((a, b) => (a.extra.time || '').localeCompare(b.extra.time || ''))
+        .forEach(({ job, extra }) => {
+          container.appendChild(this.stepCard(job, extra, dateStr, true)); // true = isAdditional
+        });
+    }
+
+    container.appendChild(this.extraJobsSection(dateStr, dayTasks));
     container.appendChild(this.dayNotesSection(dateStr, dayNote));
   },
 
   // CHANGE: schedule step view shows office + schedule edit allows office/address editing
-  stepCard(job, step, dateStr) {
+  stepCard(job, step, dateStr, isAdditional = false) {
     const def = CONFIG.STEP_DEFINITIONS[step.id] || {};
     const card = $.el('div', { className: 'schedule-step-card' });
     card.appendChild($.el('h4', { textContent: `${job.jobCode || ''} – ${job.clientName || 'No client name'}` }));
@@ -2344,18 +2175,21 @@ const ScheduleUI = {
     const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
 
     const officeComputed = step.office || Utils.detectOfficeForStep(step, job) || '-';
+    const defFields = def.fields || [];
+    const hasAddress = isAdditional || defFields.includes('address');
+
     const fields = [
       [I18n.t('office'), officeComputed],
       [I18n.t('time'), step.time || '-'],
       [I18n.t('personnel'), step.personnel || '-'],
       [I18n.t('vehicle'), step.vehicle || '-']
     ];
-    if (def.fields && def.fields.includes('address')) fields.push([I18n.t('address'), step.address || '-']);
-    if (def.fields && def.fields.includes('portDetails')) fields.push([I18n.t('portDetails'), step.portDetails || '-']);
-    if (def.fields && def.fields.includes('pickupAirport')) fields.push([I18n.t('pickupAirport'), step.pickupAirport || '-']);
-    if (def.fields && def.fields.includes('deliveryAirport')) fields.push([I18n.t('deliveryAirport'), step.deliveryAirport || '-']);
-    if (def.fields && def.fields.includes('pickupAddress')) fields.push([I18n.t('pickupAddress'), step.pickupAddress || '-']);
-    if (def.fields && def.fields.includes('deliveryAddress')) fields.push([I18n.t('deliveryAddress'), step.deliveryAddress || '-']);
+    if (hasAddress) fields.push([I18n.t('address'), step.address || '-']);
+    if (defFields.includes('portDetails')) fields.push([I18n.t('portDetails'), step.portDetails || '-']);
+    if (defFields.includes('pickupAirport')) fields.push([I18n.t('pickupAirport'), step.pickupAirport || '-']);
+    if (defFields.includes('deliveryAirport')) fields.push([I18n.t('deliveryAirport'), step.deliveryAirport || '-']);
+    if (defFields.includes('pickupAddress')) fields.push([I18n.t('pickupAddress'), step.pickupAddress || '-']);
+    if (defFields.includes('deliveryAddress')) fields.push([I18n.t('deliveryAddress'), step.deliveryAddress || '-']);
     fields.push([I18n.t('notesLabel'), step.notes || '-']);
 
     fields.forEach(([label, value]) => {
@@ -2387,8 +2221,8 @@ const ScheduleUI = {
       }
     );
 
-    // address editing only if step has address
-    if (def.fields && def.fields.includes('address')) {
+    // address editing if step supports address or is an additional job
+    if (hasAddress) {
       const addrDiv = $.el('div', { className: 'full-width' });
       addrDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
       addrDiv.appendChild($.el('textarea', { rows: '2', className: 'sched-address-input', textContent: step.address || '' }));
@@ -2449,10 +2283,13 @@ const ScheduleUI = {
     section.appendChild($.el('h4', { textContent: I18n.t('extraJobs') }));
     const list = $.el('div');
 
-    if (extraJobs.length === 0) {
+    // Only show day-only tasks here (non-move)
+    const dayOnlyTasks = (extraJobs || []).filter(ej => !ej.linkedJobId);
+
+    if (dayOnlyTasks.length === 0) {
       list.appendChild($.el('p', { className: 'schedule-extra-empty', textContent: I18n.t('noExtraJobs') }));
     } else {
-      extraJobs
+      dayOnlyTasks
         .slice()
         .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
         .forEach(ej => {
@@ -2472,11 +2309,6 @@ const ScheduleUI = {
             [I18n.t('notesLabel'), ej.notes || '-']
           ];
 
-          // linked move info if exists
-          if (ej.linkedJobCode) {
-            pairs.unshift([I18n.t('moveId'), ej.linkedJobCode]);
-          }
-
           pairs.forEach(([label, value]) => {
             const fieldRow = $.el('div', { className: 'schedule-field-row' });
             fieldRow.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
@@ -2487,19 +2319,6 @@ const ScheduleUI = {
           row.appendChild(main);
 
           const actions = $.el('div', { className: 'schedule-extra-job-actions' });
-
-          if (ej.linkedJobId) {
-            const openMoveBtn = $.el('button', { type: 'button', textContent: I18n.t('openMove') });
-            openMoveBtn.addEventListener('click', () => {
-              const job = State.getJob(ej.linkedJobId);
-              if (job) {
-                Views.show('moves');
-                JobsUI.render();
-                JobsUI.showDetails(job);
-              }
-            });
-            actions.appendChild(openMoveBtn);
-          }
 
           const delBtn = $.el('button', { type: 'button', className: 'extra-job-delete-btn', textContent: I18n.t('delete') });
           delBtn.addEventListener('click', () => {
@@ -2613,26 +2432,45 @@ const ScheduleUI = {
         return;
       }
 
-      if (!Array.isArray(State.scheduleExtraJobs[dateStr])) State.scheduleExtraJobs[dateStr] = [];
+      if (linkedJob) {
+        if (!Array.isArray(linkedJob.additionalJobs)) linkedJob.additionalJobs = [];
+        linkedJob.additionalJobs.push({
+          id: Utils.makeId('ajob'),
+          label: (taskType === 'Custom' && customTaskName) ? customTaskName : (taskType || ((State.lang === 'tr') ? 'Ek İş' : 'Additional Job')),
+          date: dateStr,
+          time,
+          personnel,
+          vehicle,
+          address,
+          notes,
+          office
+        });
+        Storage.saveJobs();
+      } else {
+        if (!Array.isArray(State.scheduleExtraJobs[dateStr])) State.scheduleExtraJobs[dateStr] = [];
 
-      State.scheduleExtraJobs[dateStr].push(Validator.normalizeExtraJob({
-        id: Utils.makeId('xjob'),
-        date: dateStr,
-        taskType,
-        customTaskName,
-        time,
-        office,
-        address,
-        personnel,
-        vehicle,
-        notes,
-        linkedJobId: linkedJob ? String(linkedJob.id) : '',
-        linkedJobCode: linkedJob ? (linkedJob.jobCode || '') : ''
-      }, dateStr));
+        State.scheduleExtraJobs[dateStr].push(Validator.normalizeExtraJob({
+          id: Utils.makeId('xjob'),
+          date: dateStr,
+          taskType,
+          customTaskName,
+          time,
+          office,
+          address,
+          personnel,
+          vehicle,
+          notes,
+          linkedJobId: '',
+          linkedJobCode: ''
+        }, dateStr));
 
-      Storage.saveScheduleExtraJobs();
+        Storage.saveScheduleExtraJobs();
+      }
+
       this.renderDay(dateStr);
       this.render();
+
+      if (linkedJob) JobsUI.showDetails(linkedJob);
     });
 
     const actionsDiv = $.el('div', { className: 'schedule-extra-actions' });
