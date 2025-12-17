@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>MOVEIST TEST AREA</title>
+    <link rel="stylesheet" href="./style.css">
+
+  </head>
+    
+  <body>
+  <header>
+  <div class="header-bar">
+    <h1 data-i18n="appTitle">ISTEX MOVE MANAGER</h1>
+  </div>
+</header>
+
+<!-- TOP NAV TABS -->
+<nav class="top-nav">
+  <button type="button" id="navMoves" class="nav-tab active" data-i18n="navMoves">Moves</button>
+  <button type="button" id="navAgents" class="nav-tab" data-i18n="navAgents">Agents</button>
+  <button type="button" id="navSchedule" class="nav-tab" data-i18n="navSchedule">Schedule</button>
+  <button type="button" id="navDocuments" class="nav-tab" data-i18n="navDocuments">Documents</button>
+</nav>
+
+<main>
+
+  <!-- ========== MOVES VIEW ========== -->
+  <div id="movesView" class="layout">
+
+    <!-- LEFT SIDE (MOVES LIST) -->
+    <section id="moves" class="left-panel">
+
+      <div class="header-row">
+        <h2 data-i18n="movesTitle">Moves</h2>
+        <button type="button" id="openCreateJob" data-i18n="btnAddNewMove">Add New Move</button>
+      </div>
+
+      <!-- FILTER BUTTONS: STATUS -->
+      <div id="statusFilters" class="filter-row">
+        <button data-status="All" class="filter-btn active" data-i18n="filterAll">All</button>
+        <button data-status="Planned" class="filter-btn" data-i18n="statusPlanned">Planned</button>
+        <button data-status="Ongoing" class="filter-btn" data-i18n="statusOngoing">Ongoing</button>
+        <button data-status="Completed" class="filter-btn" data-i18n="statusCompleted">Completed</button>
+        <button data-status="Cancelled" class="filter-btn" data-i18n="statusCancelled">Cancelled</button>
+      </div>
+
+      <!-- EXTRA FILTERS: TYPE + PAYMENT -->
+      <div class="extra-filters">
+        <select id="typeFilter" aria-label="Type filter">
+          <option value="All" data-i18n="typeAll">All types</option>
+          <option value="Import" data-i18n="typeImport">Import</option>
+          <option value="Export" data-i18n="typeExport">Export</option>
+          <option value="Local" data-i18n="typeLocal">Local</option>
+        </select>
+        <select id="paymentFilter" aria-label="Payment filter">
+          <option value="All" data-i18n="payAll">All payments</option>
+          <option value="Paid" data-i18n="payPaid">Paid</option>
+          <option value="Unpaid" data-i18n="payUnpaid">Unpaid</option>
+        </select>
+      </div>
+
+      <!-- SEARCH BAR -->
+      <div class="search-row">
+        <input
+          type="text"
+          id="searchInput"
+          data-i18n-placeholder="searchMovesPlaceholder"
+          placeholder="Search by move ID, client, origin, destination, agent..."
+        >
+      </div>
+
+      <!-- MOVE LIST -->
+      <div id="jobList"></div>
+
+    </section>
+
+    <!-- RIGHT SIDE (MOVE DETAILS) -->
+    <section id="details" class="right-panel">
+
+      <div class="header-row">
+        <h2 data-i18n="moveDetailsTitle">Move Details</h2>
+        <button type="button" id="editJobBtn" disabled data-i18n="btnEditMove">Edit Move</button>
+      </div>
+
+      <div id="jobDetails" class="detail-card">
+        <p data-i18n="hintSelectMove">Select a move from the left to see details here.</p>
+      </div>
+
+      <div class="header-row">
+        <h2 data-i18n="moveAgentsTitle">Move Agents</h2>
+      </div>
+
+      <div id="agentDetails" class="agent-card">
+        <p data-i18n="hintAgentsAppear">Agents for this move will appear here.</p>
+      </div>
+
+      <div class="header-row">
+        <h2 data-i18n="checklistTitle">Checklist</h2>
+      </div>
+
+      <div id="checklistSection" class="detail-card">
+        <div id="checklistItems">
+          <p data-i18n="noChecklistYet">No checklist yet.</p>
+        </div>
+
+        <label data-i18n="customChecklistLabel">Custom Checklist (one item per line)</label>
+        <textarea
+          id="checklistInput"
+          rows="3"
+          data-i18n-placeholder="customChecklistPlaceholder"
+          placeholder="Example:
+Packing complete
+Customs docs ready
+Payment received"
+        ></textarea>
+        <button type="button" id="setChecklistBtn" data-i18n="btnAddChecklistItems">Add Checklist Items</button>
+      </div>
+
+      <div class="header-row">
+        <h2 data-i18n="notesTitle">Notes</h2>
+      </div>
+
+      <div id="notesSection" class="detail-card">
+        <div id="notesList">
+          <p data-i18n="noNotesYet">No notes yet.</p>
+        </div>
+
+        <label data-i18n="addNoteLabel">Add Note</label>
+        <textarea
+          id="newNoteText"
+          rows="2"
+          data-i18n-placeholder="addNotePlaceholder"
+          placeholder="Write a note about this move..."
+        ></textarea>
+        <button type="button" id="addNoteBtn" data-i18n="btnAddNote">Add Note</button>
+      </div>
+
+      <div class="header-row">
+        <h2 data-i18n="documentsTitle">Documents</h2>
+      </div>
+
+      <div id="documentsSection" class="detail-card">
+        <div id="documentsList">
+          <p data-i18n="noDocumentsYet">No documents yet.</p>
+        </div>
+
+        <div class="document-form">
+          <div>
+            <label data-i18n="docNameLabel">Document Name</label>
+            <input type="text" id="docNameInput" data-i18n-placeholder="docNamePlaceholder" placeholder="e.g. Quote #123, Bill of Lading, Packing List">
+          </div>
+
+          <div>
+            <label data-i18n="docDateLabel">Document Date (dd/mm/yyyy)</label>
+            <input type="text" id="docDateInput" data-i18n-placeholder="docDatePlaceholder" placeholder="dd/mm/yyyy">
+          </div>
+
+          <div>
+            <label data-i18n="docUploadLabel">Upload File (optional)</label>
+            <input type="file" id="docFileInput">
+          </div>
+
+          <div>
+            <label class="doc-url-label" data-i18n="docUrlLabel">Document URL (optional)</label>
+            <input
+              type="text"
+              id="docUrlInput"
+              class="doc-url-input"
+              data-i18n-placeholder="docUrlPlaceholder"
+              placeholder="https://... (Drive/SharePoint/etc.)"
+            >
+          </div>
+
+          <div>
+            <button type="button" id="addDocumentBtn" data-i18n="btnAddDocument">Add Document</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- ========== AGENTS DIRECTORY VIEW ========== -->
+  <div id="agentsView" class="layout hidden">
+
+    <section class="left-panel">
+      <div class="header-row">
+        <h2 data-i18n="agentsTitle">Agents</h2>
+        <button type="button" id="openCreateAgentBtn" data-i18n="btnAddAgent">Add Agent</button>
+      </div>
+
+      <div class="search-row">
+        <input
+          type="text"
+          id="agentSearchInput"
+          data-i18n-placeholder="searchAgentsPlaceholder"
+          placeholder="Search agents by name, city, country..."
+        >
+      </div>
+
+      <div id="agentList"></div>
+    </section>
+
+    <section class="right-panel">
+      <div class="header-row">
+        <h2 data-i18n="agentDetailsTitle">Agent Details</h2>
+      </div>
+
+      <div id="agentDetailsPanel" class="detail-card">
+        <p data-i18n="hintSelectAgent">Select an agent from the left to see details and their moves.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ========== SCHEDULE VIEW (CALENDAR) ========== -->
+  <div id="scheduleView" class="layout hidden">
+
+    <section class="left-panel">
+      <div class="header-row">
+        <h2 data-i18n="scheduleTitle">Schedule</h2>
+        <div class="month-nav">
+          <button type="button" id="prevMonthBtn">‹</button>
+          <span id="monthLabel">Month Year</span>
+          <button type="button" id="nextMonthBtn">›</button>
+        </div>
+      </div>
+
+      <div class="schedule-calendar-header">
+        <div data-i18n="dowMon">Mon</div>
+        <div data-i18n="dowTue">Tue</div>
+        <div data-i18n="dowWed">Wed</div>
+        <div data-i18n="dowThu">Thu</div>
+        <div data-i18n="dowFri">Fri</div>
+        <div data-i18n="dowSat">Sat</div>
+        <div data-i18n="dowSun">Sun</div>
+      </div>
+
+      <div id="scheduleCalendar" class="schedule-calendar"></div>
+    </section>
+
+    <section class="right-panel">
+      <div class="header-row">
+        <h2 data-i18n="dayDetailsTitle">Day Details</h2>
+      </div>
+      <div id="scheduleDayDetails" class="detail-card">
+        <p data-i18n="hintSelectDay">Select a day in the calendar to see scheduled steps and extra jobs.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ========== DOCUMENTS VIEW (GLOBAL) ========== -->
+  <div id="documentsView" class="layout hidden">
+    <section class="left-panel">
+      <div class="header-row">
+        <h2 data-i18n="documentsTitle">Documents</h2>
+      </div>
+
+      <div class="search-row">
+        <input
+          type="text"
+          id="documentsSearchInput"
+          data-i18n-placeholder="searchDocumentsPlaceholder"
+          placeholder="Search by job ID, client, document name, agent..."
+        >
+      </div>
+
+      <div class="extra-filters">
+        <select id="documentsJobFilter" aria-label="Documents job filter">
+          <option value="" data-i18n="docsAllMoves">All moves</option>
+        </select>
+      </div>
+
+      <div id="documentsListGlobal"></div>
+    </section>
+  </div>
+
+</main>
+
+<!-- CREATE / EDIT MOVE MODAL -->
+<div id="createJobModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="jobModalTitle" data-i18n="modalCreateMoveTitle">Create New Move</h2>
+      <button type="button" class="close-button" id="closeModalBtn">×</button>
+    </div>
+
+    <form id="jobForm">
+
+      <label data-i18n="clientNameLabel">Client Name</label>
+      <input name="clientName" type="text">
+
+      <label data-i18n="originCityLabel">Origin City</label>
+      <input name="originCity" type="text">
+
+      <label data-i18n="originCountryLabel">Origin Country</label>
+      <select name="originCountry" id="originCountrySelect">
+        <option value="" data-i18n="selectCountry">Select country</option>
+      </select>
+
+      <label data-i18n="originAddressLabel">Full Origin Address</label>
+      <textarea name="originFullAddress" rows="2"></textarea>
+
+      <label data-i18n="destinationCityLabel">Destination City</label>
+      <input name="destinationCity" type="text">
+
+      <label data-i18n="destinationCountryLabel">Destination Country</label>
+      <select name="destinationCountry" id="destinationCountrySelect">
+        <option value="" data-i18n="selectCountry">Select country</option>
+      </select>
+
+      <label data-i18n="destinationAddressLabel">Full Destination Address</label>
+      <textarea name="destinationFullAddress" rows="2"></textarea>
+
+      <label data-i18n="weightLabel">Weight (kg)</label>
+      <input name="weight" type="number" min="0">
+
+      <label data-i18n="volumeLabel">Volume (m³)</label>
+      <input name="volume" type="number" min="0" step="0.01">
+
+      <label data-i18n="moveTypeLabel">Move Type</label>
+      <select name="tradeDirection">
+        <option value="" data-i18n="selectType">Select type</option>
+        <option value="Import" data-i18n="typeImport">Import</option>
+        <option value="Export" data-i18n="typeExport">Export</option>
+        <option value="Local" data-i18n="typeLocal">Local</option>
+      </select>
+
+      <label data-i18n="statusRequiredLabel">Status (required)</label>
+      <select name="status" required>
+        <option value="" data-i18n="selectStatus">Select status</option>
+        <option value="Planned" data-i18n="statusPlanned">Planned</option>
+        <option value="Ongoing" data-i18n="statusOngoing">Ongoing</option>
+        <option value="Completed" data-i18n="statusCompleted">Completed</option>
+        <option value="Cancelled" data-i18n="statusCancelled">Cancelled</option>
+      </select>
+
+      <label data-i18n="originAgentLabel">Origin Agent (at least one of Origin/Destination required)</label>
+      <select name="originAgentId" id="originAgentSelect">
+        <option value="" data-i18n="selectOriginAgent">Select origin agent</option>
+      </select>
+
+      <label data-i18n="destinationAgentLabel">Destination Agent (at least one of Origin/Destination required)</label>
+      <select name="destinationAgentId" id="destinationAgentSelect">
+        <option value="" data-i18n="selectDestinationAgent">Select destination agent</option>
+      </select>
+
+      <label data-i18n="modeLabel">Mode</label>
+      <div class="mode-group">
+        <label><input type="checkbox" name="mode" value="Sea"> <span data-i18n="modeSea">Sea</span></label>
+        <label><input type="checkbox" name="mode" value="Air"> <span data-i18n="modeAir">Air</span></label>
+        <label><input type="checkbox" name="mode" value="Land"> <span data-i18n="modeLand">Land</span></label>
+      </div>
+
+      <p class="modal-hint" data-i18n="stepsHint">
+        Steps (Survey, Packing, Container, Air Cargo, Delivery, etc.) will be created automatically
+        based on Move Type and Mode. You can edit them in Move Details and in the Schedule.
+      </p>
+
+      <div class="modal-actions">
+        <button type="button" id="cancelJobBtn" data-i18n="btnCancel">Cancel</button>
+        <button type="submit" data-i18n="btnSaveMove">Save Move</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CREATE / EDIT AGENT MODAL -->
+<div id="createAgentModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="agentModalTitle" data-i18n="modalAddAgentTitle">Add Agent</h2>
+      <button type="button" class="close-button" id="closeAgentModalBtn">×</button>
+    </div>
+
+    <form id="agentForm">
+      <label data-i18n="agentNameLabel">Agent Name</label>
+      <input name="agentName" type="text" required>
+
+      <label data-i18n="cityLabel">City</label>
+      <input name="agentCity" type="text" required>
+
+      <label data-i18n="countryLabel">Country</label>
+      <select name="agentCountry" id="agentCountrySelect" required>
+        <option value="" data-i18n="selectCountry">Select country</option>
+      </select>
+
+      <div class="modal-actions">
+        <button type="button" id="cancelAgentBtn" data-i18n="btnCancel">Cancel</button>
+        <button type="submit" data-i18n="btnSaveAgent">Save Agent</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Developer / Admin Data Tools -->
+<section class="admin-tools">
+  <h3 data-i18n="dataToolsTitle">Data Tools (Developer Only)</h3>
+
+  <div class="admin-buttons">
+    <button type="button" id="exportDataBtn" data-i18n="btnExportData">Export Data</button>
+    <button type="button" id="toggleImportAreaBtn" data-i18n="btnImportData">Import Data</button>
+  </div>
+
+  <div id="importArea" class="hidden">
+    <p data-i18n="importHint">Paste JSON from a previous export and click "Import Data".</p>
+    <textarea id="importDataInput" rows="5"></textarea>
+    <button type="button" id="importDataBtn" data-i18n="btnImportNow">Import Now</button>
+  </div>
+
+  <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" data-i18n="importNote">
+    Note: Export/Import will copy moves, agents, schedule day notes and extra jobs.
+  </p>
+</section>
+
+<footer>
+  <p data-i18n="footerCopyright">© 2025 Istanbul Ekspres</p>
+</footer>
+    <script  src="./script.js"></script>
+
+  </body>
+  
+</html>
