@@ -467,6 +467,7 @@ const I18n = {
     const navAgents = $.get('navAgents'); if (navAgents) navAgents.textContent = this.t('agents');
     const navSchedule = $.get('navSchedule'); if (navSchedule) navSchedule.textContent = this.t('schedule');
     const navDocuments = $.get('navDocuments'); if (navDocuments) navDocuments.textContent = this.t('documents');
+    const documentsHeader = $.get('documentsHeader'); if (documentsHeader) documentsHeader.textContent = this.t('documents');
 
     const openCreateJob = $.get('openCreateJob'); if (openCreateJob) openCreateJob.textContent = this.t('addNewMove');
     const editJobBtn = $.get('editJobBtn'); if (editJobBtn) editJobBtn.textContent = this.t('editMove');
@@ -510,6 +511,12 @@ const I18n = {
     if (documentsJobFilter && documentsJobFilter.options && documentsJobFilter.options[0]) {
       documentsJobFilter.options[0].textContent = this.t('allMovesFilter');
     }
+
+    const scheduleDayTitle = $.get('scheduleDayTitle');
+    if (scheduleDayTitle) scheduleDayTitle.textContent = this.t('dayDetails');
+
+    const scheduleDayHint = $.get('scheduleDayHint');
+    if (scheduleDayHint) scheduleDayHint.textContent = this.t('scheduleDayDetailsHint');
 
     const schedHeader = document.querySelector('.schedule-calendar-header');
     if (schedHeader && schedHeader.children.length >= 7) {
