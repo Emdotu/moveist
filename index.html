@@ -1,17 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-
-  <head>
-    <meta charset="UTF-8">
-    <title>MOVEIST TEST AREA</title>
-    <link rel="stylesheet" href="./style.css">
-
-  </head>
-    
-  <body>
-  <header>
+<header>
   <div class="header-bar">
-    <h1 data-i18n="appTitle">ISTEX MOVE MANAGER</h1>
+    <h1 data-i18n="appTitle">ISTANBUL EKSPRES</h1>
   </div>
 </header>
 
@@ -21,6 +10,7 @@
   <button type="button" id="navAgents" class="nav-tab" data-i18n="navAgents">Agents</button>
   <button type="button" id="navSchedule" class="nav-tab" data-i18n="navSchedule">Schedule</button>
   <button type="button" id="navDocuments" class="nav-tab" data-i18n="navDocuments">Documents</button>
+  <button type="button" id="navQuotes" class="nav-tab" data-i18n="navQuotes">Quotes</button>
 </nav>
 
 <main>
@@ -243,43 +233,111 @@ Payment received"
 
     <section class="right-panel">
       <div class="header-row">
-        <h2 id="scheduleDayTitle" data-i18n="dayDetails">Day Details</h2>
+        <h2 data-i18n="dayDetailsTitle">Day Details</h2>
       </div>
       <div id="scheduleDayDetails" class="detail-card">
-        <p id="scheduleDayHint" data-i18n="scheduleDayDetailsHint">Select a day in the calendar to see scheduled steps and extra jobs.</p>
+        <p data-i18n="hintSelectDay">Select a day in the calendar to see scheduled steps and extra jobs.</p>
       </div>
     </section>
 
   </div>
 
-  <!-- ========== DOCUMENTS VIEW (GLOBAL) ========== -->
-  <div id="documentsView" class="layout hidden">
-    <section class="left-panel">
-      <div class="header-row">
-        <h2 id="documentsHeader" data-i18n="documents">Documents</h2>
-      </div>
+<!-- ========== DOCUMENTS VIEW (GLOBAL) ========== -->
+<div id="documentsView" class="layout hidden">
+  <section class="left-panel">
+    <div class="header-row">
+      <h2 data-i18n="documentsTitle">Documents</h2>
+    </div>
 
+    <!-- ADD: Tab buttons -->
+    <div class="documents-tabs" style="display:flex; gap:8px; margin-bottom:16px; border-bottom:2px solid #e5e7eb;">
+      <button 
+        type="button" 
+        id="documentsSearchTab" 
+        class="documents-tab-btn active"
+        style="padding:10px 20px; background:none; border:none; border-bottom:2px solid #3b82f6; cursor:pointer; font-weight:500;"
+      >
+        Documents Search
+      </button>
+      <button 
+        type="button" 
+        id="resourceLibraryTab" 
+        class="documents-tab-btn"
+        style="padding:10px 20px; background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; font-weight:500;"
+      >
+        Resource Library
+      </button>
+    </div>
+
+    <!-- Wrap existing content in a div -->
+    <div id="documentsSearchSection">
       <div class="search-row">
         <input
           type="text"
           id="documentsSearchInput"
-          data-i18n-placeholder="searchDocsPh"
+          data-i18n-placeholder="searchDocumentsPlaceholder"
           placeholder="Search by job ID, client, document name, agent..."
         >
       </div>
 
       <div class="extra-filters">
         <select id="documentsJobFilter" aria-label="Documents job filter">
-          <option value="" data-i18n="allMovesFilter">All moves</option>
+          <option value="" data-i18n="docsAllMoves">All moves</option>
         </select>
       </div>
 
       <div id="documentsListGlobal"></div>
-    </section>
-  </div>
+    </div>
 
+    <!-- ADD: Resource Library container -->
+    <div id="resourceLibraryContainer" style="display:none;"></div>
+  </section>
+</div>
+
+  <!-- ========== QUOTES VIEW ========== -->
+<div id="quotesView" class="layout hidden">
+
+  <!-- LEFT SIDE (QUOTES LIST) -->
+  <section class="left-panel">
+
+    <div class="header-row">
+      <h2 data-i18n="quotesTitle">Quotes</h2>
+      <button type="button" id="openCreateQuote" data-i18n="btnAddNewQuote">Add New Quote</button>
+    </div>
+
+    <!-- SEARCH BAR -->
+    <div class="search-row">
+      <input
+        type="text"
+        id="quoteSearchInput"
+        data-i18n-placeholder="searchQuotesPlaceholder"
+        placeholder="Search by quote ID, client, origin, destination..."
+      >
+    </div>
+
+    <!-- QUOTE LIST -->
+    <div id="quoteList"></div>
+
+  </section>
+
+  <!-- RIGHT SIDE (QUOTE DETAILS) -->
+  <section class="right-panel">
+
+    <div class="header-row">
+      <h2 data-i18n="quoteDetailsTitle">Quote Details</h2>
+      <button type="button" id="editQuoteBtn" disabled data-i18n="btnEditQuote">Edit Quote</button>
+    </div>
+
+    <div id="quoteDetails" class="detail-card">
+      <p data-i18n="hintSelectQuote">Select a quote from the left to see details here.</p>
+    </div>
+
+  </section>
+
+</div>
+  
 </main>
-
+  
 <!-- CREATE / EDIT MOVE MODAL -->
 <div id="createJobModal" class="modal hidden">
   <div class="modal-card">
@@ -315,12 +373,6 @@ Payment received"
       <label data-i18n="destinationAddressLabel">Full Destination Address</label>
       <textarea name="destinationFullAddress" rows="2"></textarea>
 
-      <label data-i18n="weightLabel">Weight (kg)</label>
-      <input name="weight" type="number" min="0">
-
-      <label data-i18n="volumeLabel">Volume (m³)</label>
-      <input name="volume" type="number" min="0" step="0.01">
-
       <label data-i18n="moveTypeLabel">Move Type</label>
       <select name="tradeDirection">
         <option value="" data-i18n="selectType">Select type</option>
@@ -349,13 +401,78 @@ Payment received"
       </select>
 
       <label data-i18n="modeLabel">Mode</label>
-      <div class="mode-group">
-        <label><input type="checkbox" name="mode" value="Sea"> <span data-i18n="modeSea">Sea</span></label>
-        <label><input type="checkbox" name="mode" value="Air"> <span data-i18n="modeAir">Air</span></label>
-        <label><input type="checkbox" name="mode" value="Land"> <span data-i18n="modeLand">Land</span></label>
-      </div>
+<div class="mode-group">
+  <label><input type="checkbox" name="mode" value="Sea" id="jobModeSea"> <span data-i18n="modeSea">Sea</span></label>
+  <label><input type="checkbox" name="mode" value="Air" id="jobModeAir"> <span data-i18n="modeAir">Air</span></label>
+  <label><input type="checkbox" name="mode" value="Land" id="jobModeLand"> <span data-i18n="modeLand">Land</span></label>
+</div>
 
-      <p class="modal-hint" data-i18n="stepsHint">
+<!-- Shipment Contents -->
+<label style="margin-top: 12px;">Shipment Contents</label>
+<div class="mode-group">
+  <label><input type="checkbox" name="shipmentContents" value="HHE" id="jobContentsHHE" checked> Household Goods (HHE)</label>
+  <label><input type="checkbox" name="shipmentContents" value="Vehicle" id="jobContentsVehicle"> Vehicle / Auto</label>
+</div>
+
+<!-- Move Manager -->
+<label style="margin-top: 12px;">Move Manager</label>
+<input name="moveManager" type="text" placeholder="Person responsible for this move">
+
+<!-- SEA MODE FIELDS -->
+<div id="jobSeaFields" class="job-mode-fields hidden">
+  <h4 class="job-mode-fields-title job-mode-fields-title-sea">Sea Freight Details</h4>
+  <label>Container Details</label>
+  <input name="jobContainerDetails" type="text" placeholder="e.g. 1x20ft FCL, 1x40ft HQ">
+  <label>Sea Cargo Volume (cbm)</label>
+  <input name="jobSeaVolume" type="number" step="0.01" placeholder="e.g. 14.5">
+</div>
+
+<!-- AIR MODE FIELDS -->
+<div id="jobAirFields" class="job-mode-fields hidden">
+  <h4 class="job-mode-fields-title job-mode-fields-title-air">Air Freight Details</h4>
+  <label>Air Cargo Volume (cbm)</label>
+  <input name="jobAirVolume" type="number" step="0.01" placeholder="e.g. 5.0">
+  <label>Air Cargo Weight (kg)</label>
+  <input name="jobAirCargoWeight" type="number" step="0.1" placeholder="e.g. 500">
+  <label>Chargeable Weight / ACW (kg)</label>
+  <input name="jobAirACW" type="number" step="0.1" placeholder="e.g. 835">
+</div>
+
+<!-- LAND MODE FIELDS -->
+<div id="jobLandFields" class="job-mode-fields hidden">
+  <h4 class="job-mode-fields-title job-mode-fields-title-land">Land Freight Details</h4>
+  <label>Land Cargo Volume (cbm)</label>
+  <input name="jobLandVolume" type="number" step="0.01" placeholder="e.g. 14.5">
+</div>
+
+<!-- VEHICLE FIELDS -->
+<div id="jobVehicleFields" class="job-mode-fields hidden">
+  <h4 class="job-mode-fields-title job-mode-fields-title-vehicle">Vehicle Details</h4>
+  <label>Vehicle Type</label>
+  <select name="jobVehicleType">
+    <option value="">Select type</option>
+    <option value="Car">Car</option>
+    <option value="Motorcycle">Motorcycle</option>
+    <option value="Truck">Truck</option>
+    <option value="Boat">Boat</option>
+    <option value="Other">Other</option>
+  </select>
+  <label>Vehicle Make</label>
+  <input name="jobVehicleMake" type="text" placeholder="e.g. Toyota">
+  <label>Vehicle Model</label>
+  <input name="jobVehicleModel" type="text" placeholder="e.g. Camry">
+  <label>Vehicle Year</label>
+  <input name="jobVehicleYear" type="number" placeholder="e.g. 2022" min="1900" max="2099">
+  <label>VIN Number (optional)</label>
+  <input name="jobVehicleVIN" type="text" placeholder="Vehicle Identification Number">
+  <label>Condition</label>
+  <div class="mode-group">
+    <label><input type="radio" name="jobVehicleCondition" value="Running" checked> Running</label>
+    <label><input type="radio" name="jobVehicleCondition" value="Non-Running"> Non-Running</label>
+  </div>
+</div>
+
+<p class="modal-hint" data-i18n="stepsHint">
         Steps (Survey, Packing, Container, Air Cargo, Delivery, etc.) will be created automatically
         based on Move Type and Mode. You can edit them in Move Details and in the Schedule.
       </p>
@@ -396,6 +513,272 @@ Payment received"
   </div>
 </div>
 
+<!-- CREATE / EDIT QUOTE MODAL -->
+<div id="createQuoteModal" class="modal hidden">
+  <div class="modal-card quote-modal-card" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+    <div class="modal-header">
+      <h2 id="quoteModalTitle">Create New Quote</h2>
+      <button type="button" class="close-button" id="closeQuoteModalBtn">x</button>
+    </div>
+
+    <form id="quoteForm">
+
+      <!-- Basic Information -->
+      <h3 class="form-section-title">Basic Information</h3>
+
+      <label>Client Name</label>
+      <input name="clientName" type="text" required>
+
+      <label>Client Organization (optional)</label>
+      <input name="clientOrganization" type="text">
+
+      <label>Origin</label>
+      <input name="origin" type="text" required placeholder="Istanbul, Turkey">
+
+      <label>Destination</label>
+      <input name="destination" type="text" required placeholder="Dubai, UAE">
+
+      <label>Type</label>
+      <select name="quoteType" required>
+        <option value="">Select type</option>
+        <option value="Export">Export</option>
+        <option value="Import">Import</option>
+        <option value="Local">Local</option>
+      </select>
+
+      <label>Mode(s)</label>
+<div class="mode-group">
+  <label><input type="checkbox" id="quoteModeSea" name="quoteMode" value="Sea"> Sea</label>
+  <label><input type="checkbox" id="quoteModeAir" name="quoteMode" value="Air"> Air</label>
+  <label><input type="checkbox" id="quoteModeLand" name="quoteMode" value="Land"> Land</label>
+</div>
+
+<!-- Shipment Contents -->
+<label style="margin-top: 12px;">Shipment Contents</label>
+<div class="mode-group">
+  <label><input type="checkbox" id="quoteContentsHHE" name="quoteContents" value="HHE" checked> Household Goods (HHE)</label>
+  <label><input type="checkbox" id="quoteContentsVehicle" name="quoteContents" value="Vehicle"> Vehicle / Auto</label>
+</div>
+
+<!-- VEHICLE FIELDS FOR QUOTE -->
+<div id="quoteVehicleFields" class="job-mode-fields hidden">
+  <h4 class="job-mode-fields-title job-mode-fields-title-vehicle">Vehicle Details</h4>
+  <label>Vehicle Type</label>
+  <select name="quoteVehicleType" id="quoteVehicleType">
+    <option value="">Select type</option>
+    <option value="Car">Car</option>
+    <option value="Motorcycle">Motorcycle</option>
+    <option value="Truck">Truck</option>
+    <option value="Boat">Boat</option>
+    <option value="Other">Other</option>
+  </select>
+  <label>Vehicle Make</label>
+  <input name="quoteVehicleMake" id="quoteVehicleMake" type="text" placeholder="e.g. Toyota">
+  <label>Vehicle Model</label>
+  <input name="quoteVehicleModel" id="quoteVehicleModel" type="text" placeholder="e.g. Camry">
+  <label>Vehicle Year</label>
+  <input name="quoteVehicleYear" id="quoteVehicleYear" type="number" placeholder="e.g. 2022" min="1900" max="2099">
+  <label>VIN Number (optional)</label>
+  <input name="quoteVehicleVIN" id="quoteVehicleVIN" type="text" placeholder="Vehicle Identification Number">
+  <label>Condition</label>
+  <div class="mode-group">
+    <label><input type="radio" name="quoteVehicleCondition" value="Running" checked> Running</label>
+    <label><input type="radio" name="quoteVehicleCondition" value="Non-Running"> Non-Running</label>
+  </div>
+</div>
+
+<!-- Quote Currency -->
+<label style="margin-top: 16px;">Quote Currency</label>
+<select name="quoteCurrency" id="quoteCurrency">
+  <option value="USD">USD - US Dollar</option>
+  <option value="EUR">EUR - Euro</option>
+  <option value="TRY">TRY - Turkish Lira</option>
+  <option value="GBP">GBP - British Pound</option>
+</select>
+<p style="font-size: 11px; color: #6b7280; margin-top: 4px;">This currency will be used for all charges in this quote</p>
+      
+      <!-- No mode selected message -->
+      <div id="noModeSelectedMsg" style="padding: 12px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; margin: 12px 0; font-size: 13px; color: #92400e;">
+        Please select at least one mode (Sea, Air, or Land) to see mode-specific fields and charges.
+      </div>
+
+      <!-- SEA FIELDS SECTION -->
+      <div id="seaFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #0369a1;">Sea Freight Details</h4>
+        
+        <label>Departure Port</label>
+        <input name="departurePort" type="text" placeholder="e.g. Istanbul">
+        
+        <label>Port of Entry (POE)</label>
+        <input name="poe" type="text" placeholder="e.g. Dubai">
+        
+        <label>Container Details</label>
+        <input name="containerDetails" type="text" placeholder="e.g. 1x20ft FCL">
+        
+        <label>Sea Cargo Volume (cbm)</label>
+        <input name="seaVolume" type="number" step="0.01" placeholder="e.g. 14.5">
+        
+        <label>Estimated Transit Time (days)</label>
+        <input name="seaTransitTime" type="number" placeholder="e.g. 15">
+      </div>
+
+ <!-- AIR FIELDS SECTION -->
+<div id="airFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px;">
+  <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #7c3aed;">Air Freight Details</h4>
+  
+  <label>Departure Airport Name</label>
+  <input name="departureAirportName" type="text" placeholder="e.g. Istanbul Ataturk">
+  
+  <label>Departure Airport IATA Code</label>
+  <input name="departureAirportIATA" type="text" placeholder="e.g. IST" maxlength="3" style="text-transform: uppercase;">
+  
+  <label>Arrival Airport Name</label>
+  <input name="arrivalAirportName" type="text" placeholder="e.g. Dubai International">
+  
+  <label>Arrival Airport IATA Code</label>
+  <input name="arrivalAirportIATA" type="text" placeholder="e.g. DXB" maxlength="3" style="text-transform: uppercase;">
+  
+  <label>Airline</label>
+  <input name="airlineName" type="text" placeholder="e.g. Turkish Airlines">
+  
+  <label>Actual Cargo Weight (kg)</label>
+  <input name="airCargoWeight" type="number" step="0.1" placeholder="e.g. 500">
+  
+  <label>Air Cargo Volume (cbm)</label>
+  <input name="airVolume" type="number" step="0.01" placeholder="e.g. 5.0">
+  
+  <label>Chargeable Weight / ACW (kg)</label>
+  <input name="airACW" type="number" step="0.1" placeholder="e.g. 835">
+  <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">Enter the chargeable weight (ACW) manually</p>
+  
+  <label>Estimated Transit Time (days)</label>
+  <input name="airTransitTime" type="number" placeholder="e.g. 3">
+  
+  <!-- Air Quote Type (Client vs Agent) -->
+  <div style="margin-top: 12px; padding: 10px; background: #ede9fe; border: 1px solid #c4b5fd; border-radius: 6px;">
+    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Quote Format:</label>
+    <div class="mode-group">
+      <label>
+        <input type="radio" name="airQuoteType" value="client" checked>
+        Client (show actual amounts + total)
+      </label>
+      <label>
+        <input type="radio" name="airQuoteType" value="agent">
+        Agent (show per ACW rates, no total)
+      </label>
+    </div>
+  </div>
+</div>
+
+      <!-- LAND FIELDS SECTION -->
+      <div id="landFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #059669;">Land Freight Details</h4>
+        
+        <label>Truck Type</label>
+        <div class="mode-group">
+          <label><input type="radio" name="truckType" value="Dedicated" checked> Dedicated</label>
+          <label><input type="radio" name="truckType" value="Consolidated"> Consolidated</label>
+        </div>
+        
+        <label>Land Cargo Volume (cbm)</label>
+        <input name="landVolume" type="number" step="0.01" placeholder="e.g. 14.5">
+        
+        <label>Estimated Transit Time (days)</label>
+        <input name="landTransitTime" type="number" placeholder="e.g. 7">
+      </div>
+
+          <!-- Insurance Section -->
+<h3 class="form-section-title" style="margin-top: 24px;">Insurance</h3>
+
+<label>Insurance Required?</label>
+<div class="mode-group">
+  <label><input type="radio" name="insurance" value="no" checked> No</label>
+  <label><input type="radio" name="insurance" value="yes"> Yes</label>
+</div>
+
+<div id="insuranceFields" class="hidden" style="margin-top: 12px; padding: 12px; background: #fefce8; border: 1px solid #fde047; border-radius: 6px;">
+  <label>HHG Value (Household Goods)</label>
+  <input name="hhgValue" type="number" step="0.01" placeholder="e.g. 50000">
+  
+  <label>Coverage Percentage (%)</label>
+  <input name="insurancePercentage" type="number" step="0.1" value="1.5" min="0" max="100" placeholder="e.g. 1.5">
+  <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">Default is 1.5%. Adjust as needed.</p>
+</div>
+
+      <!-- SEA CHARGES SECTION -->
+      <div id="seaChargesSection" class="mode-charges-section hidden" style="margin-top: 24px; padding: 16px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #0369a1;">Sea Freight Charges</h4>
+        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on mode and type. You can edit or add more.</p>
+        <div id="seaChargesList" style="margin-bottom: 12px;"></div>
+        <button type="button" id="addSeaChargeBtn" style="padding: 8px 16px; font-size: 13px;">+ Add Sea Charge</button>
+      </div>
+
+      <!-- AIR CHARGES SECTION -->
+      <div id="airChargesSection" class="mode-charges-section hidden" style="margin-top: 16px; padding: 16px; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #7c3aed;">Air Freight Charges</h4>
+        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on mode and type. You can edit or add more.</p>
+        <div id="airChargesList" style="margin-bottom: 12px;"></div>
+        <button type="button" id="addAirChargeBtn" style="padding: 8px 16px; font-size: 13px;">+ Add Air Charge</button>
+      </div>
+
+      <!-- LAND CHARGES SECTION -->
+      <div id="landChargesSection" class="mode-charges-section hidden" style="margin-top: 16px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #059669;">Land Freight Charges</h4>
+        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on mode and type. You can edit or add more.</p>
+        <div id="landChargesList" style="margin-bottom: 12px;"></div>
+        <button type="button" id="addLandChargeBtn" style="padding: 8px 16px; font-size: 13px;">+ Add Land Charge</button>
+      </div>
+
+      <!-- OUR QUOTATION INCLUDES - CHECKLIST -->
+      <h4 style="margin: 24px 0 12px 0; font-size: 14px; font-weight: bold;">Our Quotation Includes</h4>
+      <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">Select items to include in the quote (items auto-populate based on mode and type):</p>
+      <div id="quotationIncludesChecklist" style="max-height: 250px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 12px; border-radius: 4px; background: #f9fafb; margin-bottom: 8px;">
+        <p style="color: #9ca3af; font-size: 13px; font-style: italic;">Select mode and type to see available items</p>
+      </div>
+
+      <!-- Add custom included item -->
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <input type="text" id="customIncludedInput" placeholder="Add custom item to includes" style="flex: 1;">
+        <button type="button" id="addCustomIncludedBtn" style="padding: 8px 16px; white-space: nowrap;">Add</button>
+      </div>
+
+      <!-- Custom included items list -->
+      <ul id="customIncludedItems" style="margin-top: 8px; padding-left: 20px; list-style: none;"></ul>
+
+      <!-- ADDITIONAL CHARGES MAY APPLY - CHECKLIST -->
+      <h4 style="margin: 24px 0 12px 0; font-size: 14px; font-weight: bold;">Additional Charges May Apply</h4>
+      <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">Select items to include in "Additional Charges May Apply" section:</p>
+      <div id="additionalChargesChecklist" style="max-height: 250px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 12px; border-radius: 4px; background: #f9fafb; margin-bottom: 8px;">
+        <p style="color: #9ca3af; font-size: 13px; font-style: italic;">Select type to see available items</p>
+      </div>
+
+      <!-- Add custom additional charge -->
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <input type="text" id="additionalChargeInput" placeholder="Add custom additional charge" style="flex: 1;">
+        <button type="button" id="addAdditionalChargeBtn" style="padding: 8px 16px; white-space: nowrap;">Add</button>
+      </div>
+
+      <!-- Custom additional charges list -->
+      <ul id="additionalChargesList" style="margin-top: 8px; padding-left: 20px; list-style: none;"></ul>
+
+      <!-- TERMS & CONDITIONS -->
+      <h4 style="margin: 24px 0 12px 0; font-size: 14px; font-weight: bold;">Terms & Conditions</h4>
+      <textarea name="termsAndConditions" rows="4" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 13px;">Our quotation is based on stated weights and normal access conditions. It is subject to change if actual volume/weight differs or if there are unforeseen difficulties (e.g. inspections, force majeure delays, etc.)</textarea>
+
+      <!-- VALID UNTIL -->
+      <label style="margin-top: 16px;">Valid Until</label>
+      <input name="validUntil" type="date" required>
+
+      <!-- FORM ACTIONS -->
+      <div class="modal-actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+        <button type="button" id="cancelQuoteBtn">Cancel</button>
+        <button type="submit">Save Quote</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
 <!-- Developer / Admin Data Tools -->
 <section class="admin-tools">
   <h3 data-i18n="dataToolsTitle">Data Tools (Developer Only)</h3>
@@ -419,8 +802,3 @@ Payment received"
 <footer>
   <p data-i18n="footerCopyright">© 2025 Istanbul Ekspres</p>
 </footer>
-    <script  src="./script.js"></script>
-
-  </body>
-  
-</html>

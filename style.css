@@ -1291,3 +1291,869 @@ footer {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Resource Library Styles (OPTIONAL) */
+.documents-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.documents-tab-btn {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.documents-tab-btn:hover {
+  color: #3b82f6;
+}
+
+.documents-tab-btn.active {
+  border-bottom-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.resource-category {
+  margin-bottom: 12px;
+}
+
+.resource-category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.resource-category-header:hover {
+  background: #e5e7eb;
+}
+
+.resource-items {
+  padding-left: 32px;
+}
+
+.resource-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  background: white;
+  transition: box-shadow 0.2s;
+}
+
+.resource-item:hover {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.category-arrow {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+
+/* Quote Cards (in list) */
+.quote-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quote-card:hover {
+  background: #eef2ff;
+  border-color: #2d6cdf;
+  box-shadow: 0 2px 4px rgba(45, 108, 223, 0.1);
+}
+
+.quote-card h3 {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.quote-card p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+/* Status Labels for Quotes */
+.status-label.status-draft {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.status-label.status-sent {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-label.status-accepted {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-label.status-converted {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-label.status-expired {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Quote Modal - Larger width */
+.quote-modal-card {
+  max-width: 700px;
+}
+
+/* Form Section Titles */
+.form-section-title {
+  margin: 20px 0 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.form-section-title:first-of-type {
+  margin-top: 0;
+}
+
+/* Charges List */
+.charges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.charge-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 100px 40px;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .charge-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.charge-row input,
+.charge-row select {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #ffffff;
+}
+
+.charge-row button {
+  padding: 6px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.charge-row button:hover {
+  background: #fecaca;
+}
+
+/* Add Charge Button */
+.add-charge-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  color: #374151;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+
+.add-charge-btn:hover {
+  background: #e5e7eb;
+}
+
+/* ============================================================
+   QUOTE CHECKLIST IMPROVEMENTS
+   ============================================================ */
+
+/* Checklist containers */
+#quotationIncludesChecklist,
+#additionalChargesChecklist {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+/* Each checklist item */
+#quotationIncludesChecklist label,
+#additionalChargesChecklist label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 400;
+  cursor: pointer;
+  font-size: 13px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  transition: all 0.2s;
+  line-height: 1.4;
+}
+
+#quotationIncludesChecklist label:hover,
+#additionalChargesChecklist label:hover {
+  background: #f0f9ff;
+  border-color: #3b82f6;
+}
+
+#quotationIncludesChecklist label:last-child,
+#additionalChargesChecklist label:last-child {
+  margin-bottom: 0;
+}
+
+/* Checkbox itself */
+#quotationIncludesChecklist input[type="checkbox"],
+#additionalChargesChecklist input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+/* Section headers within checklist */
+#quotationIncludesChecklist > div,
+#additionalChargesChecklist > div {
+  font-weight: 600;
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 16px 0 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #d1d5db;
+}
+
+#quotationIncludesChecklist > div:first-child,
+#additionalChargesChecklist > div:first-child {
+  margin-top: 0;
+}
+
+/* Hint text within checklist */
+#quotationIncludesChecklist > p,
+#additionalChargesChecklist > p {
+  color: #9ca3af;
+  font-size: 13px;
+  font-style: italic;
+  margin: 0;
+  padding: 8px;
+}
+
+/* Conditional hint text (smaller text in parentheses) */
+#quotationIncludesChecklist label span,
+#additionalChargesChecklist label span {
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+/* Custom items section */
+#customIncludedItems,
+#additionalChargesList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px 0;
+}
+
+#customIncludedItems li,
+#additionalChargesList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  font-size: 13px;
+  border: 1px solid transparent;
+}
+
+#customIncludedItems li {
+  background: #f0f9ff;
+  border-color: #bfdbfe;
+}
+
+#additionalChargesList li {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+#customIncludedItems li:last-child,
+#additionalChargesList li:last-child {
+  margin-bottom: 0;
+}
+
+/* Add custom input row */
+.add-custom-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.add-custom-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.add-custom-row input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.add-custom-row button {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid #3b82f6;
+  background: #3b82f6;
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.add-custom-row button:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+/* Section titles above checklists */
+.checklist-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+/* Scrollbar for checklists */
+#quotationIncludesChecklist::-webkit-scrollbar,
+#additionalChargesChecklist::-webkit-scrollbar {
+  width: 6px;
+}
+
+#quotationIncludesChecklist::-webkit-scrollbar-track,
+#additionalChargesChecklist::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 3px;
+}
+
+#quotationIncludesChecklist::-webkit-scrollbar-thumb,
+#additionalChargesChecklist::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 3px;
+}
+
+#quotationIncludesChecklist::-webkit-scrollbar-thumb:hover,
+#additionalChargesChecklist::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Quote Details - use existing detail-card styles but add these specifics */
+#quoteDetails .details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+  margin-top: 12px;
+  margin-bottom: 20px;
+}
+
+#quoteDetails table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+#quoteDetails table td {
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+#quoteDetails table tr:last-child td {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+#quoteDetails h4 {
+  margin: 20px 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+#quoteDetails ul {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+#quoteDetails li {
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Quote actions */
+.quote-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.quote-actions button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.quote-actions button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .quote-modal-card {
+    max-width: 95%;
+  }
+  
+  .charge-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .add-custom-row {
+    flex-direction: column;
+  }
+  
+  .add-custom-row input {
+    width: 100%;
+  }
+}
+
+/* ============================================================
+   MODE-SPECIFIC JOB FIELDS
+   ============================================================ */
+
+.job-mode-fields {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.job-mode-fields-title {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Sea fields */
+#jobSeaFields,
+#quoteSeaFields {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+}
+
+.job-mode-fields-title-sea {
+  color: #0369a1;
+}
+
+/* Air fields */
+#jobAirFields,
+#quoteAirFields {
+  background: #f5f3ff;
+  border: 1px solid #c4b5fd;
+}
+
+.job-mode-fields-title-air {
+  color: #7c3aed;
+}
+
+/* Land fields */
+#jobLandFields,
+#quoteLandFields {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.job-mode-fields-title-land {
+  color: #059669;
+}
+
+/* Vehicle fields */
+#jobVehicleFields,
+#quoteVehicleFields {
+  background: #fefce8;
+  border: 1px solid #fde047;
+}
+
+.job-mode-fields-title-vehicle {
+  color: #a16207;
+}
+
+/* ============================================================
+   COLLAPSIBLE STEP CARDS
+   ============================================================ */
+
+.step-card-collapsible {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.step-card-collapse-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: #f9fafb;
+  border-bottom: 1px solid transparent;
+  transition: background 0.2s;
+  gap: 12px;
+}
+
+.step-card-collapse-header:hover {
+  background: #f3f4f6;
+}
+
+.step-card-collapse-header.expanded {
+  border-bottom-color: #e5e7eb;
+}
+
+.step-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.step-card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Progress/Status Indicator */
+.step-status-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.step-status-indicator.pending {
+  background: #f3f4f6;
+  border: 2px solid #d1d5db;
+  color: #9ca3af;
+}
+
+.step-status-indicator.scheduled {
+  background: #dbeafe;
+  border: 2px solid #3b82f6;
+  color: #1d4ed8;
+}
+
+.step-status-indicator.completed {
+  background: #d1fae5;
+  border: 2px solid #10b981;
+  color: #059669;
+}
+
+/* Step Title and Info */
+.step-card-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.step-card-subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.step-card-subtitle span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Expand/Collapse Arrow */
+.step-card-arrow {
+  font-size: 12px;
+  color: #9ca3af;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.step-card-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+/* Collapsible Body */
+.step-card-collapse-body {
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.step-card-collapse-body.hidden {
+  display: none;
+}
+
+/* Time Dropdown Selectors */
+.time-select-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-select-group select {
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #ffffff;
+  min-width: 60px;
+}
+
+.time-select-group span {
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Visual Separator for Schedule */
+.schedule-job-separator {
+  height: 2px;
+  background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+  margin: 20px 0;
+}
+
+/* Job Group Header in Schedule */
+.schedule-job-group {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.schedule-job-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.schedule-job-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.schedule-job-header-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #111827;
+}
+
+.schedule-job-header-meta {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Extra Job Cards - Consistent Styling */
+.extra-job-card-collapsible {
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background: #fffbeb;
+  overflow: hidden;
+}
+
+.extra-job-card-collapsible .step-card-collapse-header {
+  background: #fefce8;
+}
+
+.extra-job-card-collapsible .step-card-collapse-header:hover {
+  background: #fef3c7;
+}
+
+/* Progress Bar for Move Steps */
+.steps-progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.steps-progress-segment {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.steps-progress-segment.completed {
+  background: #10b981;
+}
+
+.steps-progress-segment.scheduled {
+  background: #3b82f6;
+}
+
+.steps-progress-text {
+  font-size: 12px;
+  color: #6b7280;
+  margin-left: 12px;
+  white-space: nowrap;
+}
+
+/* Move Details - Mode Specific Info Boxes */
+.mode-info-box {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.mode-info-box.sea {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+}
+
+.mode-info-box.air {
+  background: #f5f3ff;
+  border: 1px solid #c4b5fd;
+}
+
+.mode-info-box.land {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.mode-info-box.vehicle {
+  background: #fefce8;
+  border: 1px solid #fde047;
+}
+
+.mode-info-box h5 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mode-info-box.sea h5 { color: #0369a1; }
+.mode-info-box.air h5 { color: #7c3aed; }
+.mode-info-box.land h5 { color: #059669; }
+.mode-info-box.vehicle h5 { color: #a16207; }
+
+.mode-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.mode-info-row:last-child {
+  border-bottom: none;
+}
+
+.mode-info-label {
+  color: #6b7280;
+}
+
+.mode-info-value {
+  font-weight: 500;
+  color: #111827;
+}
+
+/* Time Badge for Schedule */
+.step-time-badge {
+  background: #e5e7eb;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: center;
+}

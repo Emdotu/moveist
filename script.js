@@ -1,5 +1,3 @@
-'use strict';
-
 // ============================================================
 // CONFIGURATION
 // ============================================================
@@ -10,9 +8,11 @@ const CONFIG = {
     AGENTS: 'istex_agents',
     SCHEDULE_NOTES: 'istex_schedule_notes',
     SCHEDULE_EXTRA_JOBS: 'istex_schedule_extra_jobs',
-    LANG: 'istex_lang'
+    LANG: 'istex_lang',
+    RESOURCE_LIBRARY: 'istex_resource_library',
+    QUOTES: 'istex_quotes'
   },
-
+  
   COUNTRIES: [
     "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia",
     "Australia","Austria","Azerbaijan","Bangladesh","Belgium","Bosnia and Herzegovina",
@@ -72,7 +72,7 @@ const CONFIG = {
     "Local|Air/Land/Sea": ["survey","packing","delivery_to_residence"]
   },
 
-  // CHANGE: include Custom so user can type a manual task name
+  // include Custom so user can type a manual task name
   EXTRA_JOB_TYPES: [
     "Custom",
     "Packing","Survey","Delivery to Residence","Container Delivery","Container Pickup","Container Unloading","Container Loading",
@@ -81,10 +81,10 @@ const CONFIG = {
     "Vehicle Delivery","Vehicle Pickup"
   ],
 
-  // CHANGE: Offices list for filtering/exporting/assignment
+  // Offices list for filtering/exporting/assignment
   OFFICES: ["Istanbul", "Ankara", "Adana", "Izmir"],
 
-  // CHANGE: very simple address keyword rules (you can expand later)
+  // very simple address keyword rules (you can expand later)
   OFFICE_RULES: {
     Istanbul: ["istanbul", "gebze", "kocaeli"],
     Ankara: ["ankara"],
@@ -93,6 +93,485 @@ const CONFIG = {
   }
 };
 
+const DEFAULT_RESOURCE_LIBRARY = {
+  categories: [
+    {
+      id: 'quotes',
+      name: 'Quote Templates',
+      nametr: 'Teklif Şablonları',
+      items: []
+    },
+    {
+      id: 'forms',
+      name: 'Forms',
+      nametr: 'Formlar',
+      items: []
+    },
+    {
+      id: 'checklists',
+      name: 'Checklists & Inventory',
+      nametr: 'Kontrol Listeleri ve Envanter',
+      items: []
+    },
+    {
+      id: 'shipping',
+      name: 'Shipping Documents',
+      nametr: 'Taşıma Belgeleri',
+      items: []
+    },
+    {
+      id: 'required',
+      name: 'Required Documents',
+      nametr: 'Gerekli Belgeler',
+      items: []
+    }
+  ]
+};
+
+//==============================================// QUOTE TEMPLATES // =========================
+
+const QUOTE_TEMPLATES = {
+  'Sea|Export': {
+    chargeCategories: [
+      'Origin Services',
+      'Local Container Drayage',
+      'Export Customs Clearance',
+      'Sea Freight from [DEPARTURE_PORT] to [POE]'
+    ],
+    additionalChargeCategories: [
+      'Destination Terminal Handling Cost and Port Fees',
+      'Destination Services'
+    ],
+    includes: [
+      'Full export packing and wrapping at origin residence',
+      'Preparation of detailed inventory lists for each separate shipment',
+      'Inland haulage from residence to departure port',
+      'Origin terminal handling',
+      'Export customs clearance formalities and terminal fees',
+      'Ocean freight to [POE] port in a [CONTAINER_DETAILS]'
+    ],
+    conditionalIncludes: {
+      'Destination Terminal Handling': ['Destination terminal handling and terminal fees'],
+      'Destination Services': [
+        'Delivery to address in [DESTINATION]',
+        'Full unpacking of boxes to table top, unwrapping of furniture and re-assembly of basic furniture',
+        'Removal of debris upon completion'
+      ]
+    }
+  },
+
+  'Air|Export': {
+    chargeCategories: [
+      'Origin Services',
+      'Air Freight',
+      'Airwaybill Charge',
+      'Export Customs Clearance',
+      '[DEPARTURE_AIRPORT] Terminal Handling Cost'
+    ],
+    additionalChargeCategories: [
+      'Destination Services',
+      'Destination Terminal Handling Cost'
+    ],
+    includes: [
+      'Full export packing and wrapping at origin residence for air freight',
+      'Preparation of detailed inventory lists for each separate shipment',
+      'Delivery from residence to airline cargo terminal',
+      'Origin terminal handling',
+      'Export customs clearance formalities and terminal fees',
+      'Air freight to [ARRIVAL_AIRPORT]'
+    ],
+    conditionalIncludes: {
+      'Destination Terminal Handling': ['Destination terminal handling and terminal fees'],
+      'Destination Services': [
+        'Delivery to address in [DESTINATION]',
+        'Full unpacking of boxes to table top, unwrapping of furniture and re-assembly of basic furniture',
+        'Removal of debris upon completion'
+      ]
+    }
+  },
+
+  'Land|Export': {
+    chargeCategories: [
+      'Origin Services',
+      'Turkish Export Clearance',
+      'Road Transportation from [ORIGIN] to [DESTINATION]'
+    ],
+    additionalChargeCategories: [
+      'Destination Services'
+    ],
+    includes: [
+      'Full export packing and wrapping at origin residence',
+      'Preparation of detailed inventory lists for each separate shipment',
+      'Loading of items to a [TRUCK_TYPE_LOWER] truck',
+      'Export customs clearance formalities',
+      'Delivery from [ORIGIN] to address/warehouse at [DESTINATION]'
+    ],
+    conditionalIncludes: {
+      'Destination Services': [
+        'Full unpacking of boxes to table top, unwrapping of furniture and re-assembly of basic furniture',
+        'Removal of debris upon completion'
+      ]
+    }
+  },
+
+  'Sea|Import': {
+    chargeCategories: [
+      'Sea Freight from [DEPARTURE_PORT] to [POE]',
+      'Import Clearance',
+      'Destination Services',
+      'SS Line Port Agent "Delivery Order" charge',
+      '[POE] Port "Terminal Handling & Bonded Storage" charges'
+    ],
+    additionalChargeCategories: [
+      'Origin Services'
+    ],
+    includes: [
+      'Import clearance in arrival port',
+      'Delivery up to and including 1st floor residence with normal access within [DESTINATION] city limits',
+      'Full unpacking of boxes onto flat surfaces, re-assembly of basic furniture, removal of the debris, and return of empty container to port'
+    ],
+    conditionalIncludes: {
+      'Origin Services': [
+        'Professional packing of personal and household goods',
+        'Preparation of detailed inventory list',
+        'Inland haulage from storage or address to [ORIGIN] port',
+        'Origin terminal handling in departure port',
+        'Local charges at departure port for customs documentation and Bill of Lading',
+        'Ocean freight from [ORIGIN] port to [POE] port in a [CONTAINER_DETAILS]'
+      ]
+    }
+  },
+
+  'Air|Import': {
+    chargeCategories: [
+      'Destination Services',
+      'Delivery Order',
+      'Terminal Handling Charges at [ARRIVAL_AIRPORT]'
+    ],
+    additionalChargeCategories: [
+      'Origin Services'
+    ],
+    includes: [
+      'Payment of mandatory airline delivery order and [ARRIVAL_AIRPORT] terminal fees',
+      'Turkish import formalities',
+      'Inland haulage from airport to a residence in [DESTINATION]',
+      'Delivery, unpacking, and removal of the debris upon completion of delivery services'
+    ],
+    conditionalIncludes: {
+      'Origin Services': [
+        'Professional export packing and wrapping (for air transport) in [ORIGIN] residence, issue of detailed inventory list',
+        'Inland haulage from residence to [DEPARTURE_AIRPORT]',
+        'Payment of departure airport terminal handling fees',
+        '[DEPARTURE_AIRPORT] export formalities',
+        'Air freight from [DEPARTURE_AIRPORT] to [ARRIVAL_AIRPORT]'
+      ]
+    }
+  },
+
+  'Land|Import': {
+    chargeCategories: [
+      'Road Transport from [ORIGIN] to [DESTINATION]',
+      'Import Customs Clearance',
+      'Destination Services'
+    ],
+    additionalChargeCategories: [
+      'Origin Services',
+      'Shuttle Service'
+    ],
+    includes: [
+      'Transport from [ORIGIN] to [DESTINATION]',
+      'Receipt of trucks at arrival in land customs in Turkiye',
+      'Normal import clearance',
+      'Delivery up to and including 2nd floor residence with normal access within [DESTINATION] city limits',
+      'Full unpacking, re-assembly of furniture, and removal of the debris'
+    ],
+    conditionalIncludes: {
+      'Origin Services': [
+        'Full export packing and wrapping at origin residence',
+        'Preparation of detailed inventory lists'
+      ],
+      'Shuttle Service': ['Shuttle service']
+    }
+  },
+
+  'Land|Local': {
+    chargeCategories: [
+      'Local Moving Charge'
+    ],
+    additionalChargeCategories: [
+      'Storage Charge'
+    ],
+    includes: [
+      'Packing and wrapping at origin',
+      'Local door-to-door transport from address at [ORIGIN] to address at [DESTINATION]',
+      'Unpacking and unwrapping at destination',
+      'Removal of debris'
+    ],
+    conditionalIncludes: {}
+  }
+};
+
+const ADDITIONAL_CHARGES_CONFIG = {
+  Export: [
+    'Special crating for high value/extra fragile items',
+    'Shuttle service',
+    'Long/Stair carry (if pick-up from above 2nd floor and/or if 20-meter carry)',
+    'Supply of external lift',
+    'Handling of extra heavy appliance/furniture (such as Large freezers, Piano, Safe, Marble)',
+    'Additional charges if very narrow stair carry',
+    'Moving/Transit Insurance coverage (available upon request)',
+    'Turkish customs export extensive inspection order and related handling costs',
+    'Electrician, Handyman service or any other 3rd party service',
+    'Multiple address pick-up at origin',
+    'Storage and warehouse handling charges in our nearest warehouse (if more than 7-day free time offer)',
+    'Destination duties, taxes, customs terminal charges, import clearance formalities',
+    'Destination port/airport terminal handling and NVOCC fees (if / when applicable)'
+  ],
+  Export_Sea: [
+    'Any changes in sea freight, equipment availability at time of actual booking'
+  ],
+  Export_Vehicle: [
+    'Receipt of AUTO inside warehouse, container loading & lashing',
+    'Turkish traffic de-registration (per vehicle)'
+  ],
+  Import: [
+    'Shuttle service during delivery',
+    'Parking permit during delivery',
+    'Long/Stair carry',
+    'Turkish Bandrol tax (for each used imported TV)',
+    'Intensive customs inspection and handling fee if ordered by Turkish customs department',
+    'Door to door moving insurance coverage (Insurance policy premium charge is 2.2% of total declared value of the effects)'
+  ],
+  Import_Sea: [
+    'Container demurrage charges (due to customs inspection or port congestion)'
+  ],
+  Import_Vehicle: [
+    'Turkish traffic registration (per vehicle)',
+    'Car Carrier / Towtruck delivery (per vehicle, per trip)'
+  ],
+  Local: [
+    'Special crating for high value/extra fragile items',
+    'Shuttle service',
+    'Long/Stair carry (if pick-up from above 2nd floor and/or if 20-meter carry)',
+    'Supply of external lift',
+    'Handling of extra heavy appliance/furniture (such as Large freezers, Piano, Safe, Marble)',
+    'Additional charges if very narrow stair carry',
+    'Moving/Transit Insurance coverage (available upon request)',
+    'Storage and warehouse handling charges in our nearest warehouse (if more than 7-day free time offer)'
+  ]
+};
+
+// ============================================================
+// TURKISH TRANSLATION SYSTEM
+// ============================================================
+
+const TR_SYSTEM = {
+  // ===============================
+  // MOVE TYPES (Trade Direction)
+  // ===============================
+  trade_Import: "İthalat",
+  trade_Export: "İhracat",
+  trade_Local: "Yurtiçi",
+
+  // ===============================
+  // TRANSPORT MODES
+  // ===============================
+  mode_Sea: "Denizyolu",
+  mode_Land: "Karayolu",
+  mode_Air: "Havayolu",
+
+  // ===============================
+  // MOVE STATUS
+  // ===============================
+  status_Planned: "Planlandı",
+  status_Ongoing: "Devam Ediyor",
+  status_Completed: "Tamamlandı",
+  status_Cancelled: "İptal Edildi",
+
+  // ===============================
+  // MOVE STEPS
+  // ===============================
+  step_packing: "Paketleme",
+  step_survey: "Ekspertiz",
+  step_delivery_to_residence: "Adrese Teslimat",
+  step_container_pickup: "Konteyner Alımı",
+  step_container_delivery: "Konteyner Teslimi",
+  step_container_loading: "Konteyner Yükleme",
+  step_container_unloading: "Konteyner Boşaltma",
+  step_air_cargo_packing: "Hava Kargo Paketleme",
+  step_air_cargo_delivery_to_address: "Hava Kargo Adrese Teslimat",
+  step_air_cargo_delivery_to_airport: "Hava Kargo Havalimanına Teslimat",
+
+  // ===============================
+  // EXTRA JOB TYPES
+  // ===============================
+  job_Custom: "Özel",
+  job_Packing: "Paketleme",
+  job_Survey: "Ekspertiz",
+  job_DeliveryToResidence: "Adrese Teslimat",
+  job_ContainerDelivery: "Konteyner Teslimi",
+  job_ContainerPickup: "Konteyner Alımı",
+  job_ContainerUnloading: "Konteyner Boşaltma",
+  job_ContainerLoading: "Konteyner Yükleme",
+  job_AirCargoPacking: "Hava Kargo Paketleme",
+  job_AirCargoDeliveryToAddress: "Hava Kargo Adrese Teslimat",
+  job_AirCargoDeliveryToAirport: "Hava Kargo Havalimanına Teslimat",
+  job_DeliveryToPort: "Limana Teslimat",
+  job_PickupFromPort: "Limandan Alım",
+  job_AirCargoPickup: "Hava Kargo Alımı",
+  job_AirCargoDelivery: "Hava Kargo Teslimat",
+  job_WarehouseCleaning: "Depo Temizliği",
+  job_TruckPreparation: "Tır Hazırlama",
+  job_VehicleDelivery: "Araç Teslimatı",
+  job_VehiclePickup: "Araç Alımı",
+
+  // ===============================
+  // CHECKLIST ITEMS
+  // ===============================
+  chk_QuoteSent: "Teklif gönderildi",
+  chk_MoveReserved: "Taşıma rezerve edildi",
+  chk_SurveyDone: "Ekspertiz tamamlandı",
+  chk_SurveyDoneNA: "Ekspertiz - Gerekli değil",
+  chk_DocumentsComplete: "Dokümanlar tamamlandı",
+  chk_PackingDone: "Paketleme tamamlandı",
+  chk_PackingDoneNA: "Paketleme - Gerekli değil",
+  chk_InStorage: "Depoda",
+  chk_InStorageNA: "Depoda - Gerekli değil",
+  chk_EnRoute: "Yolda",
+  chk_PaymentReceived: "Ödeme alındı",
+  chk_Delivered: "Teslim edildi",
+  
+  // Import checklist
+  chk_PassportCopyWithEntryStamp: "Giriş damgalı pasaport kopyası",
+  chk_CopyOfResidentPermit: "Oturma izni kopyası",
+  chk_SignedPersonalApplication: "İmzalı kişisel dilekçe",
+  chk_PowerOfAttorney: "Vekaletname",
+  chk_CompanyApplication: "Şirket başvuru yazısı",
+  chk_SignedPackingList: "İmzalı envanter listesi",
+  chk_TurkishTaxID: "Türk vergi numarası veya yabancı kimlik numarası",
+  chk_LeaseContract: "Kira sözleşmesi",
+  chk_EntryExitList: "Son 2 yıl giriş/çıkış listesi",
+  chk_InTransitToTurkey: "Türkiye'ye yolda",
+  chk_ArrivedAtPort: "Liman/terminale vardı",
+  chk_DeliveredToWarehouse: "Depoya teslim edildi",
+  chk_DeliveredToResidence: "İkametgaha teslim edildi",
+  
+  // Export checklist
+  chk_PackingComplete: "Paketleme tamamlandı",
+  chk_CopyOfPassport: "Pasaport kopyası",
+  chk_FlightTicket: "Uçak bileti",
+  chk_CopyOfWorkResidencePermit: "Çalışma/oturma izni kopyası",
+  chk_InTransitToDestination: "Hedefe yolda",
+  chk_InTransitToDestinationAddress: "Hedef adrese yolda",
+
+  // Helper function
+  get(key, fallback = '') {
+    const value = this[key];
+    return (typeof value === 'string' && value.trim()) ? value : (fallback || key);
+  }
+};
+
+// ============================================================
+// TRANSLATION HELPER
+// ============================================================
+
+const TR = {
+  get(key, fallback = '') {
+    return TR_SYSTEM.get(key, fallback);
+  },
+
+  trade(type) {
+    const map = { Import: 'trade_Import', Export: 'trade_Export', Local: 'trade_Local' };
+    const key = map[String(type || '')];
+    return key ? this.get(key, type || '-') : (type || '-');
+  },
+
+  mode(mode) {
+    const map = { Sea: 'mode_Sea', Land: 'mode_Land', Air: 'mode_Air' };
+    const key = map[String(mode || '')];
+    return key ? this.get(key, mode || '-') : (mode || '-');
+  },
+
+  modes(modes) {
+    const arr = Array.isArray(modes) ? modes : [];
+    if (!arr.length) return '-';
+    return arr.map(m => this.mode(m)).join(' + ');
+  },
+
+  status(status) {
+    const map = {
+      Planned: 'status_Planned',
+      Ongoing: 'status_Ongoing',
+      Completed: 'status_Completed',
+      Cancelled: 'status_Cancelled'
+    };
+    const key = map[String(status || '')];
+    return key ? this.get(key, status || '-') : (status || '-');
+  },
+
+  step(step) {
+    const id = step && step.id ? String(step.id) : '';
+    const key = `step_${id}`;
+    const fallback = (step && step.label) ? step.label : (id || '-');
+    return this.get(key, fallback);
+  },
+
+  extraJobType(taskType) {
+    const t = String(taskType || '').trim();
+    if (!t) return '-';
+    
+    // Convert to key format (remove spaces)
+    const key = 'job_' + t.replace(/\s+/g, '');
+    const translated = this.get(key);
+    
+    // If found, use it; otherwise return original
+    return (translated !== key) ? translated : t;
+  },
+
+  checklist(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return '';
+
+    const map = {
+      'Quote sent': 'chk_QuoteSent',
+      'Move reserved': 'chk_MoveReserved',
+      'Survey done': 'chk_SurveyDone',
+      'Survey done - N/A': 'chk_SurveyDoneNA',
+      'Documents complete': 'chk_DocumentsComplete',
+      'Packing done': 'chk_PackingDone',
+      'Packing done - N/A': 'chk_PackingDoneNA',
+      'In storage': 'chk_InStorage',
+      'In storage - N/A': 'chk_InStorageNA',
+      'In storage or N/A': 'chk_InStorageNA',
+      'En route': 'chk_EnRoute',
+      'Payment received': 'chk_PaymentReceived',
+      'Delivered': 'chk_Delivered',
+      'Passport copy with entry stamp': 'chk_PassportCopyWithEntryStamp',
+      'Copy of resident permit': 'chk_CopyOfResidentPermit',
+      'Signed personal application (Dilekçe)': 'chk_SignedPersonalApplication',
+      'Power of Attorney (Vekaletname)': 'chk_PowerOfAttorney',
+      'Company application (Şirket yazısı)': 'chk_CompanyApplication',
+      'Company application': 'chk_CompanyApplication',
+      'Signed packing list': 'chk_SignedPackingList',
+      'Turkish tax ID or foreign citizen number': 'chk_TurkishTaxID',
+      'Lease contract': 'chk_LeaseContract',
+      'List of all entry/exit in Turkey during the last 2 years': 'chk_EntryExitList',
+      'In transit to Turkey': 'chk_InTransitToTurkey',
+      'Arrived at port/terminal': 'chk_ArrivedAtPort',
+      'Delivered to warehouse': 'chk_DeliveredToWarehouse',
+      'Delivered to residence': 'chk_DeliveredToResidence',
+      'Packing complete': 'chk_PackingComplete',
+      'Copy of passport': 'chk_CopyOfPassport',
+      'Flight ticket': 'chk_FlightTicket',
+      'Copy of work/residence permit': 'chk_CopyOfWorkResidencePermit',
+      'In transit to destination': 'chk_InTransitToDestination',
+      'In transit to destination address': 'chk_InTransitToDestinationAddress'
+    };
+
+    const key = map[raw];
+    return key ? this.get(key, raw) : raw;
+  }
+};
 // ============================================================
 // i18n (Turkish UI toggle)
 // ============================================================
@@ -153,7 +632,7 @@ const I18n = {
       invalidJson: 'Invalid JSON: ',
       scheduleDayDetailsHint: 'Select a day in the calendar to see scheduled steps and extra jobs.',
       dayDetails: 'Day Details',
-      extraJobs: 'Extra Jobs',
+      extraJobs: 'Additional Jobs',
       dayNotes: 'Day Notes',
       noScheduledSteps: 'No scheduled steps for this day.',
       openMove: 'Open Move',
@@ -163,9 +642,9 @@ const I18n = {
       download: 'Download',
       openLink: 'Open Link',
       addJob: 'Add Job',
-      noExtraJobs: 'No extra jobs for this day.',
+      noExtraJobs: 'No additional jobs for this day.',
       addNoteBtn: 'Add Note',
-      stepSaved: 'Step saved.',
+      stepSaved: 'Saved.',
       updatePaymentStatus: 'Update payment status:',
       yes: 'Yes',
       no: 'No',
@@ -197,11 +676,13 @@ const I18n = {
       addNoteOrEdit: 'Add Note',
       editNote: 'Edit',
       deleteDayNotesConfirm: 'Delete day notes?',
-      deleteExtraJobConfirm: 'Delete this extra job?',
+      deleteExtraJobConfirm: 'Delete this additional job?',
       deleteAgentConfirm: 'Delete this agent?',
       deleteContactConfirm: 'Delete this contact?',
       fillAtLeastOneField: 'Please fill at least one field.',
       noDocumentsFound: 'No documents found.',
+      documentsSearchTab: 'Documents Search',
+      resourceLibraryTab: 'Resource Library',
       openLinkWin: 'Open Link',
       recentMoves: 'Recent Moves',
       noMovesLinked: 'No moves linked yet.',
@@ -242,13 +723,34 @@ const I18n = {
       sunday: 'Sun',
       allMovesFilter: 'All moves',
 
-      // CHANGE: new labels
+      // new labels
       office: 'Office',
       linkedMove: 'Linked Move (optional)',
       none: 'None',
       customTaskName: 'Custom Task Name',
       exportDayPdf: 'Export Day (PDF)',
-      addAdditionalJob: 'Add Additional Job'
+      addAdditionalJob: 'Add Additional Job',
+
+      // translated enums
+      statusPlanned: 'Planned',
+      statusOngoing: 'Ongoing',
+      statusCompleted: 'Completed',
+      statusCancelled: 'Cancelled',
+      modeSea: 'Sea',
+      modeLand: 'Land',
+      modeAir: 'Air',
+
+      // step labels (display only; stored ids are stable)
+      step_packing: 'Packing',
+      step_survey: 'Survey',
+      step_delivery_to_residence: 'Delivery to Residence',
+      step_container_delivery: 'Container Delivery',
+      step_container_pickup: 'Container Pickup',
+      step_container_unloading: 'Container Unloading',
+      step_container_loading: 'Container Loading',
+      step_air_cargo_packing: 'Air Cargo Packing',
+      step_air_cargo_delivery_to_address: 'Air Cargo Delivery to Address',
+      step_air_cargo_delivery_to_airport: 'Air Cargo Delivery to Airport'
     },
     tr: {
       langShort: 'TR',
@@ -267,9 +769,9 @@ const I18n = {
       addNote: 'Not Ekle',
       addDocument: 'Belge Ekle',
       documentsGlobal: 'Belgeler',
-      searchMovesPh: 'Move ID, müşteri, çıkış, varış, acente ile ara...',
+      searchMovesPh: 'Taşıma no, müşteri, çıkış, varış, acente ile ara...',
       searchAgentsPh: 'Acente adı, şehir, ülke ile ara...',
-      searchDocsPh: 'Move ID, müşteri, belge adı, acente ile ara...',
+      searchDocsPh: 'Taşıma no, müşteri, belge adı, acente ile ara...',
       allMoves: 'Tüm taşımalar',
       all: 'Hepsi',
       planned: 'Planlandı',
@@ -279,7 +781,7 @@ const I18n = {
       allTypes: 'Tüm tipler',
       importType: 'İthalat',
       exportType: 'İhracat',
-      localType: 'Şehir İçi',
+      localType: 'Yurtiçi',
       allPayments: 'Tüm ödemeler',
       paid: 'Ödendi',
       unpaid: 'Ödenmedi',
@@ -296,6 +798,9 @@ const I18n = {
       statusRequired: 'Durum zorunludur.',
       selectOneAgent: 'Lütfen en az bir acente seçin.',
       documentNameRequired: 'Belge adı zorunludur.',
+      docNameLabel: 'Belge Adı',
+      docDateLabel: 'Belge Tarihi (gg/aa/yyyy)',
+      docUploadLabel: 'Dosya Yükle (opsiyonel)',
       exportedOk: 'Dışa aktarma başarılı.',
       exportFailed: 'Dışa aktarma başarısız.',
       importPromptEmpty: 'İçe aktarmak için JSON yapıştırın.',
@@ -316,7 +821,7 @@ const I18n = {
       addJob: 'İş Ekle',
       noExtraJobs: 'Bu gün için ek iş yok.',
       addNoteBtn: 'Not Ekle',
-      stepSaved: 'Adım kaydedildi.',
+      stepSaved: 'Kaydedildi.',
       updatePaymentStatus: 'Ödeme durumunu güncelle:',
       yes: 'Evet',
       no: 'Hayır',
@@ -332,7 +837,7 @@ const I18n = {
       fullDestinationAddress: 'Varış Adresi',
       weight: 'Ağırlık',
       volume: 'Hacim',
-      moveId: 'Move ID',
+      moveId: 'Taşıma No',
       time: 'Saat',
       personnel: 'Personel',
       vehicle: 'Araç',
@@ -353,6 +858,8 @@ const I18n = {
       deleteContactConfirm: 'Bu kontak silinsin mi?',
       fillAtLeastOneField: 'Lütfen en az bir alan doldurun.',
       noDocumentsFound: 'Belge bulunamadı.',
+      documentsSearchTab: 'Belge Arama',
+      resourceLibraryTab: 'Kaynak Kütüphanesi',
       recentMoves: 'Son Taşımalar',
       noMovesLinked: 'Bağlı taşıma yok.',
       location: 'Konum: ',
@@ -378,10 +885,14 @@ const I18n = {
       noMovesYet: 'Henüz taşıma yok.',
       dataToolsTitle: 'Veri Araçları (Sadece Geliştirici)',
       importAreaHint: 'Önceki bir dışa aktarımdan JSON yapıştırın ve "İçe Aktar" tıklayın.',
-      importData: 'İçe Aktar',
-      exportData: 'Dışa Aktar',
-      importNow: 'Şimdi İçe Aktar',
-      toggleImportArea: 'İçe Aktar',
+      newNotePlaceholder: 'Yeni not girin...',
+      docNamePlaceholder: 'Belge adı',
+      docDatePlaceholder: 'Tarih (GG/AA/YYYY)',
+      docUrlPlaceholder: 'URL (opsiyonel)',
+      importData: 'Yükle',
+      exportData: 'İndir',
+      importNow: 'Şimdi Yükle',
+      toggleImportArea: 'Yükle',
       monthLocale: 'tr-TR',
       monday: 'Pzt',
       tuesday: 'Sal',
@@ -392,13 +903,34 @@ const I18n = {
       sunday: 'Paz',
       allMovesFilter: 'Tüm taşımalar',
 
-      // CHANGE: new labels
+      // new labels
       office: 'Ofis',
       linkedMove: 'Bağlı Taşıma (opsiyonel)',
       none: 'Yok',
       customTaskName: 'Özel İş Adı',
       exportDayPdf: 'Günü PDF Olarak Çıkar',
-      addAdditionalJob: 'Ek İş Ekle'
+      addAdditionalJob: 'Ek İş Ekle',
+
+      // translated enums
+      statusPlanned: 'Planlandı',
+      statusOngoing: 'Devam Ediyor',
+      statusCompleted: 'Tamamlandı',
+      statusCancelled: 'İptal',
+      modeSea: 'Denizyolu',
+      modeLand: 'Karayolu',
+      modeAir: 'Havayolu',
+
+      // step labels
+      step_packing: 'Paketleme',
+      step_survey: 'Ekspertiz',
+      step_delivery_to_residence: 'Eve Teslimat',
+      step_container_delivery: 'Konteyner Teslimatı',
+      step_container_pickup: 'Konteyner Alımı',
+      step_container_unloading: 'Konteyner Boşaltma',
+      step_container_loading: 'Konteyner Yükleme',
+      step_air_cargo_packing: 'Hava Kargo Paketleme',
+      step_air_cargo_delivery_to_address: 'Hava Kargo Adrese Teslim',
+      step_air_cargo_delivery_to_airport: 'Hava Kargo Havalimanına Teslim'
     }
   },
 
@@ -409,6 +941,56 @@ const I18n = {
     return Object.keys(vars).reduce((s, k) => s.replaceAll(`{${k}}`, String(vars[k])), base);
   },
 
+  // ---- enum helpers (keeps stored values stable, translates display) ----
+  statusText(status) {
+    const key = `status${String(status || '').trim()}`;
+    if (this.dict[State.lang] && this.dict[State.lang][key]) return this.t(key);
+    if (this.dict.en && this.dict.en[key]) return this.t(key);
+    // fallback to existing per-button translations if they exist
+    const map = { Planned: 'planned', Ongoing: 'ongoing', Completed: 'completed', Cancelled: 'cancelled' };
+    if (map[status]) return this.t(map[status]);
+    return status || '-';
+  },
+
+  typeText(type) {
+    const map = { Import: 'importType', Export: 'exportType', Local: 'localType' };
+    return map[type] ? this.t(map[type]) : (type || '-');
+  },
+
+  modeText(mode) {
+    const m = String(mode || '');
+    const map = { Sea: 'modeSea', Land: 'modeLand', Air: 'modeAir' };
+    return map[m] ? this.t(map[m]) : (m || '-');
+  },
+
+  modesText(modes) {
+    const arr = Array.isArray(modes) ? modes : [];
+    if (!arr.length) return (State.lang === 'tr') ? 'Mod yok' : 'No mode';
+    return arr.map(m => this.modeText(m)).join(' + ');
+  },
+
+  stepText(step) {
+    const id = step && step.id ? String(step.id) : '';
+    const key = `step_${id}`;
+    if (this.dict[State.lang] && this.dict[State.lang][key]) return this.t(key);
+    if (this.dict.en && this.dict.en[key]) return this.t(key);
+    return (step && step.label) ? step.label : (id || '-');
+  },
+
+taskTypeText(taskType) {
+  if (State.lang === 'tr') return TR.extraJobType(taskType);
+  
+  // English: return as-is
+  const t = String(taskType || '');
+  if (!t) return '-';
+  return t;
+},
+  
+checklistText(text) {
+  if (State.lang === 'tr') return TR.checklist(text);
+  return text; // English: return as-is
+},
+  
   loadLang() {
     const saved = Storage.load(CONFIG.STORAGE_KEYS.LANG, null);
     if (saved === 'tr' || saved === 'en') return saved;
@@ -466,9 +1048,41 @@ const I18n = {
     const navMoves = $.get('navMoves'); if (navMoves) navMoves.textContent = this.t('moves');
     const navAgents = $.get('navAgents'); if (navAgents) navAgents.textContent = this.t('agents');
     const navSchedule = $.get('navSchedule'); if (navSchedule) navSchedule.textContent = this.t('schedule');
+const scheduleDayDetailsTitle = document.querySelector('#scheduleView .right-panel .header-row h2');
+if (scheduleDayDetailsTitle) scheduleDayDetailsTitle.textContent = this.t('dayDetails');
+    const scheduleViewTitle = document.querySelector('#scheduleView .left-panel .header-row h2');
+if (scheduleViewTitle) scheduleViewTitle.textContent = this.t('schedule');
+    const scheduleHintText = document.querySelector('#scheduleDayDetails p[data-i18n="hintSelectDay"]');
+if (scheduleHintText) scheduleHintText.textContent = this.t('scheduleDayDetailsHint');
     const navDocuments = $.get('navDocuments'); if (navDocuments) navDocuments.textContent = this.t('documents');
-    const documentsHeader = $.get('documentsHeader'); if (documentsHeader) documentsHeader.textContent = this.t('documents');
+    const documentsSearchTab = $.get('documentsSearchTab');
+  if (documentsSearchTab) {
+    const span = documentsSearchTab.querySelector('span');
+    if (span) span.textContent = this.t('documentsSearchTab');
+  }
 
+  const resourceLibraryTab = $.get('resourceLibraryTab');
+  if (resourceLibraryTab) {
+    const span = resourceLibraryTab.querySelector('span');
+    if (span) span.textContent = this.t('resourceLibraryTab');
+  }
+const checklistSection = $.get('checklistSection');
+if (checklistSection) {
+  const label = checklistSection.querySelector('label');
+  if (label) label.textContent = this.t('customChecklist');
+}
+
+const addNoteLabel = document.querySelector('#notesSection label');
+if (addNoteLabel) addNoteLabel.textContent = this.t('addNote');
+
+const docNameLabel = document.querySelector('#documentsSection label[data-i18n="docNameLabel"]');
+if (docNameLabel) docNameLabel.textContent = this.t('docNameLabel');
+
+const docDateLabel = document.querySelector('#documentsSection label[data-i18n="docDateLabel"]');
+if (docDateLabel) docDateLabel.textContent = this.t('docDateLabel');
+
+const docUploadLabel = document.querySelector('#documentsSection label[data-i18n="docUploadLabel"]');
+if (docUploadLabel) docUploadLabel.textContent = this.t('docUploadLabel');
     const openCreateJob = $.get('openCreateJob'); if (openCreateJob) openCreateJob.textContent = this.t('addNewMove');
     const editJobBtn = $.get('editJobBtn'); if (editJobBtn) editJobBtn.textContent = this.t('editMove');
     const openCreateAgentBtn = $.get('openCreateAgentBtn'); if (openCreateAgentBtn) openCreateAgentBtn.textContent = this.t('addAgentTitle');
@@ -476,7 +1090,33 @@ const I18n = {
     const searchInput = $.get('searchInput'); if (searchInput) searchInput.placeholder = this.t('searchMovesPh');
     const agentSearchInput = $.get('agentSearchInput'); if (agentSearchInput) agentSearchInput.placeholder = this.t('searchAgentsPh');
     const documentsSearchInput = $.get('documentsSearchInput'); if (documentsSearchInput) documentsSearchInput.placeholder = this.t('searchDocsPh');
+const checklistInput = $.get('checklistInput');
+if (checklistInput) {
+  checklistInput.placeholder = (State.lang === 'tr') 
+    ? 'Örnek:\nPaketleme tamamlandı\nGümrük belgeleri hazır\nÖdeme alındı'
+    : 'Example:\nPacking complete\nCustoms docs ready\nPayment received';
+}
 
+const newNoteText = $.get('newNoteText');
+if (newNoteText) {
+  newNoteText.placeholder = (State.lang === 'tr') 
+    ? 'Bu taşıma hakkında not yazın...'
+    : 'Write a note about this move...';
+}
+
+const docNameInput = $.get('docNameInput');
+if (docNameInput) {
+  docNameInput.placeholder = (State.lang === 'tr') 
+    ? 'örn. Teklif #123, Konşimento, Envanter Listesi'
+    : 'e.g. Quote #123, Bill of Lading, Packing List';
+}
+
+const docUrlInput = $.get('docUrlInput');
+if (docUrlInput) {
+  docUrlInput.placeholder = (State.lang === 'tr') 
+    ? 'https://... (Drive/SharePoint/vb.)'
+    : 'https://... (Drive/SharePoint/etc.)';
+}
     const statusFilters = $.get('statusFilters');
     if (statusFilters) {
       const map = { All: 'all', Planned: 'planned', Ongoing: 'ongoing', Completed: 'completed', Cancelled: 'cancelled' };
@@ -511,12 +1151,6 @@ const I18n = {
     if (documentsJobFilter && documentsJobFilter.options && documentsJobFilter.options[0]) {
       documentsJobFilter.options[0].textContent = this.t('allMovesFilter');
     }
-
-    const scheduleDayTitle = $.get('scheduleDayTitle');
-    if (scheduleDayTitle) scheduleDayTitle.textContent = this.t('dayDetails');
-
-    const scheduleDayHint = $.get('scheduleDayHint');
-    if (scheduleDayHint) scheduleDayHint.textContent = this.t('scheduleDayDetailsHint');
 
     const schedHeader = document.querySelector('.schedule-calendar-header');
     if (schedHeader && schedHeader.children.length >= 7) {
@@ -569,6 +1203,13 @@ const State = {
   schedule: { year: new Date().getFullYear(), month: new Date().getMonth(), selectedDate: null },
 
   lang: 'en',
+  resourceLibrary: null,
+  documentsViewTab: 'search',
+  
+  quotes: [],
+  selectedQuoteId: null,
+  quoteFormMode: 'create',
+  quoteFilters: { search: '' },
 
   getJob(id) { return this.jobs.find(j => j.id === id); },
   getAgent(id) { return this.agents.find(a => a.id === id); },
@@ -599,16 +1240,41 @@ const Storage = {
     }
   },
 
+  saveResourceLibrary() { 
+  this.save(CONFIG.STORAGE_KEYS.RESOURCE_LIBRARY, State.resourceLibrary); 
+},
+
+loadResourceLibrary() {
+  const saved = this.load(CONFIG.STORAGE_KEYS.RESOURCE_LIBRARY, null);
+  if (saved && Array.isArray(saved.categories)) {
+    State.resourceLibrary = saved;
+  } else {
+    // Initialize with default empty categories
+    State.resourceLibrary = JSON.parse(JSON.stringify(DEFAULT_RESOURCE_LIBRARY));
+    this.saveResourceLibrary();
+  }
+},
+  
   saveJobs() { this.save(CONFIG.STORAGE_KEYS.JOBS, State.jobs); },
   saveAgents() { this.save(CONFIG.STORAGE_KEYS.AGENTS, State.agents); },
   saveScheduleNotes() { this.save(CONFIG.STORAGE_KEYS.SCHEDULE_NOTES, State.scheduleNotes); },
   saveScheduleExtraJobs() { this.save(CONFIG.STORAGE_KEYS.SCHEDULE_EXTRA_JOBS, State.scheduleExtraJobs); },
+    saveQuotes() { 
+    this.save(CONFIG.STORAGE_KEYS.QUOTES, State.quotes); 
+  },
+
+  loadQuotes() {
+    State.quotes = this.load(CONFIG.STORAGE_KEYS.QUOTES, []);
+    State.quotes = State.quotes.map(q => Validator.normalizeQuote(q));
+  },
 
   loadAll() {
     State.agents = this.load(CONFIG.STORAGE_KEYS.AGENTS, []);
     State.jobs = this.load(CONFIG.STORAGE_KEYS.JOBS, []);
     State.scheduleNotes = this.load(CONFIG.STORAGE_KEYS.SCHEDULE_NOTES, {});
     State.scheduleExtraJobs = this.load(CONFIG.STORAGE_KEYS.SCHEDULE_EXTRA_JOBS, {});
+    this.loadResourceLibrary();
+    this.loadQuotes();
     Validator.normalizeAll();
   },
 
@@ -617,7 +1283,8 @@ const Storage = {
       jobs: State.jobs,
       agents: State.agents,
       scheduleNotes: State.scheduleNotes,
-      scheduleExtraJobs: State.scheduleExtraJobs
+      scheduleExtraJobs: State.scheduleExtraJobs,
+      quotes: State.quotes
     };
   },
 
@@ -629,11 +1296,13 @@ const Storage = {
     State.agents = data.agents;
     State.scheduleNotes = data.scheduleNotes || {};
     State.scheduleExtraJobs = data.scheduleExtraJobs || {};
+    State.quotes = data.quotes || {};
     Validator.normalizeAll();
     this.saveJobs();
     this.saveAgents();
     this.saveScheduleNotes();
     this.saveScheduleExtraJobs();
+    this.saveQuotes();
   }
 };
 
@@ -651,18 +1320,22 @@ const Validator = {
 
   normalizeExtraJob(ej, dateStr) {
     if (!ej || typeof ej !== 'object') ej = {};
-    if (!ej.id) ej.id = Utils.makeId('xjob');               // CHANGE: stable IDs
-    if (!ej.date) ej.date = dateStr || '';                  // CHANGE: store date inside item too (export-friendly)
+    if (!ej.id) ej.id = Utils.makeId('xjob');               // stable IDs
+    if (!ej.date) ej.date = dateStr || '';                  // store date inside item too (export-friendly)
     if (typeof ej.taskType !== 'string') ej.taskType = '';
-    if (typeof ej.customTaskName !== 'string') ej.customTaskName = ''; // CHANGE: custom task support
-    if (typeof ej.time !== 'string') ej.time = '';          // CHANGE: schedule items should have time
-    if (typeof ej.address !== 'string') ej.address = '';    // CHANGE: schedule items should have address
-    if (typeof ej.office !== 'string') ej.office = '';      // CHANGE: office selection (optional)
+    if (typeof ej.customTaskName !== 'string') ej.customTaskName = ''; // custom task support
+    if (typeof ej.time !== 'string') ej.time = '';          // schedule items should have time
+    if (typeof ej.address !== 'string') ej.address = '';    // schedule items should have address
+    if (typeof ej.office !== 'string') ej.office = '';      // office selection (optional)
     if (typeof ej.personnel !== 'string') ej.personnel = '';
     if (typeof ej.vehicle !== 'string') ej.vehicle = '';
     if (typeof ej.notes !== 'string') ej.notes = '';
+
+    // linking fields
     if (typeof ej.linkedJobId !== 'string') ej.linkedJobId = ej.linkedJobId ? String(ej.linkedJobId) : '';
     if (typeof ej.linkedJobCode !== 'string') ej.linkedJobCode = ej.linkedJobCode || '';
+    if (typeof ej.linkedJobClientName !== 'string') ej.linkedJobClientName = ej.linkedJobClientName || ''; // optional snapshot
+
     return ej;
   },
 
@@ -674,57 +1347,199 @@ const Validator = {
         State.scheduleExtraJobs[dateStr] = [];
         return;
       }
-      const normalized = arr.map(ej => this.normalizeExtraJob(ej, dateStr));
-      const keepForDay = [];
-
-      normalized.forEach(ej => {
-        if (ej.linkedJobId) {
-          const job = State.getJob(ej.linkedJobId);
-          if (job) {
-            if (!Array.isArray(job.additionalJobs)) job.additionalJobs = [];
-            job.additionalJobs.push({
-              id: ej.id || Utils.makeId('ajob'),
-              label: (ej.taskType === 'Custom' && ej.customTaskName) ? ej.customTaskName : (ej.taskType || ((State.lang === 'tr') ? 'Ek İş' : 'Additional Job')),
-              date: ej.date || dateStr,
-              time: ej.time || '',
-              personnel: ej.personnel || '',
-              vehicle: ej.vehicle || '',
-              address: ej.address || '',
-              notes: ej.notes || ''
-            });
-          } else {
-            keepForDay.push(ej);
-          }
-        } else {
-          keepForDay.push(ej);
-        }
-      });
-
-      State.scheduleExtraJobs[dateStr] = keepForDay;
+      State.scheduleExtraJobs[dateStr] = arr.map(ej => this.normalizeExtraJob(ej, dateStr));
     });
   },
 
   normalizeJob(job) {
-    if (!job || typeof job !== 'object') job = {};
-    if (!job.id) job.id = Utils.makeId('job'); // CHANGE: stable IDs
-    if (!job.tradeDirection) job.tradeDirection = '';
-    if (!Array.isArray(job.modes)) job.modes = [];
-    if (!Array.isArray(job.notes)) job.notes = [];
-    if (!Array.isArray(job.documents)) job.documents = [];
-    // NEW: move-linked additional jobs live on the job so schedule + move details stay synced
-    if (!Array.isArray(job.additionalJobs)) job.additionalJobs = [];
-    if (typeof job.paymentReceived !== 'boolean') job.paymentReceived = false;
-    if (!job.packDate) job.packDate = '';
-    if (!job.jobCode) job.jobCode = Utils.jobCode();
+  if (!job || typeof job !== 'object') job = {};
+  if (!job.id) job.id = Utils.makeId('job');
+  if (!job.tradeDirection) job.tradeDirection = '';
+  if (!Array.isArray(job.modes)) job.modes = [];
+  if (!Array.isArray(job.notes)) job.notes = [];
+  if (!Array.isArray(job.documents)) job.documents = [];
+  if (typeof job.paymentReceived !== 'boolean') job.paymentReceived = false;
+  if (!job.packDate) job.packDate = '';
+  if (!job.jobCode) job.jobCode = Utils.jobCode();
 
-    if (!Array.isArray(job.checklist) || job.checklist.length === 0) {
-      const template = CONFIG.CHECKLIST_TEMPLATES[job.tradeDirection] || CONFIG.CHECKLIST_TEMPLATES.DEFAULT;
-      job.checklist = template.map(text => ({ text, done: false }));
+  // Shipment contents (HHE, Vehicle)
+  if (!Array.isArray(job.shipmentContents)) job.shipmentContents = ['HHE'];
+  
+  // Move Manager
+  if (typeof job.moveManager !== 'string') job.moveManager = '';
+
+  // Mode-specific fields - Sea
+  if (typeof job.seaVolume !== 'number') job.seaVolume = 0;
+  if (typeof job.containerDetails !== 'string') job.containerDetails = '';
+
+  // Mode-specific fields - Air
+  if (typeof job.airVolume !== 'number') job.airVolume = 0;
+  if (typeof job.airCargoWeight !== 'number') job.airCargoWeight = 0;
+  if (typeof job.airACW !== 'number') job.airACW = 0;
+
+  // Mode-specific fields - Land
+  if (typeof job.landVolume !== 'number') job.landVolume = 0;
+
+  // Vehicle fields
+  if (typeof job.vehicleType !== 'string') job.vehicleType = '';
+  if (typeof job.vehicleMake !== 'string') job.vehicleMake = '';
+  if (typeof job.vehicleModel !== 'string') job.vehicleModel = '';
+  if (typeof job.vehicleYear !== 'number') job.vehicleYear = 0;
+  if (typeof job.vehicleVIN !== 'string') job.vehicleVIN = '';
+  if (typeof job.vehicleCondition !== 'string') job.vehicleCondition = 'Running';
+
+  // Legacy field migration (if old jobs have weight/volume, migrate to primary mode)
+  if (job.weight && !job.airCargoWeight && job.modes && job.modes.includes('Air')) {
+    job.airCargoWeight = job.weight;
+  }
+  if (job.volume) {
+    if (job.modes && job.modes.includes('Sea') && !job.seaVolume) job.seaVolume = job.volume;
+    else if (job.modes && job.modes.includes('Air') && !job.airVolume) job.airVolume = job.volume;
+    else if (job.modes && job.modes.includes('Land') && !job.landVolume) job.landVolume = job.volume;
+  }
+
+  if (!Array.isArray(job.checklist) || job.checklist.length === 0) {
+    const template = CONFIG.CHECKLIST_TEMPLATES[job.tradeDirection] || CONFIG.CHECKLIST_TEMPLATES.DEFAULT;
+    job.checklist = template.map(text => ({ text, done: false }));
+  }
+
+  Steps.ensure(job);
+  return job;
+},
+  
+   normalizeQuote(quote) {
+  if (!quote || typeof quote !== 'object') return this.createEmptyQuote();
+  
+  if (!quote.id) quote.id = Utils.makeId('quote');
+  if (!quote.quoteCode) quote.quoteCode = QuoteUtils.makeQuoteCode();
+  if (!quote.clientName) quote.clientName = '';
+  if (!quote.clientOrganization) quote.clientOrganization = '';
+  if (!quote.origin) quote.origin = '';
+  if (!quote.destination) quote.destination = '';
+  if (!Array.isArray(quote.modes)) quote.modes = [];
+  if (!quote.type) quote.type = 'Export';
+  if (typeof quote.insurance !== 'boolean') quote.insurance = false;
+  
+  // chargesByMode structure
+  if (!quote.chargesByMode || typeof quote.chargesByMode !== 'object') {
+    quote.chargesByMode = {};
+    // Migrate old charges array if exists
+    if (Array.isArray(quote.charges) && quote.charges.length > 0) {
+      const primaryMode = quote.modes[0] || 'Sea';
+      quote.chargesByMode[primaryMode] = quote.charges;
     }
+  }
+  
+  if (!Array.isArray(quote.selectedIncludes)) quote.selectedIncludes = [];
+  if (!Array.isArray(quote.selectedAdditionalCharges)) quote.selectedAdditionalCharges = [];
+  if (!quote.validUntil) quote.validUntil = '';
+  if (!quote.termsAndConditions) quote.termsAndConditions = '';
+  if (!quote.createdAt) quote.createdAt = new Date().toISOString();
+  
+  // Sea-specific
+  if (!quote.departurePort) quote.departurePort = '';
+  if (!quote.poe) quote.poe = '';
+  if (!quote.containerDetails) quote.containerDetails = '';
+  if (typeof quote.seaTransitTime !== 'number') quote.seaTransitTime = 0;
+  if (typeof quote.seaVolume !== 'number') quote.seaVolume = 0;
+  
+  // Air-specific
+  if (!quote.departureAirportName) quote.departureAirportName = '';
+  if (!quote.departureAirportIATA) quote.departureAirportIATA = '';
+  if (!quote.arrivalAirportName) quote.arrivalAirportName = '';
+  if (!quote.arrivalAirportIATA) quote.arrivalAirportIATA = '';
+  if (!quote.airlineName) quote.airlineName = '';
+  if (typeof quote.airCargoWeight !== 'number') quote.airCargoWeight = 0;
+  if (typeof quote.airTransitTime !== 'number') quote.airTransitTime = 0;
+  if (typeof quote.airVolume !== 'number') quote.airVolume = 0;
+     if (typeof quote.airACW !== 'number') quote.airACW = 0;
+  if (!quote.airQuoteType) quote.airQuoteType = 'client'; // 'client' or 'agent'
+     
+     // Shipment contents
+if (!Array.isArray(quote.shipmentContents)) quote.shipmentContents = ['HHE'];
 
-    Steps.ensure(job);
-    return job;
-  },
+// Vehicle fields
+if (typeof quote.vehicleType !== 'string') quote.vehicleType = '';
+if (typeof quote.vehicleMake !== 'string') quote.vehicleMake = '';
+if (typeof quote.vehicleModel !== 'string') quote.vehicleModel = '';
+if (typeof quote.vehicleYear !== 'number') quote.vehicleYear = 0;
+if (typeof quote.vehicleVIN !== 'string') quote.vehicleVIN = '';
+if (typeof quote.vehicleCondition !== 'string') quote.vehicleCondition = 'Running';
+     
+  // Land-specific
+  if (!quote.truckType) quote.truckType = 'Dedicated';
+  if (typeof quote.landTransitTime !== 'number') quote.landTransitTime = 0;
+  if (typeof quote.landVolume !== 'number') quote.landVolume = 0;
+  
+  // Insurance
+  if (typeof quote.hhgValue !== 'number') quote.hhgValue = 0;
+  if (!quote.hhgCurrency) quote.hhgCurrency = 'USD';
+     if (typeof quote.insurancePercentage !== 'number') quote.insurancePercentage = 1.5;
+if (!quote.quoteCurrency) quote.quoteCurrency = 'USD';
+  
+  // Legacy compatibility
+  if (typeof quote.estimatedVolume !== 'number') quote.estimatedVolume = 0;
+  
+  return quote;
+},
+
+ createEmptyQuote() {
+  return {
+    id: Utils.makeId('quote'),
+    quoteCode: QuoteUtils.makeQuoteCode(),
+    clientName: '',
+    clientOrganization: '',
+    origin: '',
+    destination: '',
+    modes: [],
+    type: 'Export',
+    insurance: false,
+    chargesByMode: {},
+    selectedIncludes: [],
+    selectedAdditionalCharges: [],
+    validUntil: '',
+    termsAndConditions: '',
+    createdAt: new Date().toISOString(),
+    // Sea
+    departurePort: '',
+    poe: '',
+    containerDetails: '',
+    seaTransitTime: 0,
+    seaVolume: 0,
+    // Air
+    departureAirportName: '',
+    departureAirportIATA: '',
+    arrivalAirportName: '',
+    arrivalAirportIATA: '',
+    airlineName: '',
+    airCargoWeight: 0,
+    airTransitTime: 0,
+    airVolume: 0,
+    airACW: 0,
+    
+    // Land
+    truckType: 'Dedicated',
+    landTransitTime: 0,
+    landVolume: 0,
+    // Insurance
+    hhgValue: 0,
+    hhgCurrency: 'USD',
+    insurancePercentage: 1.5,
+    quoteCurrency: 'USD',
+    // Legacy
+    estimatedVolume: 0,
+    airQuoteType: 'client',
+    // Shipment contents
+    shipmentContents: ['HHE'],
+    // Vehicle fields
+    vehicleType: '',
+    vehicleMake: '',
+    vehicleModel: '',
+    vehicleYear: 0,
+    vehicleVIN: '',
+    vehicleCondition: 'Running',
+  };
+},
 
   normalizeAll() {
     State.agents = (State.agents || []).map(a => this.normalizeAgent(a));
@@ -753,7 +1568,7 @@ const Steps = {
         date: '', time: '', personnel: '', vehicle: '', address: '',
         portDetails: '', pickupAirport: '', deliveryAirport: '',
         pickupAddress: '', deliveryAddress: '', notes: '',
-        office: '' // CHANGE: office per step (optional)
+        office: '' // office per step (optional)
       };
 
       if (def.autoFillAddress === 'origin' && job.originFullAddress) step.address = job.originFullAddress;
@@ -761,7 +1576,7 @@ const Steps = {
       if (def.autoFillDeliveryAddress === 'destination' && job.destinationFullAddress) step.deliveryAddress = job.destinationFullAddress;
       if (def.autoFillPickupAddress === 'origin' && job.originFullAddress) step.pickupAddress = job.originFullAddress;
 
-      // CHANGE: if office not set, attempt auto-detect from best available address
+      // if office not set, attempt auto-detect from best available address
       step.office = Utils.detectOfficeForStep(step, job);
 
       return step;
@@ -776,7 +1591,7 @@ const Steps = {
         if (packing && !packing.date) packing.date = job.packDate;
       }
     } else {
-      // CHANGE: ensure office field exists on existing data
+      // ensure office field exists on existing data
       job.steps.forEach(step => {
         if (typeof step.office !== 'string') step.office = Utils.detectOfficeForStep(step, job);
       });
@@ -795,21 +1610,6 @@ const Steps = {
       if (Array.isArray(job.steps)) {
         job.steps.forEach((step, idx) => {
           if (step.date === dateStr) result.push({ job, step, stepIndex: idx });
-        });
-      }
-    });
-    return result;
-  },
-
-  // NEW: Additional jobs are move-linked "extra steps" stored on each job
-  getAdditionalForDate(dateStr) {
-    const result = [];
-    State.jobs.forEach(job => {
-      if (Array.isArray(job.additionalJobs)) {
-        job.additionalJobs.forEach((aj, idx) => {
-          if (aj.date === dateStr) {
-            result.push({ job, extra: aj, extraIndex: idx });
-          }
         });
       }
     });
@@ -847,14 +1647,14 @@ const Utils = {
     return [city, country].filter(Boolean).join(', ') || '-';
   },
 
-  // CHANGE: safer unique IDs than Date.now() (prevents collisions)
+  // safer unique IDs than Date.now() (prevents collisions)
   makeId(prefix) {
     const p = String(prefix || 'id');
     // time + random to avoid duplicates in fast clicks/imports
     return `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   },
 
-  // CHANGE: ISTEX-YEAR-#### now uses max existing number + 1 (won't reuse numbers after deletions)
+  // ISTEX-YEAR-#### now uses max existing number + 1 (won't reuse numbers after deletions)
   jobCode() {
     const year = new Date().getFullYear();
     const prefix = `ISTEX-${year}-`;
@@ -869,7 +1669,7 @@ const Utils = {
     return `${prefix}${String(maxNum + 1).padStart(4, '0')}`;
   },
 
-  // CHANGE: office detection by address keywords (simple rule-based)
+  // office detection by address keywords (simple rule-based)
   detectOfficeFromAddress(address) {
     const text = String(address || '').toLowerCase();
     if (!text.trim()) return '';
@@ -880,7 +1680,7 @@ const Utils = {
     return '';
   },
 
-  // CHANGE: pick best address for steps, then detect office
+  // pick best address for steps, then detect office
   detectOfficeForStep(step, job) {
     const candidates = [
       step.address,
@@ -897,7 +1697,7 @@ const Utils = {
     return '';
   },
 
-  // CHANGE: helper to safely escape html in export layout
+  // helper to safely escape html in export layout
   escapeHtml(str) {
     return String(str ?? '')
       .replaceAll('&', '&amp;')
@@ -905,8 +1705,216 @@ const Utils = {
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  },
+
+  // NEW: show "MOVEID – Client" when linked
+  jobLabelById(jobId, fallbackCode = '') {
+    const j = jobId ? State.getJob(jobId) : null;
+    if (j) return `${j.jobCode || ''} – ${j.clientName || ''}`.trim();
+    return fallbackCode || '';
   }
 };
+
+// ============================================================
+// QUOTE UTILITIES
+// ============================================================
+
+const QuoteUtils = {
+  makeQuoteCode() {
+    const year = new Date().getFullYear();
+    const prefix = `IEQ-${year}-`;
+    let maxNum = 0;
+    (State.quotes || []).forEach(q => {
+      const code = q && q.quoteCode ? String(q.quoteCode) : '';
+      if (!code.startsWith(prefix)) return;
+      const n = parseInt(code.slice(prefix.length), 10);
+      if (!isNaN(n)) maxNum = Math.max(maxNum, n);
+    });
+    return `${prefix}${String(maxNum + 1).padStart(4, '0')}`;
+  },
+
+  calculateInsurancePremium(hhgValue, percentage = 1.5) {
+  return (hhgValue || 0) * (percentage / 100);
+},
+
+  getTemplate(mode, type) {
+    if (type === 'Local') return QUOTE_TEMPLATES['Land|Local'] || null;
+    return QUOTE_TEMPLATES[`${mode}|${type}`] || null;
+  },
+
+  replacePlaceholders(text, data) {
+    if (!text) return '';
+    let result = text;
+    
+    // Simple direct replacements (case-insensitive)
+    const replacements = {
+      '[ORIGIN]': data.origin || '',
+      '[DESTINATION]': data.destination || '',
+      '[POE]': data.poe || '',
+      '[DEPARTURE_PORT]': data.departurePort || data.origin || '',
+      '[CONTAINER_DETAILS]': data.containerDetails || '',
+      '[DEPARTURE_AIRPORT]': data.departureAirportName || '',
+      '[ARRIVAL_AIRPORT]': data.arrivalAirportName || '',
+      '[TRUCK_TYPE]': data.truckType || 'Dedicated',
+      '[TRUCK_TYPE_LOWER]': (data.truckType || 'dedicated').toLowerCase()
+    };
+    
+    // Replace each placeholder (case-insensitive)
+    Object.keys(replacements).forEach(placeholder => {
+      const escaped = placeholder.replace(/[[\]]/g, '\\$&');
+      const regex = new RegExp(escaped, 'gi');
+      result = result.replace(regex, replacements[placeholder]);
+    });
+    
+    return result;
+  },
+
+  getChargeCategories(mode, type, data) {
+    const tpl = this.getTemplate(mode, type);
+    if (!tpl) return { main: [], additional: [] };
+    return {
+      main: (tpl.chargeCategories || []).map(c => this.replacePlaceholders(c, data)),
+      additional: (tpl.additionalChargeCategories || []).map(c => this.replacePlaceholders(c, data))
+    };
+  },
+
+  getBaseIncludes(mode, type, data) {
+    const tpl = this.getTemplate(mode, type);
+    if (!tpl) return [];
+    return (tpl.includes || []).map(i => this.replacePlaceholders(i, data));
+  },
+
+  getConditionalIncludes(mode, type, data, selectedChargeCategories) {
+    const tpl = this.getTemplate(mode, type);
+    if (!tpl || !tpl.conditionalIncludes) return [];
+    
+    let items = [];
+    Object.keys(tpl.conditionalIncludes).forEach(chargeKey => {
+      const hasMatch = selectedChargeCategories.some(c => 
+        c.toLowerCase().includes(chargeKey.toLowerCase()) || 
+        chargeKey.toLowerCase().includes(c.toLowerCase().split(' ')[0])
+      );
+      if (hasMatch) {
+        items = items.concat(tpl.conditionalIncludes[chargeKey].map(i => 
+          this.replacePlaceholders(i, data)
+        ));
+      }
+    });
+    return items;
+  },
+
+  getAdditionalChargesMayApply(type, modes = [], hasInsurance = false, hasVehicle = false) {
+  let items = [...(ADDITIONAL_CHARGES_CONFIG[type] || [])];
+  
+  modes.forEach(m => {
+    const key = `${type}_${m}`;
+    if (ADDITIONAL_CHARGES_CONFIG[key]) {
+      items = items.concat(ADDITIONAL_CHARGES_CONFIG[key]);
+    }
+  });
+  
+  // Add vehicle-specific charges if vehicle is included
+  if (hasVehicle) {
+    const vehicleKey = `${type}_Vehicle`;
+    if (ADDITIONAL_CHARGES_CONFIG[vehicleKey]) {
+      items = items.concat(ADDITIONAL_CHARGES_CONFIG[vehicleKey]);
+    }
+  }
+  
+  if (hasInsurance) {
+    items = items.filter(i => !i.toLowerCase().includes('insurance'));
+  }
+  
+  return [...new Set(items)];
+},
+
+  calculateTotals(charges) {
+    const totals = {};
+    (charges || []).forEach(c => {
+      const curr = c.currency || 'USD';
+      totals[curr] = (totals[curr] || 0) + (parseFloat(c.amount) || 0);
+    });
+    return totals;
+  },
+
+  formatTotals(totals) {
+    return Object.entries(totals)
+      .map(([c, a]) => `${c} ${a.toFixed(2)}`)
+      .join(' + ');
+  }
+};
+
+
+// ============================================================
+// TIME HELPERS (24-hour dropdowns)
+// ============================================================
+
+const TimeHelpers = {
+  // Create hour dropdown (00-23)
+  createHourSelect(selectedHour = '') {
+    const select = $.el('select', { className: 'time-hour-select' });
+    select.appendChild($.el('option', { value: '', textContent: '--' }));
+    for (let h = 0; h < 24; h++) {
+      const val = String(h).padStart(2, '0');
+      const opt = $.el('option', { value: val, textContent: val });
+      if (val === selectedHour) opt.selected = true;
+      select.appendChild(opt);
+    }
+    return select;
+  },
+
+  // Create minute dropdown (00, 15, 30, 45)
+  createMinuteSelect(selectedMinute = '') {
+    const select = $.el('select', { className: 'time-minute-select' });
+    select.appendChild($.el('option', { value: '', textContent: '--' }));
+    ['00', '15', '30', '45'].forEach(m => {
+      const opt = $.el('option', { value: m, textContent: m });
+      if (m === selectedMinute) opt.selected = true;
+      select.appendChild(opt);
+    });
+    return select;
+  },
+
+  // Create complete time selector group
+  createTimeSelector(currentTime = '') {
+    const group = $.el('div', { className: 'time-select-group' });
+    
+    let hour = '';
+    let minute = '';
+    if (currentTime && currentTime.includes(':')) {
+      const parts = currentTime.split(':');
+      hour = parts[0] || '';
+      minute = parts[1] || '';
+      // Round minute to nearest option
+      if (minute && !['00', '15', '30', '45'].includes(minute)) {
+        const m = parseInt(minute, 10);
+        if (m < 8) minute = '00';
+        else if (m < 23) minute = '15';
+        else if (m < 38) minute = '30';
+        else if (m < 53) minute = '45';
+        else minute = '00';
+      }
+    }
+    
+    const hourSelect = this.createHourSelect(hour);
+    const minuteSelect = this.createMinuteSelect(minute);
+    
+    group.appendChild(hourSelect);
+    group.appendChild($.el('span', { textContent: ':' }));
+    group.appendChild(minuteSelect);
+    
+    return group;
+  },
+
+  // Get time value from selector group
+  getTimeFromSelector(group) {
+    const hour = group.querySelector('.time-hour-select')?.value || '';
+    const minute = group.querySelector('.time-minute-select')?.value || '';
+    if (!hour && !minute) return '';
+    return `${hour || '00'}:${minute || '00'}`;
+  }
+};
+
 
 // ============================================================
 // DOM HELPERS
@@ -927,7 +1935,6 @@ const $ = {
       } else if (k.startsWith('data-')) {
         el.setAttribute(k, v);
       } else if (k === 'type' && tag.toLowerCase() === 'textarea') {
-        return;
       } else if (k === 'rows' || k === 'cols') {
         el.setAttribute(k, v);
       } else {
@@ -970,10 +1977,10 @@ const Modals = {
 
 const Views = {
   show(name) {
-    ['movesView', 'agentsView', 'scheduleView', 'documentsView']
+    ['movesView', 'agentsView', 'scheduleView', 'documentsView', 'quotesView']
       .forEach(id => $.hide($.get(id)));
 
-    ['navMoves', 'navAgents', 'navSchedule', 'navDocuments']
+    ['navMoves', 'navAgents', 'navSchedule', 'navDocuments', 'navQuotes']
       .forEach(id => {
         const el = $.get(id);
         if (el) el.classList.remove('active');
@@ -983,7 +1990,8 @@ const Views = {
       'moves':     { view: 'movesView',     nav: 'navMoves' },
       'agents':    { view: 'agentsView',    nav: 'navAgents' },
       'schedule':  { view: 'scheduleView',  nav: 'navSchedule' },
-      'documents': { view: 'documentsView', nav: 'navDocuments' }
+      'documents': { view: 'documentsView', nav: 'navDocuments' },
+      'quotes':    { view: 'quotesView',    nav: 'navQuotes' }
     };
 
     const v = map[name];
@@ -996,13 +2004,15 @@ const Views = {
         ScheduleUI.render();
       } else if (name === 'documents') {
         DocumentsTabUI.render();
-      }
+      } else if (name === 'quotes') {
+  QuotesUI.render();
+}
     }
   }
 };
 
 // ============================================================
-// CHANGE: Schedule Export (PDF via browser print)
+// Schedule Export (PDF via browser print)
 // ============================================================
 
 const ScheduleExport = {
@@ -1019,7 +2029,7 @@ const ScheduleExport = {
         time: step.time || '',
         jobCode: job.jobCode || '',
         client: job.clientName || '',
-        task: step.label || '',
+        task: I18n.stepText(step) || '',
         address,
         personnel: step.personnel || '',
         vehicle: step.vehicle || '',
@@ -1032,13 +2042,16 @@ const ScheduleExport = {
     extra.forEach(ej => {
       const taskName = (ej.taskType === 'Custom' && ej.customTaskName)
         ? ej.customTaskName
-        : (ej.taskType || '');
+        : I18n.taskTypeText(ej.taskType || '');
+
       const office = ej.office || Utils.detectOfficeFromAddress(ej.address) || '-';
+      const linked = ej.linkedJobId ? State.getJob(ej.linkedJobId) : null;
+
       rows.push({
         office,
         time: ej.time || '',
-        jobCode: ej.linkedJobCode || '',
-        client: '', // optional (could be derived, but keep safe/simple)
+        jobCode: linked ? (linked.jobCode || '') : (ej.linkedJobCode || ''),
+        client: linked ? (linked.clientName || '') : (ej.linkedJobClientName || ''),
         task: taskName || '',
         address: ej.address || '',
         personnel: ej.personnel || '',
@@ -1132,7 +2145,6 @@ const ScheduleExport = {
     w.document.write(html);
     w.document.close();
 
-    // Wait a tick so styles load, then open print dialog
     setTimeout(() => {
       try { w.focus(); w.print(); } catch (e) {}
     }, 150);
@@ -1212,12 +2224,12 @@ const JobsUI = {
     }
 
     const statusP = $.el('p');
-    statusP.appendChild($.el('strong', { className: `status-label status-${job.status}`, textContent: job.status }));
-    const modes = job.modes && job.modes.length ? job.modes.join(' + ') : 'No mode';
+    statusP.appendChild($.el('strong', { className: `status-label status-${job.status}`, textContent: I18n.statusText(job.status) }));
+    const modes = I18n.modesText(job.modes);
     statusP.appendChild(document.createTextNode(' ' + modes));
     card.appendChild(statusP);
 
-    const typeLabel = job.tradeDirection || '-';
+    const typeLabel = I18n.typeText(job.tradeDirection) || '-';
     const payLabel = job.paymentReceived ? I18n.t('paidLabel') : I18n.t('unpaidLabel');
 
     card.appendChild($.el('p', {
@@ -1250,27 +2262,103 @@ const JobsUI = {
 
     const grid = $.el('div', { className: 'details-grid' });
     const details = [
-      [I18n.t('statusLabel'), job.status],
-      [I18n.t('modeLabel'), job.modes && job.modes.length ? job.modes.join(' + ') : 'No mode'],
-      [I18n.t('origin'), Utils.location(job.originCity, job.originCountry)],
-      [I18n.t('destination'), Utils.location(job.destinationCity, job.destinationCountry)],
-      [I18n.t('fullOriginAddress'), job.originFullAddress || '-'],
-      [I18n.t('fullDestinationAddress'), job.destinationFullAddress || '-'],
-      [I18n.t('weight'), `${job.weight || 0} kg`],
-      [I18n.t('volume'), `${job.volume || 0} m³`],
-      [I18n.t('moveId'), job.jobCode || '-'],
-      [I18n.t('typeLabel'), job.tradeDirection || '-'],
-      [I18n.t('paymentReceived'), job.paymentReceived ? I18n.t('yes') : I18n.t('no')]
-    ];
+  [I18n.t('statusLabel'), I18n.statusText(job.status)],
+  [I18n.t('modeLabel'), I18n.modesText(job.modes)],
+  [I18n.t('origin'), Utils.location(job.originCity, job.originCountry)],
+  [I18n.t('destination'), Utils.location(job.destinationCity, job.destinationCountry)],
+  [I18n.t('fullOriginAddress'), job.originFullAddress || '-'],
+  [I18n.t('fullDestinationAddress'), job.destinationFullAddress || '-'],
+  [I18n.t('moveId'), job.jobCode || '-'],
+  [I18n.t('typeLabel'), I18n.typeText(job.tradeDirection) || '-'],
+  ['Move Manager', job.moveManager || '-'],
+  [I18n.t('paymentReceived'), job.paymentReceived ? I18n.t('yes') : I18n.t('no')]
+];
 
-    details.forEach(([label, value]) => {
-      const p = $.el('p');
-      p.appendChild($.el('strong', { textContent: label + ': ' }));
-      p.appendChild(document.createTextNode(value));
-      grid.appendChild(p);
-    });
+// Add shipment contents info
+const contents = (job.shipmentContents || ['HHE']).join(' + ');
+details.push(['Shipment Contents', contents]);
 
-    container.appendChild(grid);
+details.forEach(([label, value]) => {
+  const p = $.el('p');
+  p.appendChild($.el('strong', { textContent: label + ': ' }));
+  p.appendChild(document.createTextNode(value));
+  grid.appendChild(p);
+});
+
+container.appendChild(grid);
+
+// Mode-specific information boxes
+const modeInfoContainer = $.el('div', { style: 'margin-top: 16px;' });
+
+if (job.modes && job.modes.includes('Sea')) {
+  const seaBox = $.el('div', { className: 'mode-info-box sea' });
+  seaBox.appendChild($.el('h5', { textContent: 'Sea Freight Details' }));
+  const seaRows = [
+    ['Volume', `${job.seaVolume || 0} cbm`],
+    ['Container', job.containerDetails || '-']
+  ];
+  seaRows.forEach(([label, value]) => {
+    const row = $.el('div', { className: 'mode-info-row' });
+    row.appendChild($.el('span', { className: 'mode-info-label', textContent: label }));
+    row.appendChild($.el('span', { className: 'mode-info-value', textContent: value }));
+    seaBox.appendChild(row);
+  });
+  modeInfoContainer.appendChild(seaBox);
+}
+
+if (job.modes && job.modes.includes('Air')) {
+  const airBox = $.el('div', { className: 'mode-info-box air' });
+  airBox.appendChild($.el('h5', { textContent: 'Air Freight Details' }));
+  const airRows = [
+    ['Volume', `${job.airVolume || 0} cbm`],
+    ['Cargo Weight', `${job.airCargoWeight || 0} kg`],
+    ['Chargeable Weight (ACW)', `${job.airACW || 0} kg`]
+  ];
+  airRows.forEach(([label, value]) => {
+    const row = $.el('div', { className: 'mode-info-row' });
+    row.appendChild($.el('span', { className: 'mode-info-label', textContent: label }));
+    row.appendChild($.el('span', { className: 'mode-info-value', textContent: value }));
+    airBox.appendChild(row);
+  });
+  modeInfoContainer.appendChild(airBox);
+}
+
+if (job.modes && job.modes.includes('Land')) {
+  const landBox = $.el('div', { className: 'mode-info-box land' });
+  landBox.appendChild($.el('h5', { textContent: 'Land Freight Details' }));
+  const landRows = [
+    ['Volume', `${job.landVolume || 0} cbm`]
+  ];
+  landRows.forEach(([label, value]) => {
+    const row = $.el('div', { className: 'mode-info-row' });
+    row.appendChild($.el('span', { className: 'mode-info-label', textContent: label }));
+    row.appendChild($.el('span', { className: 'mode-info-value', textContent: value }));
+    landBox.appendChild(row);
+  });
+  modeInfoContainer.appendChild(landBox);
+}
+
+// Vehicle information if present
+if (job.shipmentContents && job.shipmentContents.includes('Vehicle') && job.vehicleType) {
+  const vehicleBox = $.el('div', { className: 'mode-info-box vehicle' });
+  vehicleBox.appendChild($.el('h5', { textContent: 'Vehicle Details' }));
+  const vehicleRows = [
+    ['Type', job.vehicleType || '-'],
+    ['Make/Model', `${job.vehicleMake || '-'} ${job.vehicleModel || ''}`.trim()],
+    ['Year', job.vehicleYear || '-'],
+    ['VIN', job.vehicleVIN || '-'],
+    ['Condition', job.vehicleCondition || '-']
+  ];
+  vehicleRows.forEach(([label, value]) => {
+    const row = $.el('div', { className: 'mode-info-row' });
+    row.appendChild($.el('span', { className: 'mode-info-label', textContent: label }));
+    row.appendChild($.el('span', { className: 'mode-info-value', textContent: value }));
+    vehicleBox.appendChild(row);
+  });
+  modeInfoContainer.appendChild(vehicleBox);
+}
+
+container.appendChild(modeInfoContainer);
     container.appendChild(this.paymentSection(job));
     container.appendChild(this.stepsSection(job));
     this.renderAgents(job);
@@ -1319,198 +2407,951 @@ const JobsUI = {
     return section;
   },
 
-  stepsSection(job) {
-    const section = $.el('div', { className: 'steps-section' });
+  // Move Steps: collapsible cards with progress indicator
+stepsSection(job) {
+  const section = $.el('div', { className: 'steps-section' });
 
-    // Title row + Add Additional Job button (no separate section anymore)
-    const titleRow = $.el('div', { style: 'display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;' });
-    titleRow.appendChild($.el('h4', { textContent: I18n.t('moveSteps') }));
+  const headerRow = $.el('div', {
+    style: 'display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px;'
+  });
+  headerRow.appendChild($.el('h4', { textContent: I18n.t('moveSteps'), style: 'margin:0;' }));
 
-    const addBtn = $.el('button', {
-      type: 'button',
-      textContent: (State.lang === 'tr') ? 'Ek İş Adımı Ekle' : 'Add Additional Job Step'
+  const addBtn = $.el('button', { type: 'button', textContent: I18n.t('addAdditionalJob') });
+  headerRow.appendChild(addBtn);
+
+  section.appendChild(headerRow);
+
+  const steps = job.steps || [];
+  
+  // Progress bar
+  if (steps.length > 0) {
+    const progressBar = $.el('div', { className: 'steps-progress-bar' });
+    let completedCount = 0;
+    let scheduledCount = 0;
+    
+    steps.forEach(step => {
+      const segment = $.el('div', { className: 'steps-progress-segment' });
+      if (step.date) {
+        const stepDate = new Date(step.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (stepDate < today) {
+          segment.classList.add('completed');
+          completedCount++;
+        } else {
+          segment.classList.add('scheduled');
+          scheduledCount++;
+        }
+      }
+      progressBar.appendChild(segment);
     });
-
-    addBtn.addEventListener('click', () => {
-      // Create a new move-linked additional job (step-like)
-      if (!Array.isArray(job.additionalJobs)) job.additionalJobs = [];
-
-      job.additionalJobs.push({
-        id: Date.now(),               // stable id for this extra step
-        label: (State.lang === 'tr') ? 'Ek İş' : 'Additional Job',
-        date: '',
-        time: '',
-        personnel: '',
-        vehicle: '',
-        address: '',
-        notes: ''
-      });
-
-      Storage.saveJobs();
-      // Re-render both move details + schedule
-      this.showDetails(job);
-      ScheduleUI.render();
-      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    
+    const progressText = $.el('span', { 
+      className: 'steps-progress-text',
+      textContent: `${completedCount}/${steps.length} completed`
     });
+    progressBar.appendChild(progressText);
+    section.appendChild(progressBar);
+  }
 
-    titleRow.appendChild(addBtn);
-    section.appendChild(titleRow);
+  const container = $.el('div', { id: 'stepsContainer' });
 
-    const container = $.el('div', { id: 'stepsContainer' });
+  if (steps.length === 0) {
+    container.appendChild($.el('p', { textContent: I18n.t('noStepsDefined') }));
+  } else {
+    steps.forEach((step, idx) => container.appendChild(this.stepCardCollapsible(step, idx, job)));
+  }
 
-    const steps = job.steps || [];
-    const additional = job.additionalJobs || [];
+  // Linked additional jobs for this move
+  const linked = ScheduleExtraJobs.getLinkedToJob(job.id);
+  linked.forEach(item => {
+    container.appendChild(this.linkedExtraJobCollapsible(job, item));
+  });
 
-    if (steps.length === 0 && additional.length === 0) {
-      container.appendChild($.el('p', { textContent: I18n.t('noStepsDefined') }));
+  section.appendChild(container);
+
+  // Inline add form (hidden until button click)
+  const addForm = this.addAdditionalJobForm(job);
+  addForm.classList.add('hidden');
+
+  addBtn.addEventListener('click', () => {
+    addForm.classList.toggle('hidden');
+    if (!addForm.classList.contains('hidden')) addForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  section.appendChild(addForm);
+  return section;
+},
+
+  // Collapsible step card for Move Details
+stepCardCollapsible(step, idx, job) {
+  const def = CONFIG.STEP_DEFINITIONS[step.id] || { fields: [] };
+  const card = $.el('div', { className: 'step-card-collapsible' });
+
+  // Determine status
+  let status = 'pending';
+  if (step.date) {
+    const stepDate = new Date(step.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    status = stepDate < today ? 'completed' : 'scheduled';
+  }
+
+  // Collapse Header
+  const header = $.el('div', { className: 'step-card-collapse-header' });
+  
+  const headerLeft = $.el('div', { className: 'step-card-header-left' });
+  
+  // Status indicator
+  const statusIndicator = $.el('div', { className: `step-status-indicator ${status}` });
+  statusIndicator.textContent = status === 'completed' ? '✓' : (status === 'scheduled' ? '•' : '○');
+  headerLeft.appendChild(statusIndicator);
+  
+  // Title and subtitle
+  const titleGroup = $.el('div');
+  titleGroup.appendChild($.el('div', { className: 'step-card-title', textContent: I18n.stepText(step) }));
+  
+  const subtitle = $.el('div', { className: 'step-card-subtitle' });
+  if (step.date) {
+    subtitle.appendChild($.el('span', { textContent: Utils.formatDate(step.date) }));
+  }
+  if (step.time) {
+    subtitle.appendChild($.el('span', { textContent: step.time }));
+  }
+  if (step.personnel) {
+    subtitle.appendChild($.el('span', { textContent: step.personnel }));
+  }
+  titleGroup.appendChild(subtitle);
+  headerLeft.appendChild(titleGroup);
+  
+  header.appendChild(headerLeft);
+  
+  // Arrow
+  const arrow = $.el('span', { className: 'step-card-arrow', textContent: '▼' });
+  header.appendChild(arrow);
+  
+  card.appendChild(header);
+
+  // Collapse Body
+  const body = $.el('div', { className: 'step-card-collapse-body hidden' });
+  
+  // View section
+  const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
+  const officeComputed = step.office || Utils.detectOfficeForStep(step, job) || '-';
+  const addrShort = (step.address || step.pickupAddress || step.deliveryAddress || '').trim();
+  const addrView = addrShort ? (addrShort.length > 120 ? (addrShort.slice(0, 120) + '...') : addrShort) : '-';
+
+  const rows = [
+    [(State.lang === 'tr') ? 'Tarih' : 'Date', step.date ? Utils.formatDate(step.date) : '-'],
+    [I18n.t('time'), step.time || '-'],
+    [I18n.t('office'), officeComputed],
+    [I18n.t('personnel'), step.personnel || '-'],
+    [I18n.t('vehicle'), step.vehicle || '-']
+  ];
+
+  if (def.fields.includes('address')) rows.push([I18n.t('address'), addrView]);
+  if (def.fields.includes('portDetails')) rows.push([I18n.t('portDetails'), step.portDetails || '-']);
+  if (def.fields.includes('pickupAirport')) rows.push([I18n.t('pickupAirport'), step.pickupAirport || '-']);
+  if (def.fields.includes('deliveryAirport')) rows.push([I18n.t('deliveryAirport'), step.deliveryAirport || '-']);
+  if (def.fields.includes('pickupAddress')) rows.push([I18n.t('pickupAddress'), step.pickupAddress || '-']);
+  if (def.fields.includes('deliveryAddress')) rows.push([I18n.t('deliveryAddress'), step.deliveryAddress || '-']);
+  rows.push([I18n.t('notesLabel'), step.notes || '-']);
+
+  rows.forEach(([label, value]) => {
+    const r = $.el('div', { className: 'schedule-field-row' });
+    r.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
+    r.appendChild($.el('span', { className: 'schedule-field-value', textContent: value }));
+    viewBox.appendChild(r);
+  });
+  body.appendChild(viewBox);
+
+  // Edit section (hidden by default)
+  const editBox = $.el('div', { className: 'step-card-body hidden' });
+
+  // Date input
+  const dateDiv = $.el('div');
+  dateDiv.appendChild($.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' }));
+  dateDiv.appendChild($.el('input', { type: 'date', className: 'step-date-input', value: step.date || '' }));
+  editBox.appendChild(dateDiv);
+
+  // Time selector (24-hour dropdowns)
+  const timeDiv = $.el('div');
+  timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
+  const timeSelector = TimeHelpers.createTimeSelector(step.time || '');
+  timeSelector.classList.add('step-time-selector');
+  timeDiv.appendChild(timeSelector);
+  editBox.appendChild(timeDiv);
+
+  // Personnel
+  const personnelDiv = $.el('div');
+  personnelDiv.appendChild($.el('label', { textContent: I18n.t('personnel') }));
+  personnelDiv.appendChild($.el('input', { type: 'text', className: 'step-personnel-input', value: step.personnel || '' }));
+  editBox.appendChild(personnelDiv);
+
+  // Vehicle
+  const vehicleDiv = $.el('div');
+  vehicleDiv.appendChild($.el('label', { textContent: I18n.t('vehicle') }));
+  vehicleDiv.appendChild($.el('input', { type: 'text', className: 'step-vehicle-input', value: step.vehicle || '' }));
+  editBox.appendChild(vehicleDiv);
+
+  // Office select
+  const officeDiv = $.el('div');
+  officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
+  const officeSelect = $.el('select', { className: 'step-office-select' });
+  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+  CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
+  officeSelect.value = step.office || '';
+  officeDiv.appendChild(officeSelect);
+  editBox.appendChild(officeDiv);
+
+  if (def.fields.includes('address')) {
+    const div = $.el('div', { className: 'full-width' });
+    div.appendChild($.el('label', { textContent: I18n.t('address') }));
+    div.appendChild($.el('textarea', { rows: '2', className: 'step-address-input', textContent: step.address || '' }));
+    editBox.appendChild(div);
+  }
+  if (def.fields.includes('portDetails')) {
+    const div = $.el('div', { className: 'full-width' });
+    div.appendChild($.el('label', { textContent: I18n.t('portDetails') }));
+    div.appendChild($.el('textarea', { rows: '2', className: 'step-port-input', textContent: step.portDetails || '' }));
+    editBox.appendChild(div);
+  }
+  if (def.fields.includes('pickupAirport')) {
+    const div = $.el('div');
+    div.appendChild($.el('label', { textContent: I18n.t('pickupAirport') }));
+    div.appendChild($.el('input', { type: 'text', className: 'step-pickup-airport-input', value: step.pickupAirport || '' }));
+    editBox.appendChild(div);
+  }
+  if (def.fields.includes('deliveryAirport')) {
+    const div = $.el('div');
+    div.appendChild($.el('label', { textContent: I18n.t('deliveryAirport') }));
+    div.appendChild($.el('input', { type: 'text', className: 'step-delivery-airport-input', value: step.deliveryAirport || '' }));
+    editBox.appendChild(div);
+  }
+  if (def.fields.includes('pickupAddress')) {
+    const div = $.el('div', { className: 'full-width' });
+    div.appendChild($.el('label', { textContent: I18n.t('pickupAddress') }));
+    div.appendChild($.el('textarea', { rows: '2', className: 'step-pickup-address-input', textContent: step.pickupAddress || '' }));
+    editBox.appendChild(div);
+  }
+  if (def.fields.includes('deliveryAddress')) {
+    const div = $.el('div', { className: 'full-width' });
+    div.appendChild($.el('label', { textContent: I18n.t('deliveryAddress') }));
+    div.appendChild($.el('textarea', { rows: '2', className: 'step-delivery-address-input', textContent: step.deliveryAddress || '' }));
+    editBox.appendChild(div);
+  }
+
+  const notesDiv = $.el('div', { className: 'full-width' });
+  notesDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
+  notesDiv.appendChild($.el('textarea', { rows: '2', className: 'step-notes-input', textContent: step.notes || '' }));
+  editBox.appendChild(notesDiv);
+
+  body.appendChild(editBox);
+
+  // Actions
+  const actions = $.el('div', { style: 'margin-top:12px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;' });
+
+  const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit') });
+  const saveBtn = $.el('button', { type: 'button', className: 'hidden step-save-btn', textContent: I18n.t('save') });
+  const cancelBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('cancel') });
+
+  editBtn.addEventListener('click', () => {
+    $.hide(viewBox);
+    $.show(editBox);
+    $.hide(editBtn);
+    $.show(saveBtn);
+    $.show(cancelBtn);
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    this.showDetails(job);
+  });
+
+  saveBtn.addEventListener('click', () => {
+    step.date = card.querySelector('.step-date-input').value || '';
+    const timeSelector = card.querySelector('.step-time-selector');
+    step.time = TimeHelpers.getTimeFromSelector(timeSelector);
+    step.personnel = card.querySelector('.step-personnel-input').value.trim();
+    step.vehicle = card.querySelector('.step-vehicle-input').value.trim();
+    step.office = card.querySelector('.step-office-select').value || '';
+
+    if (def.fields.includes('address')) step.address = card.querySelector('.step-address-input').value.trim();
+    if (def.fields.includes('portDetails')) step.portDetails = card.querySelector('.step-port-input').value.trim();
+    if (def.fields.includes('pickupAirport')) step.pickupAirport = card.querySelector('.step-pickup-airport-input').value.trim();
+    if (def.fields.includes('deliveryAirport')) step.deliveryAirport = card.querySelector('.step-delivery-airport-input').value.trim();
+    if (def.fields.includes('pickupAddress')) step.pickupAddress = card.querySelector('.step-pickup-address-input').value.trim();
+    if (def.fields.includes('deliveryAddress')) step.deliveryAddress = card.querySelector('.step-delivery-address-input').value.trim();
+    step.notes = card.querySelector('.step-notes-input').value.trim();
+
+    Storage.saveJobs();
+    ScheduleUI.render();
+    if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    alert(I18n.t('stepSaved'));
+    this.showDetails(job);
+  });
+
+  actions.appendChild(editBtn);
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  body.appendChild(actions);
+
+  card.appendChild(body);
+
+  // Toggle collapse on header click
+  header.addEventListener('click', () => {
+    const isExpanded = !body.classList.contains('hidden');
+    if (isExpanded) {
+      body.classList.add('hidden');
+      header.classList.remove('expanded');
+      arrow.classList.remove('expanded');
     } else {
-      // 1) Normal generated steps
-      steps.forEach((step, idx) => {
-        container.appendChild(this.compactStepCard(job, step, idx, false));
-      });
-
-      // 2) Additional jobs as steps (no divider / no separate section)
-      additional.forEach((extra, idx) => {
-        container.appendChild(this.compactStepCard(job, extra, idx, true));
-      });
+      body.classList.remove('hidden');
+      header.classList.add('expanded');
+      arrow.classList.add('expanded');
     }
+  });
 
-    section.appendChild(container);
-    return section;
-  },
+  return card;
+},
+  
+  // Collapsible linked extra job card
+linkedExtraJobCollapsible(job, item) {
+  const { dateStr, ej } = item;
+  const card = $.el('div', { className: 'extra-job-card-collapsible' });
 
-  // NEW: Compact step UI (same pattern as Schedule cards)
-  // isExtra=true means this is job.additionalJobs[] instead of job.steps[]
-  compactStepCard(job, step, idx, isExtra) {
+  const taskName = (ej.taskType === 'Custom' && ej.customTaskName)
+    ? ej.customTaskName
+    : I18n.taskTypeText(ej.taskType || '');
+
+  // Collapse Header
+  const header = $.el('div', { className: 'step-card-collapse-header' });
+  
+  const headerLeft = $.el('div', { className: 'step-card-header-left' });
+  
+  // Status indicator (extra jobs shown as scheduled)
+  const statusIndicator = $.el('div', { className: 'step-status-indicator scheduled' });
+  statusIndicator.textContent = '+';
+  headerLeft.appendChild(statusIndicator);
+  
+  const titleGroup = $.el('div');
+  titleGroup.appendChild($.el('div', { className: 'step-card-title', textContent: taskName || 'Additional Job' }));
+  
+  const subtitle = $.el('div', { className: 'step-card-subtitle' });
+  subtitle.appendChild($.el('span', { textContent: Utils.formatDate(dateStr) }));
+  if (ej.time) {
+    subtitle.appendChild($.el('span', { textContent: ej.time }));
+  }
+  titleGroup.appendChild(subtitle);
+  headerLeft.appendChild(titleGroup);
+  
+  header.appendChild(headerLeft);
+  
+  const arrow = $.el('span', { className: 'step-card-arrow', textContent: '▼' });
+  header.appendChild(arrow);
+  
+  card.appendChild(header);
+
+  // Collapse Body
+  const body = $.el('div', { className: 'step-card-collapse-body hidden' });
+
+  // View section
+  const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
+  const office = ej.office || Utils.detectOfficeFromAddress(ej.address) || '-';
+  const addr = (ej.address || '').trim();
+  const addrView = addr ? (addr.length > 120 ? (addr.slice(0, 120) + '...') : addr) : '-';
+
+  const vRows = [
+    [(State.lang === 'tr') ? 'Tarih' : 'Date', Utils.formatDate(dateStr)],
+    [I18n.t('time'), ej.time || '-'],
+    [I18n.t('office'), office],
+    [I18n.t('personnel'), ej.personnel || '-'],
+    [I18n.t('vehicle'), ej.vehicle || '-'],
+    [I18n.t('address'), addrView],
+    [I18n.t('notesLabel'), ej.notes || '-']
+  ];
+
+  vRows.forEach(([label, value]) => {
+    const r = $.el('div', { className: 'schedule-field-row' });
+    r.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
+    r.appendChild($.el('span', { className: 'schedule-field-value', textContent: value }));
+    viewBox.appendChild(r);
+  });
+
+  body.appendChild(viewBox);
+
+  // Edit section
+  const editBox = $.el('div', { className: 'step-card-body hidden' });
+
+  const dateDiv = $.el('div');
+  dateDiv.appendChild($.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' }));
+  dateDiv.appendChild($.el('input', { type: 'text', value: Utils.formatDate(dateStr), disabled: true }));
+  editBox.appendChild(dateDiv);
+
+  const timeDiv = $.el('div');
+  timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
+  const timeSelector = TimeHelpers.createTimeSelector(ej.time || '');
+  timeSelector.classList.add('lej-time-selector');
+  timeDiv.appendChild(timeSelector);
+  editBox.appendChild(timeDiv);
+
+  const officeDiv = $.el('div');
+  officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
+  const officeSelect = $.el('select', { className: 'lej-office' });
+  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+  CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
+  officeSelect.value = ej.office || '';
+  officeDiv.appendChild(officeSelect);
+  editBox.appendChild(officeDiv);
+
+  const pDiv = $.el('div');
+  pDiv.appendChild($.el('label', { textContent: I18n.t('personnel') }));
+  pDiv.appendChild($.el('input', { type: 'text', className: 'lej-personnel', value: ej.personnel || '' }));
+  editBox.appendChild(pDiv);
+
+  const vDiv = $.el('div');
+  vDiv.appendChild($.el('label', { textContent: I18n.t('vehicle') }));
+  vDiv.appendChild($.el('input', { type: 'text', className: 'lej-vehicle', value: ej.vehicle || '' }));
+  editBox.appendChild(vDiv);
+
+  const aDiv = $.el('div', { className: 'full-width' });
+  aDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
+  aDiv.appendChild($.el('textarea', { rows: '2', className: 'lej-address', textContent: ej.address || '' }));
+  editBox.appendChild(aDiv);
+
+  const nDiv = $.el('div', { className: 'full-width' });
+  nDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
+  nDiv.appendChild($.el('textarea', { rows: '2', className: 'lej-notes', textContent: ej.notes || '' }));
+  editBox.appendChild(nDiv);
+
+  body.appendChild(editBox);
+
+  const actions = $.el('div', { style: 'margin-top:12px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;' });
+
+  const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit') });
+  const saveBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('save') });
+  const cancelBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('cancel') });
+  const deleteBtn = $.el('button', { type: 'button', textContent: I18n.t('delete') });
+
+  editBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    $.hide(viewBox);
+    $.show(editBox);
+    $.hide(editBtn);
+    $.show(saveBtn);
+    $.show(cancelBtn);
+  });
+
+  cancelBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    this.showDetails(job);
+  });
+
+  saveBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const timeSelector = card.querySelector('.lej-time-selector');
+    ej.time = TimeHelpers.getTimeFromSelector(timeSelector);
+    ej.office = card.querySelector('.lej-office').value || '';
+    ej.personnel = card.querySelector('.lej-personnel').value.trim();
+    ej.vehicle = card.querySelector('.lej-vehicle').value.trim();
+    ej.address = card.querySelector('.lej-address').value.trim();
+    ej.notes = card.querySelector('.lej-notes').value.trim();
+
+    Storage.saveScheduleExtraJobs();
+    ScheduleUI.render();
+    if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    const current = State.getJob(State.selectedJobId);
+    if (current) this.showDetails(current);
+  });
+
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
+    ScheduleExtraJobs.deleteById(dateStr, ej.id);
+    Storage.saveScheduleExtraJobs();
+    ScheduleUI.render();
+    if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    const current = State.getJob(State.selectedJobId);
+    if (current) this.showDetails(current);
+  });
+
+  actions.appendChild(editBtn);
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  actions.appendChild(deleteBtn);
+  body.appendChild(actions);
+
+  card.appendChild(body);
+
+  // Toggle collapse
+  header.addEventListener('click', () => {
+    const isExpanded = !body.classList.contains('hidden');
+    if (isExpanded) {
+      body.classList.add('hidden');
+      header.classList.remove('expanded');
+      arrow.classList.remove('expanded');
+    } else {
+      body.classList.remove('hidden');
+      header.classList.add('expanded');
+      arrow.classList.add('expanded');
+    }
+  });
+
+  return card;
+},
+  
+  // Compact step card: view mode + edit mode
+  stepCard(step, idx, job) {
+    const def = CONFIG.STEP_DEFINITIONS[step.id] || { fields: [] };
     const card = $.el('div', { className: 'step-card' });
 
-    // Header (compact)
     const header = $.el('div', { className: 'step-card-header' });
-    header.appendChild($.el('div', {
-      className: 'step-card-header-title',
-      textContent: step.label || (isExtra ? ((State.lang === 'tr') ? 'Ek İş' : 'Additional Job') : 'Step')
-    }));
-
-    const right = $.el('div', { style: 'display:flex; gap:8px; align-items:center;' });
-
-    // Optional delete for additional jobs only (steps are generated)
-    if (isExtra) {
-      const delBtn = $.el('button', {
-        type: 'button',
-        textContent: I18n.t('delete'),
-        style: 'padding:4px 10px; font-size:12px; background:#fee2e2; color:#991b1b; border-color:#fecaca;'
-      });
-      delBtn.addEventListener('click', () => {
-        if (!confirm((State.lang === 'tr') ? 'Bu ek iş silinsin mi?' : 'Delete this additional job?')) return;
-        job.additionalJobs.splice(idx, 1);
-        Storage.saveJobs();
-        JobsUI.showDetails(job);
-        ScheduleUI.render();
-        if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
-      });
-      right.appendChild(delBtn);
-    }
-
-    const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit'), style: 'padding:4px 10px; font-size:12px;' });
-    header.appendChild(right);
+    header.appendChild($.el('div', { className: 'step-card-header-title', textContent: I18n.stepText(step) }));
+    header.appendChild($.el('div', { innerHTML: `#${idx + 1}`, style: 'font-size: 11px; color:#6b7280;' }));
     card.appendChild(header);
 
-    // View mode
-    const viewBox = $.el('div', { className: 'schedule-step-fields-view' }); // reuse your existing compact view style
-    const viewFields = [
+    // ---- compact view box ----
+    const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
+
+    const officeComputed = step.office || Utils.detectOfficeForStep(step, job) || '-';
+    const addrShort = (step.address || step.pickupAddress || step.deliveryAddress || '').trim();
+    const addrView = addrShort ? (addrShort.length > 120 ? (addrShort.slice(0, 120) + '…') : addrShort) : '-';
+
+    const rows = [
       [(State.lang === 'tr') ? 'Tarih' : 'Date', step.date ? Utils.formatDate(step.date) : '-'],
       [I18n.t('time'), step.time || '-'],
+      [I18n.t('office'), officeComputed],
       [I18n.t('personnel'), step.personnel || '-'],
-      [I18n.t('vehicle'), step.vehicle || '-'],
-      [I18n.t('address'), step.address || '-'],
-      [I18n.t('notesLabel'), step.notes || '-']
+      [I18n.t('vehicle'), step.vehicle || '-']
     ];
 
-    viewFields.forEach(([label, value]) => {
-      const row = $.el('div', { className: 'schedule-field-row' });
-      row.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
-      row.appendChild($.el('span', { className: 'schedule-field-value', textContent: value }));
-      viewBox.appendChild(row);
+    if (def.fields.includes('address')) rows.push([I18n.t('address'), addrView]);
+    if (def.fields.includes('portDetails')) rows.push([I18n.t('portDetails'), step.portDetails || '-']);
+    if (def.fields.includes('pickupAirport')) rows.push([I18n.t('pickupAirport'), step.pickupAirport || '-']);
+    if (def.fields.includes('deliveryAirport')) rows.push([I18n.t('deliveryAirport'), step.deliveryAirport || '-']);
+    if (def.fields.includes('pickupAddress')) rows.push([I18n.t('pickupAddress'), step.pickupAddress || '-']);
+    if (def.fields.includes('deliveryAddress')) rows.push([I18n.t('deliveryAddress'), step.deliveryAddress || '-']);
+    rows.push([I18n.t('notesLabel'), step.notes || '-']);
+
+    rows.forEach(([label, value]) => {
+      const r = $.el('div', { className: 'schedule-field-row' });
+      r.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
+      r.appendChild($.el('span', { className: 'schedule-field-value', textContent: value }));
+      viewBox.appendChild(r);
     });
+    card.appendChild(viewBox);
 
-    // Edit mode
-    const editBox = $.el('div', { className: 'schedule-step-fields-edit hidden' });
+    // ---- full edit body (hidden by default) ----
+    const body = $.el('div', { className: 'step-card-body hidden' });
 
-    // Date input (type=date)
-    const dateDiv = $.el('div');
-    dateDiv.appendChild($.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' }));
-    dateDiv.appendChild($.el('input', { type: 'date', className: 'ms-date', value: step.date || '' }));
-    editBox.appendChild(dateDiv);
+    const baseFields = [
+      [(State.lang === 'tr') ? 'Tarih' : 'Date', 'date', 'date'],
+      [I18n.t('time'), 'time', 'time'],
+      [I18n.t('personnel'), 'personnel', 'text'],
+      [I18n.t('vehicle'), 'vehicle', 'text']
+    ];
 
-    // Time, personnel, vehicle
-    [
-      [I18n.t('time'), 'time', 'time', 'ms-time'],
-      [I18n.t('personnel'), 'personnel', 'text', 'ms-personnel'],
-      [I18n.t('vehicle'), 'vehicle', 'text', 'ms-vehicle']
-    ].forEach(([label, field, type, cls]) => {
+    baseFields.forEach(([label, field, type]) => {
       const div = $.el('div');
       div.appendChild($.el('label', { textContent: label }));
-      div.appendChild($.el('input', { type, className: cls, value: step[field] || '' }));
-      editBox.appendChild(div);
+      div.appendChild($.el('input', { type, className: `step-${field}-input`, value: step[field] || '' }));
+      body.appendChild(div);
     });
 
-    // Address + Notes
-    const addrDiv = $.el('div', { className: 'full-width' });
-    addrDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
-    addrDiv.appendChild($.el('textarea', { rows: '2', className: 'ms-address', textContent: step.address || '' }));
-    editBox.appendChild(addrDiv);
+    // Office select
+    const officeDiv = $.el('div');
+    officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
+    const officeSelect = $.el('select', { className: 'step-office-select' });
+    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+    CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
+    officeSelect.value = step.office || '';
+    officeDiv.appendChild(officeSelect);
+    body.appendChild(officeDiv);
+
+    if (def.fields.includes('address')) {
+      const div = $.el('div', { className: 'full-width' });
+      div.appendChild($.el('label', { textContent: I18n.t('address') }));
+      div.appendChild($.el('textarea', { rows: '2', className: 'step-address-input', textContent: step.address || '' }));
+      body.appendChild(div);
+    }
+    if (def.fields.includes('portDetails')) {
+      const div = $.el('div', { className: 'full-width' });
+      div.appendChild($.el('label', { textContent: I18n.t('portDetails') }));
+      div.appendChild($.el('textarea', { rows: '2', className: 'step-port-input', textContent: step.portDetails || '' }));
+      body.appendChild(div);
+    }
+    if (def.fields.includes('pickupAirport')) {
+      const div = $.el('div');
+      div.appendChild($.el('label', { textContent: I18n.t('pickupAirport') }));
+      div.appendChild($.el('input', { type: 'text', className: 'step-pickup-airport-input', value: step.pickupAirport || '' }));
+      body.appendChild(div);
+    }
+    if (def.fields.includes('deliveryAirport')) {
+      const div = $.el('div');
+      div.appendChild($.el('label', { textContent: I18n.t('deliveryAirport') }));
+      div.appendChild($.el('input', { type: 'text', className: 'step-delivery-airport-input', value: step.deliveryAirport || '' }));
+      body.appendChild(div);
+    }
+    if (def.fields.includes('pickupAddress')) {
+      const div = $.el('div', { className: 'full-width' });
+      div.appendChild($.el('label', { textContent: I18n.t('pickupAddress') }));
+      div.appendChild($.el('textarea', { rows: '2', className: 'step-pickup-address-input', textContent: step.pickupAddress || '' }));
+      body.appendChild(div);
+    }
+    if (def.fields.includes('deliveryAddress')) {
+      const div = $.el('div', { className: 'full-width' });
+      div.appendChild($.el('label', { textContent: I18n.t('deliveryAddress') }));
+      div.appendChild($.el('textarea', { rows: '2', className: 'step-delivery-address-input', textContent: step.deliveryAddress || '' }));
+      body.appendChild(div);
+    }
 
     const notesDiv = $.el('div', { className: 'full-width' });
     notesDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
-    notesDiv.appendChild($.el('textarea', { rows: '2', className: 'ms-notes', textContent: step.notes || '' }));
-    editBox.appendChild(notesDiv);
+    notesDiv.appendChild($.el('textarea', { rows: '2', className: 'step-notes-input', textContent: step.notes || '' }));
+    body.appendChild(notesDiv);
 
-    const actions = $.el('div', { style: 'display:flex; justify-content:flex-end; gap:8px; margin-top:10px;' });
-    const saveBtn = $.el('button', { type: 'button', textContent: I18n.t('save') });
-    const cancelBtn = $.el('button', { type: 'button', textContent: I18n.t('cancel') });
+    card.appendChild(body);
 
-    saveBtn.addEventListener('click', () => {
-      step.date = card.querySelector('.ms-date').value || '';
-      step.time = card.querySelector('.ms-time').value || '';
-      step.personnel = card.querySelector('.ms-personnel').value.trim();
-      step.vehicle = card.querySelector('.ms-vehicle').value.trim();
-      step.address = card.querySelector('.ms-address').value.trim();
-      step.notes = card.querySelector('.ms-notes').value.trim();
+    // ---- actions ----
+    const actions = $.el('div', { style: 'margin-top:6px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;' });
 
-      Storage.saveJobs();
-
-      // Keep schedule in sync
-      ScheduleUI.render();
-      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
-
-      // Re-render move details so view mode updates
-      JobsUI.showDetails(job);
-    });
-
-    cancelBtn.addEventListener('click', () => {
-      JobsUI.showDetails(job);
-    });
-
-    actions.appendChild(saveBtn);
-    actions.appendChild(cancelBtn);
+    const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit') });
+    const saveBtn = $.el('button', { type: 'button', className: 'hidden step-save-btn', textContent: I18n.t('save') });
+    const cancelBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('cancel') });
 
     editBtn.addEventListener('click', () => {
       $.hide(viewBox);
-      $.show(editBox);
+      $.show(body);
       $.hide(editBtn);
-      $.show(actions);
+      $.show(saveBtn);
+      $.show(cancelBtn);
     });
 
-    right.appendChild(editBtn);
+    cancelBtn.addEventListener('click', () => {
+      // easiest and safest: re-render details to reset edits
+      this.showDetails(job);
+    });
+
+    saveBtn.addEventListener('click', () => {
+      step.date = card.querySelector('.step-date-input').value || '';
+      step.time = card.querySelector('.step-time-input').value || '';
+      step.personnel = card.querySelector('.step-personnel-input').value.trim();
+      step.vehicle = card.querySelector('.step-vehicle-input').value.trim();
+      step.office = card.querySelector('.step-office-select').value || '';
+
+      if (def.fields.includes('address')) step.address = card.querySelector('.step-address-input').value.trim();
+      if (def.fields.includes('portDetails')) step.portDetails = card.querySelector('.step-port-input').value.trim();
+      if (def.fields.includes('pickupAirport')) step.pickupAirport = card.querySelector('.step-pickup-airport-input').value.trim();
+      if (def.fields.includes('deliveryAirport')) step.deliveryAirport = card.querySelector('.step-delivery-airport-input').value.trim();
+      if (def.fields.includes('pickupAddress')) step.pickupAddress = card.querySelector('.step-pickup-address-input').value.trim();
+      if (def.fields.includes('deliveryAddress')) step.deliveryAddress = card.querySelector('.step-delivery-address-input').value.trim();
+      step.notes = card.querySelector('.step-notes-input').value.trim();
+
+      Storage.saveJobs();
+      ScheduleUI.render();
+      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+      alert(I18n.t('stepSaved'));
+      this.showDetails(job);
+    });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+    card.appendChild(actions);
+    return card;
+  },
+
+  // Linked extra job shown as a step card in move details (compact + edit)
+  linkedExtraJobAsStepCard(job, item) {
+    const { dateStr, ej } = item;
+    const card = $.el('div', { className: 'step-card' });
+
+    const header = $.el('div', { className: 'step-card-header' });
+    const taskName = (ej.taskType === 'Custom' && ej.customTaskName)
+      ? ej.customTaskName
+      : I18n.taskTypeText(ej.taskType || '');
+
+    header.appendChild($.el('div', { className: 'step-card-header-title', textContent: taskName || 'Additional Job' }));
+    header.appendChild($.el('div', { innerHTML: Utils.formatDate(dateStr), style: 'font-size: 11px; color:#6b7280;' }));
+    card.appendChild(header);
+
+    // view
+    const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
+    const office = ej.office || Utils.detectOfficeFromAddress(ej.address) || '-';
+    const addr = (ej.address || '').trim();
+    const addrView = addr ? (addr.length > 120 ? (addr.slice(0, 120) + '…') : addr) : '-';
+
+    const vRows = [
+      [(State.lang === 'tr') ? 'Tarih' : 'Date', Utils.formatDate(dateStr)],
+      [I18n.t('time'), ej.time || '-'],
+      [I18n.t('office'), office],
+      [I18n.t('personnel'), ej.personnel || '-'],
+      [I18n.t('vehicle'), ej.vehicle || '-'],
+      [I18n.t('address'), addrView],
+      [I18n.t('notesLabel'), ej.notes || '-']
+    ];
+
+    vRows.forEach(([label, value]) => {
+      const r = $.el('div', { className: 'schedule-field-row' });
+      r.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
+      r.appendChild($.el('span', { className: 'schedule-field-value', textContent: value }));
+      viewBox.appendChild(r);
+    });
 
     card.appendChild(viewBox);
-    card.appendChild(editBox);
 
-    // Hide actions initially (only show in edit mode)
-    actions.classList.add('hidden');
+    // edit
+    const body = $.el('div', { className: 'step-card-body hidden' });
+
+    const dateDiv = $.el('div');
+    dateDiv.appendChild($.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' }));
+    dateDiv.appendChild($.el('input', { type: 'text', value: Utils.formatDate(dateStr), disabled: true }));
+    body.appendChild(dateDiv);
+
+    const timeDiv = $.el('div');
+    timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
+    timeDiv.appendChild($.el('input', { type: 'time', className: 'lej-time', value: ej.time || '' }));
+    body.appendChild(timeDiv);
+
+    // Office
+    const officeDiv = $.el('div');
+    officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
+    const officeSelect = $.el('select', { className: 'lej-office' });
+    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+    CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
+    officeSelect.value = ej.office || '';
+    officeDiv.appendChild(officeSelect);
+    body.appendChild(officeDiv);
+
+    // Personnel / Vehicle
+    const pDiv = $.el('div');
+    pDiv.appendChild($.el('label', { textContent: I18n.t('personnel') }));
+    pDiv.appendChild($.el('input', { type: 'text', className: 'lej-personnel', value: ej.personnel || '' }));
+    body.appendChild(pDiv);
+
+    const vDiv = $.el('div');
+    vDiv.appendChild($.el('label', { textContent: I18n.t('vehicle') }));
+    vDiv.appendChild($.el('input', { type: 'text', className: 'lej-vehicle', value: ej.vehicle || '' }));
+    body.appendChild(vDiv);
+
+    // Address
+    const aDiv = $.el('div', { className: 'full-width' });
+    aDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
+    aDiv.appendChild($.el('textarea', { rows: '2', className: 'lej-address', textContent: ej.address || '' }));
+    body.appendChild(aDiv);
+
+    // Notes
+    const nDiv = $.el('div', { className: 'full-width' });
+    nDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
+    nDiv.appendChild($.el('textarea', { rows: '2', className: 'lej-notes', textContent: ej.notes || '' }));
+    body.appendChild(nDiv);
+
+    card.appendChild(body);
+
+    const actions = $.el('div', { style: 'margin-top:6px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;' });
+
+    const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit') });
+    const saveBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('save') });
+    const cancelBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('cancel') });
+    const deleteBtn = $.el('button', { type: 'button', textContent: I18n.t('delete') });
+
+    editBtn.addEventListener('click', () => {
+      $.hide(viewBox);
+      $.show(body);
+      $.hide(editBtn);
+      $.show(saveBtn);
+      $.show(cancelBtn);
+    });
+
+    cancelBtn.addEventListener('click', () => this.showDetails(job));
+
+    saveBtn.addEventListener('click', () => {
+      ej.time = card.querySelector('.lej-time').value || '';
+      ej.office = card.querySelector('.lej-office').value || '';
+      ej.personnel = card.querySelector('.lej-personnel').value.trim();
+      ej.vehicle = card.querySelector('.lej-vehicle').value.trim();
+      ej.address = card.querySelector('.lej-address').value.trim();
+      ej.notes = card.querySelector('.lej-notes').value.trim();
+
+      Storage.saveScheduleExtraJobs();
+      ScheduleUI.render();
+      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+      const current = State.getJob(State.selectedJobId);
+      if (current) this.showDetails(current);
+    });
+
+    deleteBtn.addEventListener('click', () => {
+      if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
+      ScheduleExtraJobs.deleteById(dateStr, ej.id);
+      Storage.saveScheduleExtraJobs();
+      ScheduleUI.render();
+      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+      const current = State.getJob(State.selectedJobId);
+      if (current) this.showDetails(current);
+    });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+    actions.appendChild(deleteBtn);
     card.appendChild(actions);
 
     return card;
+  },
+
+  // Inline add additional job form (toggleable). No separate title/section.
+  addAdditionalJobForm(job) {
+    const wrap = $.el('div', { style: 'margin-top:10px; padding-top:10px; border-top: 1px dashed #e5e7eb;' });
+
+    const form = $.el('div', { className: 'schedule-extra-form' });
+
+    // Date
+    const dateDiv = $.el('div');
+    dateDiv.appendChild($.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' }));
+    const dateInput = $.el('input', { type: 'date', id: 'moveAddJobDate' });
+    dateDiv.appendChild(dateInput);
+    form.appendChild(dateDiv);
+
+    // Time
+    const timeDiv = $.el('div');
+    timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
+    const timeInput = $.el('input', { type: 'time', id: 'moveAddJobTime' });
+    timeDiv.appendChild(timeInput);
+    form.appendChild(timeDiv);
+
+    // Task type
+    const taskDiv = $.el('div');
+    taskDiv.appendChild($.el('label', { textContent: I18n.t('task') }));
+    const taskSelect = $.el('select', { id: 'moveAddJobType' });
+    CONFIG.EXTRA_JOB_TYPES.forEach(type => {
+      taskSelect.appendChild($.el('option', { value: type, textContent: I18n.taskTypeText(type) }));
+    });
+    taskDiv.appendChild(taskSelect);
+    form.appendChild(taskDiv);
+
+    // Custom name (shown only when Custom)
+    const customDiv = $.el('div');
+    customDiv.appendChild($.el('label', { textContent: I18n.t('customTaskName') }));
+    const customInput = $.el('input', { type: 'text', id: 'moveAddJobCustomName', placeholder: (State.lang === 'tr') ? 'Örn. Depo temizlik' : 'e.g. Warehouse cleaning' });
+    customDiv.appendChild(customInput);
+    form.appendChild(customDiv);
+
+    const toggleCustom = () => {
+      customDiv.style.display = (taskSelect.value === 'Custom') ? '' : 'none';
+      if (taskSelect.value !== 'Custom') customInput.value = '';
+    };
+    taskSelect.addEventListener('change', toggleCustom);
+    toggleCustom();
+
+    // Office
+    const officeDiv = $.el('div');
+    officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
+    const officeSelect = $.el('select', { id: 'moveAddJobOffice' });
+    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+    CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
+    officeDiv.appendChild(officeSelect);
+    form.appendChild(officeDiv);
+
+    // Personnel
+    const pDiv = $.el('div');
+    pDiv.appendChild($.el('label', { textContent: I18n.t('personnel') }));
+    const pInput = $.el('input', { type: 'text', id: 'moveAddJobPersonnel' });
+    pDiv.appendChild(pInput);
+    form.appendChild(pDiv);
+
+    // Vehicle
+    const vDiv = $.el('div');
+    vDiv.appendChild($.el('label', { textContent: I18n.t('vehicle') }));
+    const vInput = $.el('input', { type: 'text', id: 'moveAddJobVehicle' });
+    vDiv.appendChild(vInput);
+    form.appendChild(vDiv);
+
+    // Address
+    const aDiv = $.el('div');
+    aDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
+    const aInput = $.el('textarea', { id: 'moveAddJobAddress', rows: '2' });
+    aDiv.appendChild(aInput);
+    form.appendChild(aDiv);
+
+    // Notes
+    const nDiv = $.el('div');
+    nDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
+    const nInput = $.el('textarea', { id: 'moveAddJobNotes', rows: '2' });
+    nDiv.appendChild(nInput);
+    form.appendChild(nDiv);
+
+    // Actions
+    const actionsDiv = $.el('div', { className: 'schedule-extra-actions' });
+    const addBtn = $.el('button', { type: 'button', textContent: I18n.t('addJob') });
+    const cancelBtn = $.el('button', { type: 'button', textContent: I18n.t('cancel') });
+
+    addBtn.addEventListener('click', () => {
+      const dateStr = dateInput.value || '';
+      const taskType = taskSelect.value || '';
+      const customTaskName = customInput.value.trim();
+      const time = timeInput.value || '';
+      const personnel = pInput.value.trim();
+      const vehicle = vInput.value.trim();
+      const address = aInput.value.trim();
+      const notes = nInput.value.trim();
+      const office = officeSelect.value || '';
+
+      if (!dateStr) {
+        alert((State.lang === 'tr') ? 'Lütfen tarih seçin.' : 'Please select a date.');
+        return;
+      }
+
+      if (!taskType && !customTaskName && !time && !personnel && !vehicle && !address && !notes && !office) {
+        alert(I18n.t('fillAtLeastOneField'));
+        return;
+      }
+
+      if (!Array.isArray(State.scheduleExtraJobs[dateStr])) State.scheduleExtraJobs[dateStr] = [];
+
+      State.scheduleExtraJobs[dateStr].push(Validator.normalizeExtraJob({
+        id: Utils.makeId('xjob'),
+        date: dateStr,
+        taskType,
+        customTaskName,
+        time,
+        address,
+        office,
+        personnel,
+        vehicle,
+        notes,
+        linkedJobId: String(job.id),
+        linkedJobCode: job.jobCode || '',
+        linkedJobClientName: job.clientName || ''
+      }, dateStr));
+
+      Storage.saveScheduleExtraJobs();
+      ScheduleUI.render();
+      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+
+      // reset + hide form
+      timeInput.value = '';
+      pInput.value = '';
+      vInput.value = '';
+      aInput.value = '';
+      nInput.value = '';
+      officeSelect.value = '';
+      taskSelect.value = 'Custom';
+      toggleCustom();
+
+      wrap.classList.add('hidden');
+      this.showDetails(job);
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      wrap.classList.add('hidden');
+    });
+
+    actionsDiv.appendChild(addBtn);
+    actionsDiv.appendChild(cancelBtn);
+    form.appendChild(actionsDiv);
+
+    wrap.appendChild(form);
+    return wrap;
   },
 
   renderAgents(job) {
@@ -1556,19 +3397,19 @@ const ChecklistUI = {
       return;
     }
     items.forEach((item, idx) => {
-      const wrapper = $.el('div', { className: 'checklist-item' });
-      const label = $.el('label');
-      const cb = $.el('input', { type: 'checkbox' });
-      cb.checked = item.done;
-      cb.addEventListener('change', () => {
-        job.checklist[idx].done = cb.checked;
-        Storage.saveJobs();
-      });
-      label.appendChild(cb);
-      label.appendChild(document.createTextNode(' ' + item.text));
-      wrapper.appendChild(label);
-      container.appendChild(wrapper);
-    });
+  const wrapper = $.el('div', { className: 'checklist-item' });
+  const label = $.el('label');
+  const cb = $.el('input', { type: 'checkbox' });
+  cb.checked = item.done;
+  cb.addEventListener('change', () => {
+    job.checklist[idx].done = cb.checked;
+    Storage.saveJobs();
+  });
+  label.appendChild(cb);
+  label.appendChild(document.createTextNode(' ' + I18n.checklistText(item.text))); // ← CHANGED
+  wrapper.appendChild(label);
+  container.appendChild(wrapper);
+});
   }
 };
 
@@ -1665,11 +3506,20 @@ const DocumentsUI = {
 
 const DocumentsTabUI = {
   render() {
-    const listEl = $.get('documentsListGlobal');
+  // Get containers
+  const listEl = $.get('documentsListGlobal');
+  const resourceContainer = $.get('resourceLibraryContainer');
+  
+  if (!listEl || !resourceContainer) return;
+
+  // Show/hide based on active tab
+  if (State.documentsViewTab === 'search') {
+    listEl.style.display = 'block';
+    resourceContainer.style.display = 'none';
+    
+    // Render search content (existing code)
     const jobFilterEl = $.get('documentsJobFilter');
     const searchEl = $.get('documentsSearchInput');
-
-    if (!listEl || !jobFilterEl || !searchEl) return;
 
     const searchTerm = (searchEl.value || '').toLowerCase().trim();
     this.refreshJobFilter(jobFilterEl);
@@ -1714,7 +3564,14 @@ const DocumentsTabUI = {
     }
 
     filtered.forEach(({ job, doc }) => listEl.appendChild(this.row(job, doc)));
-  },
+    
+  } else {
+    // Show library
+    listEl.style.display = 'none';
+    resourceContainer.style.display = 'block';
+    ResourceLibraryUI.render();
+  }
+},
 
   refreshJobFilter(selectEl) {
     const previous = selectEl.value;
@@ -1748,8 +3605,8 @@ const DocumentsTabUI = {
     main.appendChild(title);
 
     const meta = $.el('div', { className: 'document-meta' });
-    const modeLabel = job.modes && job.modes.length ? job.modes.join(' + ') : 'No mode';
-    const typeLabel = job.tradeDirection || '-';
+    const modeLabel = I18n.modesText(job.modes);
+    const typeLabel = I18n.typeText(job.tradeDirection) || '-';
     const routeLabel = `${Utils.location(job.originCity, job.originCountry)} → ${Utils.location(job.destinationCity, job.destinationCountry)}`;
     meta.textContent = [
       job.clientName || 'No client',
@@ -1791,6 +3648,1649 @@ const DocumentsTabUI = {
     return row;
   }
 };
+
+
+const ResourceLibraryUI = {
+  render() {
+    const container = $.get('resourceLibraryContainer');
+    if (!container) return;
+
+    $.clear(container);
+
+    // Header with Add button
+    const header = $.el('div', { 
+      style: 'display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;' 
+    });
+    
+    const title = $.el('h3', { 
+      textContent: (State.lang === 'tr') ? 'Kaynak Kütüphanesi' : 'Resource Library',
+      style: 'margin:0;'
+    });
+    
+    const addBtn = $.el('button', { 
+      type: 'button',
+      textContent: (State.lang === 'tr') ? '+ Kaynak Ekle' : '+ Add Resource'
+    });
+    addBtn.addEventListener('click', () => this.openAddModal());
+    
+    header.appendChild(title);
+    header.appendChild(addBtn);
+    container.appendChild(header);
+
+    // Render categories
+    if (!State.resourceLibrary || !State.resourceLibrary.categories) {
+      container.appendChild($.el('p', { 
+        textContent: (State.lang === 'tr') ? 'Henüz kaynak yok.' : 'No resources yet.'
+      }));
+      return;
+    }
+
+    State.resourceLibrary.categories.forEach(category => {
+      container.appendChild(this.renderCategory(category));
+    });
+  },
+
+  renderCategory(category) {
+    const categoryDiv = $.el('div', { className: 'resource-category' });
+    
+    // Category header
+    const header = $.el('div', { 
+      className: 'resource-category-header',
+      style: 'display:flex; align-items:center; gap:8px; padding:12px; background:#f3f4f6; border-radius:6px; margin-bottom:8px; cursor:pointer;'
+    });
+    
+    const icon = $.el('span', { textContent: '📁', style: 'font-size:20px;' });
+    const name = $.el('strong', { 
+      textContent: (State.lang === 'tr' ? category.nametr : category.name) + ` (${category.items.length})`
+    });
+    const arrow = $.el('span', { 
+      textContent: '▼', 
+      className: 'category-arrow',
+      style: 'margin-left:auto; transition:transform 0.2s;'
+    });
+    
+    header.appendChild(icon);
+    header.appendChild(name);
+    header.appendChild(arrow);
+    categoryDiv.appendChild(header);
+
+    // Items container (collapsible)
+    const itemsContainer = $.el('div', { 
+      className: 'resource-items',
+      style: 'padding-left:32px;'
+    });
+
+    if (category.items.length === 0) {
+      itemsContainer.appendChild($.el('p', { 
+        textContent: (State.lang === 'tr') ? 'Bu kategoride kaynak yok.' : 'No resources in this category.',
+        style: 'color:#6b7280; font-size:14px; padding:8px 0;'
+      }));
+    } else {
+      category.items.forEach(item => {
+        itemsContainer.appendChild(this.renderItem(item, category.id));
+      });
+    }
+
+    categoryDiv.appendChild(itemsContainer);
+
+    // Toggle collapse
+    let isCollapsed = false;
+    header.addEventListener('click', () => {
+      isCollapsed = !isCollapsed;
+      itemsContainer.style.display = isCollapsed ? 'none' : 'block';
+      arrow.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+    });
+
+    return categoryDiv;
+  },
+
+  renderItem(item, categoryId) {
+    const itemDiv = $.el('div', { 
+      className: 'resource-item',
+      style: 'display:flex; align-items:center; justify-content:space-between; padding:10px; border:1px solid #e5e7eb; border-radius:4px; margin-bottom:6px; background:white;'
+    });
+
+    // Left side: icon + name
+    const leftDiv = $.el('div', { style: 'display:flex; align-items:center; gap:8px; flex:1;' });
+    const fileIcon = $.el('span', { textContent: '📄', style: 'font-size:18px;' });
+    const nameSpan = $.el('span', { 
+      textContent: State.lang === 'tr' ? item.nametr : item.name,
+      style: 'font-weight:500;'
+    });
+    
+    leftDiv.appendChild(fileIcon);
+    leftDiv.appendChild(nameSpan);
+
+    // Right side: actions
+    const actionsDiv = $.el('div', { style: 'display:flex; gap:8px;' });
+
+    // Download button
+    const downloadBtn = $.el('button', { 
+      type: 'button',
+      textContent: (State.lang === 'tr') ? 'İndir' : 'Download',
+      style: 'padding:6px 12px; font-size:12px;'
+    });
+    downloadBtn.addEventListener('click', () => this.downloadItem(item));
+
+    // Delete button
+    const deleteBtn = $.el('button', { 
+      type: 'button',
+      textContent: (State.lang === 'tr') ? 'Sil' : 'Delete',
+      style: 'padding:6px 12px; font-size:12px; background:#ef4444; color:white; border:none; border-radius:4px; cursor:pointer;'
+    });
+    deleteBtn.addEventListener('click', () => this.deleteItem(item.id, categoryId));
+
+    actionsDiv.appendChild(downloadBtn);
+    actionsDiv.appendChild(deleteBtn);
+
+    itemDiv.appendChild(leftDiv);
+    itemDiv.appendChild(actionsDiv);
+
+    return itemDiv;
+  },
+
+  openAddModal() {
+    // Show modal
+    const modal = $.get('resourceLibraryModal');
+    if (!modal) {
+      this.createModal();
+    }
+    
+    // Reset form
+    const form = $.get('resourceLibraryForm');
+    if (form) form.reset();
+    
+    Modals.open('resourceLibraryModal');
+  },
+
+  createModal() {
+    // Create modal HTML
+    const modal = $.el('div', { 
+      id: 'resourceLibraryModal',
+      className: 'modal hidden'
+    });
+
+    const modalCard = $.el('div', { className: 'modal-card' });
+
+    // Header
+    const modalHeader = $.el('div', { className: 'modal-header' });
+    const title = $.el('h2', { 
+      textContent: (State.lang === 'tr') ? 'Kaynak Ekle' : 'Add Resource'
+    });
+    const closeBtn = $.el('button', { 
+      type: 'button',
+      className: 'close-button',
+      textContent: '×'
+    });
+    closeBtn.addEventListener('click', () => Modals.close('resourceLibraryModal'));
+    
+    modalHeader.appendChild(title);
+    modalHeader.appendChild(closeBtn);
+    modalCard.appendChild(modalHeader);
+
+    // Form
+    const form = $.el('form', { id: 'resourceLibraryForm' });
+
+    // Category select
+    const categoryLabel = $.el('label', { 
+      textContent: (State.lang === 'tr') ? 'Kategori' : 'Category'
+    });
+    const categorySelect = $.el('select', { 
+      name: 'category',
+      required: true
+    });
+    
+    State.resourceLibrary.categories.forEach(cat => {
+      categorySelect.appendChild($.el('option', {
+        value: cat.id,
+        textContent: State.lang === 'tr' ? cat.nametr : cat.name
+      }));
+    });
+
+    form.appendChild(categoryLabel);
+    form.appendChild(categorySelect);
+
+    // Name (English)
+    const nameEnLabel = $.el('label', { textContent: 'Name (English)' });
+    const nameEnInput = $.el('input', { 
+      type: 'text',
+      name: 'nameEn',
+      required: true
+    });
+    form.appendChild(nameEnLabel);
+    form.appendChild(nameEnInput);
+
+    // Name (Turkish)
+    const nameTrLabel = $.el('label', { textContent: 'Name (Turkish)' });
+    const nameTrInput = $.el('input', { 
+      type: 'text',
+      name: 'nameTr',
+      required: true
+    });
+    form.appendChild(nameTrLabel);
+    form.appendChild(nameTrInput);
+
+    // File upload
+    const fileLabel = $.el('label', { 
+      textContent: (State.lang === 'tr') ? 'Dosya' : 'File'
+    });
+    const fileInput = $.el('input', { 
+      type: 'file',
+      name: 'file',
+      required: true
+    });
+    form.appendChild(fileLabel);
+    form.appendChild(fileInput);
+
+    // Actions
+    const actionsDiv = $.el('div', { className: 'modal-actions' });
+    const cancelBtn = $.el('button', { 
+      type: 'button',
+      textContent: (State.lang === 'tr') ? 'İptal' : 'Cancel'
+    });
+    cancelBtn.addEventListener('click', () => Modals.close('resourceLibraryModal'));
+    
+    const submitBtn = $.el('button', { 
+      type: 'submit',
+      textContent: (State.lang === 'tr') ? 'Kaydet' : 'Save'
+    });
+
+    actionsDiv.appendChild(cancelBtn);
+    actionsDiv.appendChild(submitBtn);
+    form.appendChild(actionsDiv);
+
+    // Form submit handler
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const categoryId = form.category.value;
+  const nameEn = form.nameEn.value.trim();
+  const nameTr = form.nameTr.value.trim();
+  const file = form.file.files[0];
+
+  if (!file) {
+    alert((State.lang === 'tr') ? 'Lütfen dosya seçin.' : 'Please select a file.');
+    return;
+  }
+
+  // Read file as base64
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const category = State.resourceLibrary.categories.find(c => c.id === categoryId);
+    if (!category) return;
+
+    // Create new item
+    const newItem = {
+      id: Utils.makeId('resource'),
+      name: nameEn,
+      nametr: nameTr,
+      fileName: file.name,
+      fileData: event.target.result,
+      uploadedAt: new Date().toISOString()
+    };
+
+    category.items.push(newItem);
+    Storage.saveResourceLibrary();
+
+    // Close modal and refresh
+    Modals.close('resourceLibraryModal');
+    ResourceLibraryUI.render();
+
+    alert((State.lang === 'tr') ? 'Kaynak eklendi!' : 'Resource added!');
+  };
+
+  reader.readAsDataURL(file);
+});
+    
+modalCard.appendChild(form);
+modal.appendChild(modalCard);
+
+document.body.appendChild(modal);
+},
+    
+  downloadItem(item) {
+    if (!item.fileData) {
+      alert((State.lang === 'tr') ? 'Dosya bulunamadı.' : 'File not found.');
+      return;
+    }
+
+    const a = document.createElement('a');
+    a.href = item.fileData;
+    a.download = item.fileName || item.name || 'document';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  },
+
+  deleteItem(itemId, categoryId) {
+    if (!confirm((State.lang === 'tr') ? 'Bu kaynağı silmek istediğinize emin misiniz?' : 'Are you sure you want to delete this resource?')) {
+      return;
+    }
+
+    const category = State.resourceLibrary.categories.find(c => c.id === categoryId);
+    if (!category) return;
+
+    const index = category.items.findIndex(item => item.id === itemId);
+    if (index !== -1) {
+      category.items.splice(index, 1);
+      Storage.saveResourceLibrary();
+      this.render();
+    }
+  }
+};
+
+// ========== // QUOTES UI // ========== //
+
+const QuotesUI = {
+  render() {
+    const container = $.get('quoteList');
+    if (!container) return;
+    
+    const quotes = this.filter();
+    $.clear(container);
+    
+    if (quotes.length === 0) {
+      container.appendChild($.el('p', { 
+        textContent: (State.lang === 'tr') ? 'Henuz teklif yok.' : 'No quotes yet.' 
+      }));
+      return;
+    }
+    
+    quotes.forEach(quote => container.appendChild(this.createCard(quote)));
+  },
+
+  filter() {
+    let list = [...State.quotes];
+    
+    if (State.quoteFilters.search) {
+      const term = State.quoteFilters.search.toLowerCase();
+      list = list.filter(quote => {
+        const text = [
+          quote.quoteCode,
+          quote.clientName,
+          quote.clientOrganization,
+          quote.origin,
+          quote.destination,
+          quote.type,
+          ...(quote.modes || [])
+        ].filter(Boolean).join(' ').toLowerCase();
+        return text.includes(term);
+      });
+    }
+    
+    list.sort((a, b) => {
+      const da = a.createdAt || '';
+      const db = b.createdAt || '';
+      return db.localeCompare(da);
+    });
+    
+    return list;
+  },
+
+  createCard(quote) {
+    const card = $.el('div', { className: 'quote-card' });
+    
+    card.appendChild($.el('h3', { 
+      textContent: `${quote.quoteCode || ''} - ${quote.clientName || 'No client name'}` 
+    }));
+    
+    if (quote.clientOrganization) {
+      card.appendChild($.el('p', { 
+        textContent: quote.clientOrganization,
+        style: 'font-size: 12px; color: #6b7280; margin-top: -8px;'
+      }));
+    }
+    
+    card.appendChild($.el('p', { 
+      textContent: `${quote.origin || '-'} to ${quote.destination || '-'}` 
+    }));
+    
+    const modes = (quote.modes || []).join(' + ') || 'No mode';
+    const typeLabel = quote.type || '-';
+    card.appendChild($.el('p', {
+      textContent: `${modes} | ${typeLabel}`,
+      style: 'font-size: 12px; color: #6b7280;'
+    }));
+    
+    card.addEventListener('click', () => this.showDetails(quote));
+    return card;
+  },
+
+  showDetails(quote) {
+    State.selectedQuoteId = quote.id;
+    const editBtn = $.get('editQuoteBtn');
+    if (editBtn) editBtn.disabled = false;
+    
+    const container = $.get('quoteDetails');
+    $.clear(container);
+    
+    container.appendChild($.el('h3', { 
+      textContent: `${quote.quoteCode || ''} - ${quote.clientName || 'No client name'}` 
+    }));
+    
+    const grid = $.el('div', { className: 'details-grid' });
+    const details = [
+      ['Client', quote.clientName || '-'],
+      ['Organization', quote.clientOrganization || '-'],
+      ['Origin', quote.origin || '-'],
+      ['Destination', quote.destination || '-'],
+      ['Type', quote.type || '-'],
+      ['Modes', (quote.modes || []).join(', ') || '-'],
+      ['Insurance', quote.insurance ? 'Yes' : 'No'],
+      ['Valid Until', quote.validUntil ? Utils.formatDate(quote.validUntil) : '-']
+    ];
+    
+    details.forEach(([label, value]) => {
+      const p = $.el('p');
+      p.appendChild($.el('strong', { textContent: label + ': ' }));
+      p.appendChild(document.createTextNode(value));
+      grid.appendChild(p);
+    });
+    container.appendChild(grid);
+    
+    const formData = {
+      origin: quote.origin,
+      destination: quote.destination,
+      departurePort: quote.departurePort,
+      poe: quote.poe,
+      containerDetails: quote.containerDetails,
+      departureAirportName: quote.departureAirportName,
+      arrivalAirportName: quote.arrivalAirportName,
+      truckType: quote.truckType
+    };
+    
+    (quote.modes || []).forEach(mode => {
+      const charges = (quote.chargesByMode && quote.chargesByMode[mode]) || [];
+      if (charges.length > 0) {
+        container.appendChild(this.buildChargesSection(mode, charges, quote, formData));
+      }
+    });
+    
+    const includes = quote.selectedIncludes || [];
+    if (includes.length > 0) {
+      const sec = $.el('div', { style: 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;' });
+      sec.appendChild($.el('h4', { textContent: 'Our Quotation Includes' }));
+      const ul = $.el('ul', { style: 'margin: 8px 0; padding-left: 20px;' });
+      includes.forEach(item => {
+        ul.appendChild($.el('li', { textContent: item, style: 'font-size: 13px; margin: 4px 0;' }));
+      });
+      sec.appendChild(ul);
+      container.appendChild(sec);
+    }
+    
+    const additional = quote.selectedAdditionalCharges || [];
+    if (additional.length > 0) {
+      const sec = $.el('div', { style: 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;' });
+      sec.appendChild($.el('h4', { textContent: 'Additional Charges May Apply' }));
+      const ul = $.el('ul', { style: 'margin: 8px 0; padding-left: 20px;' });
+      additional.forEach(item => {
+        ul.appendChild($.el('li', { textContent: item, style: 'font-size: 13px; margin: 4px 0;' }));
+      });
+      sec.appendChild(ul);
+      container.appendChild(sec);
+    }
+    
+    if (quote.termsAndConditions) {
+      const sec = $.el('div', { style: 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;' });
+      sec.appendChild($.el('h4', { textContent: 'Terms & Conditions' }));
+      sec.appendChild($.el('p', { 
+        textContent: quote.termsAndConditions,
+        style: 'white-space: pre-wrap; font-size: 13px;'
+      }));
+      container.appendChild(sec);
+    }
+    
+    if (quote.validUntil) {
+      const box = $.el('div', { 
+        style: 'margin-top: 16px; padding: 12px; background: #fff3cd; border: 2px solid #f59e0b; border-radius: 6px; text-align: center; font-weight: bold;'
+      });
+      box.textContent = `Rates & Services are Valid Until: ${Utils.formatDate(quote.validUntil)}`;
+      container.appendChild(box);
+    }
+    
+    const actions = $.el('div', { style: 'margin-top: 24px; display: flex; gap: 8px; flex-wrap: wrap;' });
+    
+    const exportBtn = $.el('button', { type: 'button', textContent: 'Export PDF' });
+    exportBtn.addEventListener('click', () => QuoteExport.exportToPdf(quote));
+    
+    const convertBtn = $.el('button', { type: 'button', textContent: 'Convert to Job' });
+    convertBtn.addEventListener('click', () => this.convertToJob(quote));
+    
+    const deleteBtn = $.el('button', { type: 'button', textContent: 'Delete Quote' });
+    deleteBtn.style.cssText = 'background: #fee2e2; color: #dc2626; border-color: #fecaca;';
+    deleteBtn.addEventListener('click', () => this.deleteQuote(quote));
+    
+    actions.appendChild(exportBtn);
+    actions.appendChild(convertBtn);
+    actions.appendChild(deleteBtn);
+    container.appendChild(actions);
+  },
+
+  buildChargesSection(mode, charges, quote, formData) {
+    const section = $.el('div', { style: 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;' });
+    
+    const headerColors = { Sea: '#0369a1', Air: '#7c3aed', Land: '#059669' };
+    const header = $.el('h4', { 
+      textContent: `${mode} Freight Charges`,
+      style: `color: ${headerColors[mode] || '#374151'}; margin-bottom: 8px;`
+    });
+    section.appendChild(header);
+    
+    const info = $.el('div', { style: 'font-size: 12px; color: #6b7280; margin-bottom: 8px;' });
+    if (mode === 'Sea') {
+      const vol = quote.seaVolume || quote.estimatedVolume || 0;
+      info.textContent = `Container: ${quote.containerDetails || 'N/A'} | Volume: ${vol} cbm | Route: ${quote.departurePort || '-'} to POE ${quote.poe || '-'} | Transit: ${quote.seaTransitTime ? quote.seaTransitTime + ' days' : 'TBD'}`;
+    } else if (mode === 'Air') {
+  const vol = quote.airVolume || quote.estimatedVolume || 0;
+  const acw = quote.airACW || 0;
+  info.textContent = `Weight: ${quote.airCargoWeight || 0} kg | Volume: ${vol} cbm | ACW: ${acw.toFixed(1)} kg | Route: ${quote.departureAirportName || '-'} to ${quote.arrivalAirportName || '-'} | Transit: ${quote.airTransitTime ? quote.airTransitTime + ' days' : 'TBD'}`;
+} else if (mode === 'Land') {
+      const vol = quote.landVolume || quote.estimatedVolume || 0;
+      info.textContent = `Truck: ${quote.truckType || 'Dedicated'} | Volume: ${vol} cbm | Route: ${quote.origin || '-'} to ${quote.destination || '-'} | Transit: ${quote.landTransitTime ? quote.landTransitTime + ' days' : 'TBD'}`;
+    }
+    section.appendChild(info);
+    
+    const table = $.el('table', { style: 'width: 100%; border-collapse: collapse; font-size: 13px;' });
+    let totalsByCurrency = {};
+    
+    charges.forEach(charge => {
+      const row = $.el('tr');
+      row.innerHTML = `
+        <td style="padding: 6px 8px; border: 1px solid #e5e7eb;">${charge.category}</td>
+        <td style="padding: 6px 8px; border: 1px solid #e5e7eb; text-align: right; white-space: nowrap;">${charge.currency} ${parseFloat(charge.amount).toFixed(2)}</td>
+      `;
+      table.appendChild(row);
+      
+      if (!totalsByCurrency[charge.currency]) totalsByCurrency[charge.currency] = 0;
+      totalsByCurrency[charge.currency] += parseFloat(charge.amount) || 0;
+    });
+    
+    const totalText = Object.entries(totalsByCurrency)
+      .map(([curr, amt]) => `${curr} ${amt.toFixed(2)}`)
+      .join(' + ');
+    
+    if (totalText) {
+      const totalRow = $.el('tr');
+      totalRow.innerHTML = `
+        <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: bold; background: #f3f4f6;">TOTAL (${mode})</td>
+        <td style="padding: 6px 8px; border: 1px solid #e5e7eb; text-align: right; white-space: nowrap; font-weight: bold; background: #f3f4f6;">${totalText}</td>
+      `;
+      table.appendChild(totalRow);
+    }
+    
+    section.appendChild(table);
+    return section;
+  },
+
+  deleteQuote(quote) {
+    if (!confirm('Are you sure you want to delete this quote?')) return;
+    
+    State.quotes = State.quotes.filter(q => q.id !== quote.id);
+    Storage.saveQuotes();
+    this.render();
+    
+    const container = $.get('quoteDetails');
+    $.clear(container);
+    container.appendChild($.el('p', { textContent: 'Select a quote to see details.' }));
+    
+    const editBtn = $.get('editQuoteBtn');
+    if (editBtn) editBtn.disabled = true;
+    
+    State.selectedQuoteId = null;
+  },
+
+  convertToJob(quote) {
+  if (!confirm('Convert this quote to a job?')) return;
+  
+  const job = Validator.normalizeJob({
+    clientName: quote.clientName,
+    originCity: quote.origin.split(',')[0]?.trim() || '',
+    originCountry: quote.origin.split(',').slice(1).join(',').trim() || '',
+    originFullAddress: quote.origin,
+    destinationCity: quote.destination.split(',')[0]?.trim() || '',
+    destinationCountry: quote.destination.split(',').slice(1).join(',').trim() || '',
+    destinationFullAddress: quote.destination,
+    tradeDirection: quote.type,
+    modes: quote.modes,
+    status: 'Planned',
+    paymentReceived: false,
+    shipmentContents: quote.shipmentContents || ['HHE'],
+    
+    // Mode-specific fields from quote
+    seaVolume: quote.seaVolume || 0,
+    containerDetails: quote.containerDetails || '',
+    airVolume: quote.airVolume || 0,
+    airCargoWeight: quote.airCargoWeight || 0,
+    airACW: quote.airACW || 0,
+    landVolume: quote.landVolume || 0,
+    
+    // Vehicle fields from quote
+    vehicleType: quote.vehicleType || '',
+    vehicleMake: quote.vehicleMake || '',
+    vehicleModel: quote.vehicleModel || '',
+    vehicleYear: quote.vehicleYear || 0,
+    vehicleVIN: quote.vehicleVIN || '',
+    vehicleCondition: quote.vehicleCondition || 'Running'
+  });
+  
+  State.jobs.push(job);
+  Storage.saveJobs();
+  
+  alert('Quote successfully converted to job!');
+  
+  Views.show('moves');
+  JobsUI.render();
+  JobsUI.showDetails(job);
+},
+
+  showModal(quote = null) {
+    State.quoteFormMode = quote ? 'edit' : 'create';
+    const form = $.get('quoteForm');
+    
+    if (!form) {
+      alert('Quote form not found');
+      return;
+    }
+    
+    form.reset();
+    this.clearAllChargeLists();
+    this.clearChecklists();
+    this.hideAllModeSections();
+    
+    if (quote) {
+      $.get('quoteModalTitle').textContent = 'Edit Quote';
+      State.selectedQuoteId = quote.id;
+      this.populateFormForEdit(quote);
+    } else {
+      $.get('quoteModalTitle').textContent = 'Create New Quote';
+      State.selectedQuoteId = null;
+      
+      const threeMonths = new Date();
+      threeMonths.setMonth(threeMonths.getMonth() + 3);
+      form.validUntil.value = threeMonths.toISOString().split('T')[0];
+      
+      form.termsAndConditions.value = 'Our quotation is based on stated weights and normal access conditions. It is subject to change if actual volume/weight differs or if there are unforeseen difficulties (e.g. inspections, force majeure delays, etc.)';
+      
+      $.show($.get('noModeSelectedMsg'));
+    }
+    
+    Modals.open('createQuoteModal');
+  },
+
+  hideAllModeSections() {
+    ['Sea', 'Air', 'Land'].forEach(mode => {
+      const fieldsSection = $.get(`${mode.toLowerCase()}FieldsSection`);
+      const chargesSection = $.get(`${mode.toLowerCase()}ChargesSection`);
+      if (fieldsSection) $.hide(fieldsSection);
+      if (chargesSection) $.hide(chargesSection);
+    });
+  },
+
+  clearAllChargeLists() {
+    ['seaChargesList', 'airChargesList', 'landChargesList'].forEach(id => {
+      const list = $.get(id);
+      if (list) $.clear(list);
+    });
+  },
+
+  clearChecklists() {
+    const includesContainer = $.get('quotationIncludesChecklist');
+    if (includesContainer) {
+      $.clear(includesContainer);
+      includesContainer.appendChild($.el('p', { 
+        textContent: 'Select mode and type to see available items',
+        style: 'color: #9ca3af; font-size: 13px; font-style: italic;'
+      }));
+    }
+    
+    const additionalContainer = $.get('additionalChargesChecklist');
+    if (additionalContainer) {
+      $.clear(additionalContainer);
+      additionalContainer.appendChild($.el('p', { 
+        textContent: 'Select type to see available items',
+        style: 'color: #9ca3af; font-size: 13px; font-style: italic;'
+      }));
+    }
+    
+    const customIncludesList = $.get('customIncludedItems');
+    if (customIncludesList) $.clear(customIncludesList);
+    
+    const customAdditionalList = $.get('additionalChargesList');
+    if (customAdditionalList) $.clear(customAdditionalList);
+  },
+
+  populateFormForEdit(quote) {
+    const form = $.get('quoteForm');
+    
+    form.clientName.value = quote.clientName || '';
+    if (form.clientOrganization) form.clientOrganization.value = quote.clientOrganization || '';
+    form.origin.value = quote.origin || '';
+    form.destination.value = quote.destination || '';
+    form.quoteType.value = quote.type || 'Export';
+    form.termsAndConditions.value = quote.termsAndConditions || '';
+    form.validUntil.value = quote.validUntil || '';
+    
+    // Set mode checkboxes
+    ['Sea', 'Air', 'Land'].forEach(mode => {
+      const cb = $.get(`quoteMode${mode}`);
+      if (cb) cb.checked = (quote.modes || []).includes(mode);
+    });
+    
+    // Show/hide mode sections WITHOUT auto-populating charges
+    const selectedModes = (quote.modes || []);
+    ['Sea', 'Air', 'Land'].forEach(mode => {
+      const fieldsSection = $.get(`${mode.toLowerCase()}FieldsSection`);
+      const chargesSection = $.get(`${mode.toLowerCase()}ChargesSection`);
+      const shouldShow = selectedModes.includes(mode);
+      if (fieldsSection) {
+        if (shouldShow) $.show(fieldsSection);
+        else $.hide(fieldsSection);
+      }
+      if (chargesSection) {
+        if (shouldShow) $.show(chargesSection);
+        else $.hide(chargesSection);
+      }
+    });
+    
+    const noModeMsg = $.get('noModeSelectedMsg');
+    if (noModeMsg) {
+      if (selectedModes.length === 0) $.show(noModeMsg);
+      else $.hide(noModeMsg);
+    }
+    
+    // Sea fields
+    if (form.departurePort) form.departurePort.value = quote.departurePort || '';
+    if (form.poe) form.poe.value = quote.poe || '';
+    if (form.containerDetails) form.containerDetails.value = quote.containerDetails || '';
+    if (form.seaTransitTime) form.seaTransitTime.value = quote.seaTransitTime || '';
+    if (form.seaVolume) form.seaVolume.value = quote.seaVolume || '';
+    
+    // Air fields
+    if (form.departureAirportName) form.departureAirportName.value = quote.departureAirportName || '';
+    if (form.departureAirportIATA) form.departureAirportIATA.value = quote.departureAirportIATA || '';
+    if (form.arrivalAirportName) form.arrivalAirportName.value = quote.arrivalAirportName || '';
+    if (form.arrivalAirportIATA) form.arrivalAirportIATA.value = quote.arrivalAirportIATA || '';
+    if (form.airlineName) form.airlineName.value = quote.airlineName || '';
+    if (form.airTransitTime) form.airTransitTime.value = quote.airTransitTime || '';
+    if (form.airCargoWeight) form.airCargoWeight.value = quote.airCargoWeight || '';
+    if (form.airVolume) form.airVolume.value = quote.airVolume || '';
+    if (form.airACW) form.airACW.value = quote.airACW || '';
+    
+    // Air quote type
+if (quote.airQuoteType) {
+  const radio = form.querySelector(`input[name="airQuoteType"][value="${quote.airQuoteType}"]`);
+  if (radio) radio.checked = true;
+}
+    // Shipment Contents
+['HHE', 'Vehicle'].forEach(content => {
+  const cb = $.get(`quoteContents${content}`);
+  if (cb) cb.checked = (quote.shipmentContents || ['HHE']).includes(content);
+});
+
+// Vehicle fields
+if (form.quoteVehicleType) form.quoteVehicleType.value = quote.vehicleType || '';
+if (form.quoteVehicleMake) form.quoteVehicleMake.value = quote.vehicleMake || '';
+if (form.quoteVehicleModel) form.quoteVehicleModel.value = quote.vehicleModel || '';
+if (form.quoteVehicleYear) form.quoteVehicleYear.value = quote.vehicleYear || '';
+if (form.quoteVehicleVIN) form.quoteVehicleVIN.value = quote.vehicleVIN || '';
+const vehicleConditionRadio = form.querySelector(`input[name="quoteVehicleCondition"][value="${quote.vehicleCondition || 'Running'}"]`);
+if (vehicleConditionRadio) vehicleConditionRadio.checked = true;
+
+// Show/hide vehicle fields
+toggleQuoteVehicleFields();
+    
+    
+    // Land fields
+    if (quote.truckType) {
+      const radio = form.querySelector(`input[name="truckType"][value="${quote.truckType}"]`);
+      if (radio) radio.checked = true;
+    }
+    if (form.landTransitTime) form.landTransitTime.value = quote.landTransitTime || '';
+    if (form.landVolume) form.landVolume.value = quote.landVolume || '';
+    
+    // Insurance
+    const insuranceYes = form.querySelector('input[name="insurance"][value="yes"]');
+    const insuranceNo = form.querySelector('input[name="insurance"][value="no"]');
+    if (quote.insurance) {
+      if (insuranceYes) insuranceYes.checked = true;
+      this.toggleInsuranceFields(true);
+      if (form.hhgValue) form.hhgValue.value = quote.hhgValue || '';
+      if (form.hhgCurrency) form.hhgCurrency.value = quote.hhgCurrency || 'USD';
+      if (form.insurancePercentage) form.insurancePercentage.value = quote.insurancePercentage || 1.5;
+if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
+    } else {
+      if (insuranceNo) insuranceNo.checked = true;
+      this.toggleInsuranceFields(false);
+    }
+    
+    // NOW populate charges from saved data (not auto-populate)
+    if (quote.chargesByMode) {
+      Object.keys(quote.chargesByMode).forEach(mode => {
+        const charges = quote.chargesByMode[mode] || [];
+        charges.forEach(charge => {
+          this.addChargeRow(mode, charge.category, charge.amount, charge.currency);
+        });
+      });
+    }
+    
+    // Update checklists
+    this.updateChecklists();
+    
+    // Set selected checkboxes after a brief delay to let DOM update
+    setTimeout(() => {
+      if (quote.selectedIncludes) {
+        document.querySelectorAll('#quotationIncludesChecklist input[type="checkbox"]').forEach(cb => {
+          cb.checked = quote.selectedIncludes.includes(cb.value);
+        });
+      }
+      if (quote.selectedAdditionalCharges) {
+        document.querySelectorAll('#additionalChargesChecklist input[type="checkbox"]').forEach(cb => {
+          cb.checked = quote.selectedAdditionalCharges.includes(cb.value);
+        });
+      }
+    }, 100);
+  },
+
+  updateModeFields() {
+    const selectedModes = this.getSelectedModes();
+    const type = this.getSelectedType();
+    
+    ['Sea', 'Air', 'Land'].forEach(mode => {
+      const fieldsSection = $.get(`${mode.toLowerCase()}FieldsSection`);
+      const chargesSection = $.get(`${mode.toLowerCase()}ChargesSection`);
+      
+      const shouldShow = selectedModes.includes(mode);
+      
+      if (fieldsSection) {
+        if (shouldShow) $.show(fieldsSection);
+        else $.hide(fieldsSection);
+      }
+      if (chargesSection) {
+        if (shouldShow) $.show(chargesSection);
+        else $.hide(chargesSection);
+      }
+      
+      if (shouldShow && type) {
+        this.autoPopulateCharges(mode, type);
+      }
+    });
+    
+    const noModeMsg = $.get('noModeSelectedMsg');
+    if (noModeMsg) {
+      if (selectedModes.length === 0) $.show(noModeMsg);
+      else $.hide(noModeMsg);
+    }
+    
+    this.updateChecklists();
+  },
+
+  autoPopulateCharges(mode, type) {
+    const listId = `${mode.toLowerCase()}ChargesList`;
+    const container = $.get(listId);
+    if (!container) return;
+    
+    if (container.children.length > 0) return;
+    
+    // Get raw categories from template
+    const tpl = QuoteUtils.getTemplate(mode, type);
+    if (!tpl) return;
+    
+    const formData = this.getFormDataForPlaceholders();
+    const rawCategories = tpl.chargeCategories || [];
+    
+    rawCategories.forEach(cat => {
+      // Replace placeholders that have values, keep others intact
+      let processed = cat;
+      if (formData.origin) processed = processed.replace(/\[ORIGIN\]/gi, formData.origin);
+      if (formData.destination) processed = processed.replace(/\[DESTINATION\]/gi, formData.destination);
+      if (formData.departurePort) processed = processed.replace(/\[DEPARTURE_PORT\]/gi, formData.departurePort);
+      if (formData.poe) processed = processed.replace(/\[POE\]/gi, formData.poe);
+      if (formData.containerDetails) processed = processed.replace(/\[CONTAINER_DETAILS\]/gi, formData.containerDetails);
+      if (formData.departureAirportName) processed = processed.replace(/\[DEPARTURE_AIRPORT\]/gi, formData.departureAirportName);
+      if (formData.arrivalAirportName) processed = processed.replace(/\[ARRIVAL_AIRPORT\]/gi, formData.arrivalAirportName);
+      if (formData.truckType) processed = processed.replace(/\[TRUCK_TYPE\]/gi, formData.truckType);
+      
+      this.addChargeRow(mode, processed, '', 'USD');
+    });
+  },
+  
+  refreshChargeCategoryPlaceholders() {
+    const formData = this.getFormDataForPlaceholders();
+    
+    ['Sea', 'Air', 'Land'].forEach(mode => {
+      const listId = `${mode.toLowerCase()}ChargesList`;
+      const container = $.get(listId);
+      if (!container) return;
+      
+      container.querySelectorAll('.charge-category-input').forEach(input => {
+        // Only replace if it still contains a placeholder AND we have a value to replace with
+        if (input.value.includes('[DEPARTURE_AIRPORT]') && formData.departureAirportName) {
+          input.value = input.value.replace(/\[DEPARTURE_AIRPORT\]/gi, formData.departureAirportName);
+        }
+        if (input.value.includes('[ARRIVAL_AIRPORT]') && formData.arrivalAirportName) {
+          input.value = input.value.replace(/\[ARRIVAL_AIRPORT\]/gi, formData.arrivalAirportName);
+        }
+        if (input.value.includes('[DEPARTURE_PORT]') && formData.departurePort) {
+          input.value = input.value.replace(/\[DEPARTURE_PORT\]/gi, formData.departurePort);
+        }
+        if (input.value.includes('[POE]') && formData.poe) {
+          input.value = input.value.replace(/\[POE\]/gi, formData.poe);
+        }
+        if (input.value.includes('[CONTAINER_DETAILS]') && formData.containerDetails) {
+          input.value = input.value.replace(/\[CONTAINER_DETAILS\]/gi, formData.containerDetails);
+        }
+      });
+    });
+  },
+
+  getSelectedModes() {
+    const modes = [];
+    ['Sea', 'Air', 'Land'].forEach(mode => {
+      const cb = $.get(`quoteMode${mode}`);
+      if (cb && cb.checked) modes.push(mode);
+    });
+    return modes;
+  },
+
+  getSelectedType() {
+    const form = $.get('quoteForm');
+    return form?.quoteType?.value || '';
+  },
+
+  getFormDataForPlaceholders() {
+    const form = $.get('quoteForm');
+    if (!form) return {};
+    return {
+      origin: form.origin?.value || '',
+      destination: form.destination?.value || '',
+      departurePort: form.departurePort?.value || '',
+      poe: form.poe?.value || '',
+      containerDetails: form.containerDetails?.value || '',
+      departureAirportName: form.departureAirportName?.value || '',
+      arrivalAirportName: form.arrivalAirportName?.value || '',
+      departureAirportIATA: form.departureAirportIATA?.value || '',
+      arrivalAirportIATA: form.arrivalAirportIATA?.value || '',
+      truckType: form.querySelector('input[name="truckType"]:checked')?.value || 'Dedicated'
+    };
+  },
+
+  toggleInsuranceFields(show) {
+    const insuranceFields = $.get('insuranceFields');
+    if (insuranceFields) {
+      if (show) $.show(insuranceFields);
+      else $.hide(insuranceFields);
+    }
+  },
+
+  updateChecklists() {
+    const selectedModes = this.getSelectedModes();
+    const type = this.getSelectedType();
+    const formData = this.getFormDataForPlaceholders();
+    
+    const includesContainer = $.get('quotationIncludesChecklist');
+    if (includesContainer) {
+      $.clear(includesContainer);
+      
+      if (selectedModes.length === 0 || !type) {
+        includesContainer.appendChild($.el('p', { 
+          textContent: 'Select mode and type to see available items',
+          style: 'color: #9ca3af; font-size: 13px; font-style: italic;'
+        }));
+      } else {
+        const addedItems = new Set();
+        
+        selectedModes.forEach(mode => {
+          if (selectedModes.length > 1) {
+            includesContainer.appendChild($.el('div', { 
+              textContent: `${mode} Freight Items:`,
+              style: 'font-weight: 600; margin-top: 8px; margin-bottom: 4px; color: #374151;'
+            }));
+          }
+          
+          const baseIncludes = QuoteUtils.getBaseIncludes(mode, type, formData);
+          baseIncludes.forEach(item => {
+            if (!addedItems.has(item)) {
+              addedItems.add(item);
+              this.addChecklistItem(includesContainer, item, true);
+            }
+          });
+          
+          const tpl = QuoteUtils.getTemplate(mode, type);
+          if (tpl && tpl.conditionalIncludes && Object.keys(tpl.conditionalIncludes).length > 0) {
+            includesContainer.appendChild($.el('div', { 
+              textContent: 'Additional items (if corresponding charges included):',
+              style: 'font-size: 11px; color: #6b7280; margin-top: 8px; margin-bottom: 4px;'
+            }));
+            
+            Object.keys(tpl.conditionalIncludes).forEach(key => {
+              tpl.conditionalIncludes[key].forEach(item => {
+                const replaced = QuoteUtils.replacePlaceholders(item, formData);
+                if (!addedItems.has(replaced)) {
+                  addedItems.add(replaced);
+                  this.addChecklistItem(includesContainer, replaced, false, `If "${key}" charge included`);
+                }
+              });
+            });
+          }
+        });
+      }
+    }
+    
+    const additionalContainer = $.get('additionalChargesChecklist');
+    if (additionalContainer) {
+      $.clear(additionalContainer);
+      
+      if (!type) {
+        additionalContainer.appendChild($.el('p', { 
+          textContent: 'Select type to see available items',
+          style: 'color: #9ca3af; font-size: 13px; font-style: italic;'
+        }));
+      } else {
+        const form = $.get('quoteForm');
+        const hasInsurance = form?.querySelector('input[name="insurance"]:checked')?.value === 'yes';
+        const hasVehicle = $.get('quoteContentsVehicle')?.checked || false;
+const items = QuoteUtils.getAdditionalChargesMayApply(type, selectedModes, hasInsurance, hasVehicle);
+        
+        items.forEach(item => {
+          this.addChecklistItem(additionalContainer, item, true);
+        });
+      }
+    }
+  },
+
+  addChecklistItem(container, text, checked, hint = '') {
+    const label = $.el('label', { 
+      style: 'display: block; margin: 6px 0; font-size: 13px; cursor: pointer;'
+    });
+    const checkbox = $.el('input', { 
+      type: 'checkbox', 
+      value: text,
+      style: 'margin-right: 8px;'
+    });
+    checkbox.checked = checked;
+    label.appendChild(checkbox);
+    
+    if (hint) {
+      label.appendChild(document.createTextNode(`${text} `));
+      label.appendChild($.el('span', { 
+        textContent: `(${hint})`,
+        style: 'color: #9ca3af; font-size: 11px;'
+      }));
+    } else {
+      label.appendChild(document.createTextNode(text));
+    }
+    
+    container.appendChild(label);
+  },
+
+  addChargeRow(mode, category = '', amount = '') {
+  const listId = `${mode.toLowerCase()}ChargesList`;
+  const container = $.get(listId);
+  if (!container) return;
+  
+  const quoteCurrency = $.get('quoteCurrency')?.value || 'USD';
+  
+  const row = $.el('div', { 
+    className: 'charge-row',
+    style: 'display: grid; grid-template-columns: 2fr 1fr 40px; gap: 8px; margin-bottom: 8px; align-items: center;'
+  });
+  
+  const categoryInput = $.el('input', { 
+    type: 'text', 
+    placeholder: 'Charge category',
+    className: 'charge-category-input',
+    value: category
+  });
+  
+  const amountInput = $.el('input', { 
+    type: 'number', 
+    step: '0.01',
+    placeholder: `Amount (${quoteCurrency})`,
+    className: 'charge-amount-input',
+    value: amount
+  });
+  
+  const deleteBtn = $.el('button', { 
+    type: 'button', 
+    textContent: '×',
+    style: 'background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 16px;'
+  });
+  deleteBtn.addEventListener('click', () => row.remove());
+  
+  row.appendChild(categoryInput);
+  row.appendChild(amountInput);
+  row.appendChild(deleteBtn);
+  
+  container.appendChild(row);
+},
+
+  handleFormSubmit(e) {
+    e.preventDefault();
+    const form = $.get('quoteForm');
+    
+    const modes = this.getSelectedModes();
+    
+    if (modes.length === 0) {
+      alert('Please select at least one mode (Sea, Air, or Land)');
+      return;
+    }
+    
+    const type = this.getSelectedType();
+    if (!type) {
+      alert('Please select a type (Export, Import, or Local)');
+      return;
+    }
+    
+    const quoteCurrency = form.quoteCurrency?.value || 'USD';
+
+const chargesByMode = {};
+modes.forEach(mode => {
+  const listId = `${mode.toLowerCase()}ChargesList`;
+  const container = $.get(listId);
+  if (!container) return;
+  
+  chargesByMode[mode] = [];
+  container.querySelectorAll('.charge-row').forEach(row => {
+    const category = row.querySelector('.charge-category-input')?.value.trim();
+    const amount = parseFloat(row.querySelector('.charge-amount-input')?.value) || 0;
+    
+    if (category) {
+      chargesByMode[mode].push({ category, amount, currency: quoteCurrency });
+    }
+  });
+});
+    
+    const selectedIncludes = [];
+    document.querySelectorAll('#quotationIncludesChecklist input[type="checkbox"]:checked').forEach(cb => {
+      selectedIncludes.push(cb.value);
+    });
+    
+    const customIncludesList = $.get('customIncludedItems');
+    if (customIncludesList) {
+      customIncludesList.querySelectorAll('li span').forEach(span => {
+        const text = span.textContent?.trim();
+        if (text) selectedIncludes.push(text);
+      });
+    }
+    
+    const selectedAdditionalCharges = [];
+    document.querySelectorAll('#additionalChargesChecklist input[type="checkbox"]:checked').forEach(cb => {
+      selectedAdditionalCharges.push(cb.value);
+    });
+    
+    const customAdditionalList = $.get('additionalChargesList');
+    if (customAdditionalList) {
+      customAdditionalList.querySelectorAll('li span').forEach(span => {
+        const text = span.textContent?.trim();
+        if (text) selectedAdditionalCharges.push(text);
+      });
+    }
+    
+    const hasInsurance = form.querySelector('input[name="insurance"]:checked')?.value === 'yes';
+    
+    const quote = {
+      clientName: form.clientName.value.trim(),
+      clientOrganization: form.clientOrganization?.value.trim() || '',
+      origin: form.origin.value.trim(),
+      destination: form.destination.value.trim(),
+      type: type,
+      modes: modes,
+      insurance: hasInsurance,
+      shipmentContents: Array.from(document.querySelectorAll('input[name="quoteContents"]:checked')).map(cb => cb.value),
+      hhgValue: hasInsurance ? (parseFloat(form.hhgValue?.value) || 0) : 0,
+      hhgCurrency: hasInsurance ? (form.hhgCurrency?.value || 'USD') : 'USD',
+      insurancePercentage: hasInsurance ? (parseFloat(form.insurancePercentage?.value) || 1.5) : 1.5,
+      quoteCurrency: quoteCurrency,
+      chargesByMode: chargesByMode,
+      selectedIncludes: selectedIncludes,
+      selectedAdditionalCharges: selectedAdditionalCharges,
+      termsAndConditions: form.termsAndConditions?.value.trim() || '',
+      validUntil: form.validUntil?.value || '',
+      departurePort: form.departurePort?.value.trim() || '',
+      poe: form.poe?.value.trim() || '',
+      containerDetails: form.containerDetails?.value.trim() || '',
+      seaTransitTime: parseInt(form.seaTransitTime?.value) || 0,
+      seaVolume: parseFloat(form.seaVolume?.value) || 0,
+      departureAirportName: form.departureAirportName?.value.trim() || '',
+      departureAirportIATA: (form.departureAirportIATA?.value || '').toUpperCase().trim(),
+      arrivalAirportName: form.arrivalAirportName?.value.trim() || '',
+      arrivalAirportIATA: (form.arrivalAirportIATA?.value || '').toUpperCase().trim(),
+      airlineName: form.airlineName?.value.trim() || '',
+      airCargoWeight: parseFloat(form.airCargoWeight?.value) || 0,
+      airTransitTime: parseInt(form.airTransitTime?.value) || 0,
+      airVolume: parseFloat(form.airVolume?.value) || 0,
+      airACW: parseFloat(form.airACW?.value) || 0,
+      airQuoteType: form.querySelector('input[name="airQuoteType"]:checked')?.value || 'client',
+      // Vehicle fields
+vehicleType: form.quoteVehicleType?.value || '',
+vehicleMake: form.quoteVehicleMake?.value.trim() || '',
+vehicleModel: form.quoteVehicleModel?.value.trim() || '',
+vehicleYear: parseInt(form.quoteVehicleYear?.value) || 0,
+vehicleVIN: form.quoteVehicleVIN?.value.trim() || '',
+vehicleCondition: form.querySelector('input[name="quoteVehicleCondition"]:checked')?.value || 'Running',
+      truckType: form.querySelector('input[name="truckType"]:checked')?.value || 'Dedicated',
+      landTransitTime: parseInt(form.landTransitTime?.value) || 0,
+      landVolume: parseFloat(form.landVolume?.value) || 0,
+      estimatedVolume: parseFloat(form.seaVolume?.value) || parseFloat(form.airVolume?.value) || parseFloat(form.landVolume?.value) || 0
+    };
+    
+    if (hasInsurance && quote.hhgValue > 0) {
+  const percentage = quote.insurancePercentage || 1.5;
+  const premium = QuoteUtils.calculateInsurancePremium(quote.hhgValue, percentage);
+  const insuranceCurrency = quote.quoteCurrency || 'USD';
+  const insuranceText = `Moving/Transit Insurance coverage (${percentage}% of ${quote.hhgValue.toLocaleString()} ${insuranceCurrency} = ${premium.toFixed(2)} ${insuranceCurrency})`;
+  if (!quote.selectedIncludes.includes(insuranceText)) {
+    quote.selectedIncludes.push(insuranceText);
+  }
+  
+  // Auto-add insurance as a charge to the first mode
+  const firstMode = modes[0];
+  if (firstMode && chargesByMode[firstMode]) {
+    // Remove any existing Transit Insurance charge first
+    chargesByMode[firstMode] = chargesByMode[firstMode].filter(c => 
+      !c.category.toLowerCase().includes('transit insurance')
+    );
+    // Add the insurance charge
+    chargesByMode[firstMode].push({
+      category: 'Transit Insurance',
+      amount: premium,
+      currency: insuranceCurrency
+    });
+  }
+}
+    
+    if (State.quoteFormMode === 'create') {
+      quote.id = Date.now();
+      quote.quoteCode = QuoteUtils.makeQuoteCode();
+      quote.createdAt = new Date().toISOString();
+      State.quotes.push(quote);
+    } else {
+      const existingIndex = State.quotes.findIndex(q => q.id === State.selectedQuoteId);
+      if (existingIndex !== -1) {
+        quote.id = State.selectedQuoteId;
+        quote.quoteCode = State.quotes[existingIndex].quoteCode;
+        quote.createdAt = State.quotes[existingIndex].createdAt;
+        State.quotes[existingIndex] = quote;
+      }
+    }
+    
+    Storage.saveQuotes();
+    Modals.close('createQuoteModal');
+    this.render();
+    
+    const savedQuote = State.quotes.find(q => q.id === quote.id);
+    if (savedQuote) this.showDetails(savedQuote);
+  }
+};
+
+
+// END OF QuotesUI
+
+// ============================================================
+// QuoteExport (PDF Generation)
+// ============================================================
+
+const QuoteExport = {
+  
+  bannerImage: 'data:image/png;base64,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',
+  
+   exportToPdf(quote) {
+    const html = this.buildPdfHtml(quote);
+    const w = window.open('', '_blank');
+    if (!w) { 
+      alert('Popup blocked. Please allow popups.'); 
+      return; 
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    setTimeout(() => { 
+      try { 
+        w.focus(); 
+        w.print(); 
+      } catch(e) {} 
+    }, 300);
+  },
+
+  buildPdfHtml(quote) {
+    const title = quote.type === 'Local'
+      ? `MOVING QUOTE FROM ${(quote.origin || '').toUpperCase()} TO ${(quote.destination || '').toUpperCase()}`
+      : `INTERNATIONAL MOVING QUOTE FROM ${(quote.origin || '').toUpperCase()} TO ${(quote.destination || '').toUpperCase()}`;
+
+    const formData = {
+  origin: quote.origin,
+  destination: quote.destination,
+  departurePort: quote.departurePort,
+  poe: quote.poe,
+  containerDetails: quote.containerDetails,
+  departureAirportName: quote.departureAirportName,
+  arrivalAirportName: quote.arrivalAirportName,
+  truckType: quote.truckType
+};
+
+    let modeSections = '';
+    (quote.modes || []).forEach(m => { 
+      modeSections += this.buildModeSection(m, quote, formData); 
+    });
+
+    const validDate = quote.validUntil ? Utils.formatDate(quote.validUntil) : '';
+    const today = Utils.formatDate(new Date().toISOString().split('T')[0]);
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Quote - ${quote.quoteCode || ''}</title>
+  <style>
+    @page { margin: 0.6in 0.5in; size: A4; }
+    @media print {
+      body { padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4; color: #000; padding: 20px; }
+    .banner { width: 100%; height: auto; display: block; margin-bottom: 16px; }
+    .main-title { text-align: center; font-size: 16pt; font-weight: bold; color: #c00; margin: 16px 0 20px 0; }
+    .header-info { display: flex; justify-content: space-between; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 3px solid #c00; }
+    .header-left, .header-right { font-size: 10pt; line-height: 1.6; }
+    .header-right { text-align: right; }
+    .header-label { font-weight: bold; }
+    .mode-section { margin-bottom: 28px; page-break-inside: avoid; }
+    .mode-header { background: #c00; color: white; padding: 10px 14px; font-weight: bold; font-size: 12pt; }
+    .mode-details { padding: 12px 14px; background: #fafafa; border: 1px solid #e0e0e0; border-top: none; margin-bottom: 12px; font-size: 10pt; line-height: 1.5; }
+    .mode-details strong { font-size: 11pt; }
+    .charges-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+    .charges-table td { padding: 8px 12px; border: 1px solid #ddd; }
+    .charge-category { width: 75%; }
+    .charge-amount { width: 25%; text-align: right; white-space: nowrap; }
+    .total-row { background: #f0f0f0; font-weight: bold; }
+    .section { margin-top: 24px; page-break-inside: avoid; }
+    .section-header { background: #f5f5f5; padding: 8px 12px; font-weight: bold; font-size: 11pt; border-left: 4px solid #c00; margin-bottom: 12px; }
+    .section ul { margin: 0; padding-left: 24px; }
+    .section li { margin-bottom: 6px; font-size: 10pt; line-height: 1.4; }
+    .terms-section { margin-top: 24px; page-break-inside: avoid; }
+    .terms-section .section-header { background: #f5f5f5; padding: 8px 12px; font-weight: bold; font-size: 11pt; border-left: 4px solid #c00; margin-bottom: 12px; }
+    .terms-content { padding: 0 12px; font-size: 10pt; line-height: 1.5; }
+    .validity-box { margin-top: 20px; padding: 14px 20px; background: #fff3cd; border: 2px solid #f59e0b; border-radius: 6px; text-align: center; font-weight: bold; font-size: 12pt; color: #92400e; }
+  </style>
+</head>
+<body>
+  <img src="${this.bannerImage}" class="banner" alt="" onerror="this.style.display='none'">
+  
+  <h1 class="main-title">${Utils.escapeHtml(title)}</h1>
+  
+  <div class="header-info">
+    <div class="header-left">
+      <div><span class="header-label">Client:</span> ${Utils.escapeHtml(quote.clientName || '')}</div>
+      ${quote.clientOrganization ? `<div><span class="header-label">Organization:</span> ${Utils.escapeHtml(quote.clientOrganization)}</div>` : ''}
+      <div><span class="header-label">Reference Number:</span> ${Utils.escapeHtml(quote.quoteCode || '')}</div>
+    </div>
+    <div class="header-right">
+      <div><span class="header-label">Date:</span> ${today}</div>
+      ${validDate ? `<div><span class="header-label">Valid Until:</span> ${validDate}</div>` : ''}
+    </div>
+  </div>
+  
+  ${modeSections}
+  
+  ${this.buildIncludesSection(quote, formData)}
+  
+  ${this.buildAdditionalSection(quote)}
+  
+  ${this.buildTermsSection(quote)}
+  
+  ${validDate ? `<div class="validity-box">Rates & Services are Valid Until: ${validDate}</div>` : ''}
+</body>
+</html>`;
+  },
+
+  buildModeSection(mode, quote, formData) {
+    const charges = (quote.chargesByMode && quote.chargesByMode[mode]) || [];
+    if (charges.length === 0) return '';
+
+    let headerTitle = '';
+    let detailsHtml = '';
+    let chargeRows = '';
+    let totalText = '';
+
+    if (mode === 'Sea') {
+      const vol = quote.seaVolume || quote.estimatedVolume || 0;
+      headerTitle = `SEA FREIGHT (${Utils.escapeHtml(quote.containerDetails || 'Container details not specified')}) est. total volume: ${vol} cbm`;
+      detailsHtml = `
+        <div>${Utils.escapeHtml(quote.departurePort || quote.origin || '-')} to POE ${Utils.escapeHtml(quote.poe || '-')}</div>
+        <div>Estimated port-to-port transit time: ${quote.seaTransitTime ? quote.seaTransitTime + ' days' : 'TBD'}</div>
+      `;
+      
+      const totals = QuoteUtils.calculateTotals(charges);
+      totalText = QuoteUtils.formatTotals(totals);
+      
+      chargeRows = charges.map(c => {
+        const replacedCategory = QuoteUtils.replacePlaceholders(c.category, formData);
+        return `
+          <tr>
+            <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
+            <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)}</td>
+          </tr>
+        `;
+      }).join('');
+      
+      if (totalText) {
+        chargeRows += `
+          <tr class="total-row">
+            <td class="charge-category">TOTAL (${mode})</td>
+            <td class="charge-amount">${totalText}</td>
+          </tr>
+        `;
+      }
+      
+    } else if (mode === 'Air') {
+  const vol = quote.airVolume || quote.estimatedVolume || 0;
+  const acw = quote.airACW || 0;
+  headerTitle = `AIR FREIGHT - ${acw.toFixed(1)} kg (ACW)`;
+      detailsHtml = `
+        <div>${Utils.escapeHtml(quote.departureAirportName || 'Origin Airport')} (${Utils.escapeHtml(quote.departureAirportIATA || 'XXX')}) to ${Utils.escapeHtml(quote.arrivalAirportName || 'Destination Airport')} (${Utils.escapeHtml(quote.arrivalAirportIATA || 'XXX')})</div>
+        <div>via ${Utils.escapeHtml(quote.airlineName || 'TBD')} - Estimated transit time: ${quote.airTransitTime ? quote.airTransitTime + ' days' : 'TBD'}</div>
+      `;
+      
+      // Check if this is agent or client quote type
+      const isAgentQuote = quote.airQuoteType === 'agent';
+      
+      if (isAgentQuote) {
+  // Agent mode: ONLY "Air Freight" charge shows "per ACW", others show normal amounts
+  chargeRows = charges.map(c => {
+    const replacedCategory = QuoteUtils.replacePlaceholders(c.category, formData);
+    const categoryLower = c.category.toLowerCase().trim();
+    const isAirFreightCharge = categoryLower === 'air freight';
+    
+    if (isAirFreightCharge) {
+      return `
+        <tr>
+          <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
+          <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)} per ACW</td>
+        </tr>
+      `;
+    } else {
+      return `
+        <tr>
+          <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
+          <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)}</td>
+        </tr>
+      `;
+    }
+  }).join('');
+  // No total row for agent quotes
+      } else {
+        // Client mode: show actual values with total
+        const totals = QuoteUtils.calculateTotals(charges);
+        totalText = QuoteUtils.formatTotals(totals);
+        
+        chargeRows = charges.map(c => {
+          const replacedCategory = QuoteUtils.replacePlaceholders(c.category, formData);
+          return `
+            <tr>
+              <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
+              <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)}</td>
+            </tr>
+          `;
+        }).join('');
+        
+        if (totalText) {
+          chargeRows += `
+            <tr class="total-row">
+              <td class="charge-category">TOTAL (${mode})</td>
+              <td class="charge-amount">${totalText}</td>
+            </tr>
+          `;
+        }
+      }
+      
+    } else if (mode === 'Land') {
+      const vol = quote.landVolume || quote.estimatedVolume || 0;
+      headerTitle = `LAND FREIGHT (${Utils.escapeHtml(quote.truckType || 'Dedicated')} Truck) est. total volume: ${vol} cbm`;
+      detailsHtml = `
+        <div>${Utils.escapeHtml(quote.origin || '-')} to ${Utils.escapeHtml(quote.destination || '-')}</div>
+        <div>Estimated transit time: ${quote.landTransitTime ? quote.landTransitTime + ' days' : 'TBD'}</div>
+      `;
+      
+      const totals = QuoteUtils.calculateTotals(charges);
+      totalText = QuoteUtils.formatTotals(totals);
+      
+      chargeRows = charges.map(c => {
+        const replacedCategory = QuoteUtils.replacePlaceholders(c.category, formData);
+        return `
+          <tr>
+            <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
+            <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)}</td>
+          </tr>
+        `;
+      }).join('');
+      
+      if (totalText) {
+        chargeRows += `
+          <tr class="total-row">
+            <td class="charge-category">TOTAL (${mode})</td>
+            <td class="charge-amount">${totalText}</td>
+          </tr>
+        `;
+      }
+    }
+
+    return `
+      <div class="mode-section">
+        <div class="mode-header">${headerTitle}</div>
+        <div class="mode-details">
+          ${detailsHtml}
+        </div>
+        <table class="charges-table">
+          <tbody>${chargeRows}</tbody>
+        </table>
+      </div>
+    `;
+  },
+
+  buildIncludesSection(quote, formData) {
+    let items = [...(quote.selectedIncludes || [])];
+    
+    if (quote.insurance && quote.hhgValue) {
+  const percentage = quote.insurancePercentage || 1.5;
+  const premium = QuoteUtils.calculateInsurancePremium(quote.hhgValue, percentage);
+  const insuranceCurrency = quote.quoteCurrency || 'USD';
+  const insuranceText = `Moving/Transit Insurance coverage (${percentage}% of ${quote.hhgValue.toLocaleString()} ${insuranceCurrency} = ${premium.toFixed(2)} ${insuranceCurrency})`;
+  if (!items.some(i => i.toLowerCase().includes('insurance'))) {
+    items.push(insuranceText);
+  }
+}
+    
+    if (items.length === 0) return '';
+    
+    const lis = items.map(i => `<li>${Utils.escapeHtml(i)}</li>`).join('');
+    return `
+      <div class="section">
+        <div class="section-header">OUR QUOTATION INCLUDES:</div>
+        <ul>${lis}</ul>
+      </div>
+    `;
+  },
+
+  buildAdditionalSection(quote) {
+    const items = quote.selectedAdditionalCharges || [];
+    if (items.length === 0) return '';
+    
+    const lis = items.map(i => `<li>${Utils.escapeHtml(i)}</li>`).join('');
+    return `
+      <div class="section">
+        <div class="section-header">ADDITIONAL CHARGES MAY APPLY (if required):</div>
+        <ul>${lis}</ul>
+      </div>
+    `;
+  },
+
+  buildTermsSection(quote) {
+    if (!quote.termsAndConditions) return '';
+    
+    return `
+      <div class="terms-section">
+        <div class="section-header">TERMS & CONDITIONS:</div>
+        <div class="terms-content">${Utils.escapeHtml(quote.termsAndConditions).replace(/\n/g, '<br>')}</div>
+      </div>
+    `;
+  }
+};
+
+// ============================================================
+// HELPER FUNCTIONS FOR QUOTES
+// ============================================================
+
+function addCustomIncluded() {
+  const input = $.get('customIncludedInput');
+  const text = input ? input.value.trim() : '';
+  if (!text) return;
+  
+  const list = $.get('customIncludedItems');
+  if (!list) return;
+  
+  const li = $.el('li', { 
+    className: 'custom-item', 
+    style: 'display:flex; justify-content:space-between; align-items:center; margin:4px 0; padding:4px 8px; background:#f0f9ff; border-radius:4px;' 
+  });
+  const span = $.el('span', { textContent: text });
+  const btn = $.el('button', { 
+    type: 'button', 
+    textContent: 'x',
+    style: 'background:#ef4444; color:white; border:none; padding:2px 8px; border-radius:3px; cursor:pointer; margin-left:8px;'
+  });
+  btn.addEventListener('click', () => li.remove());
+  
+  li.appendChild(span);
+  li.appendChild(btn);
+  list.appendChild(li);
+  input.value = '';
+}
+
+function addAdditionalCharge() {
+  const input = $.get('additionalChargeInput');
+  const text = input ? input.value.trim() : '';
+  if (!text) return;
+  
+  const list = $.get('additionalChargesList');
+  if (!list) return;
+  
+  const li = $.el('li', { 
+    className: 'custom-item', 
+    style: 'display:flex; justify-content:space-between; align-items:center; margin:4px 0; padding:4px 8px; background:#fffbeb; border-radius:4px;' 
+  });
+  const span = $.el('span', { textContent: text });
+  const btn = $.el('button', { 
+    type: 'button', 
+    textContent: 'x',
+    style: 'background:#ef4444; color:white; border:none; padding:2px 8px; border-radius:3px; cursor:pointer; margin-left:8px;'
+  });
+  btn.addEventListener('click', () => li.remove());
+  
+  li.appendChild(span);
+  li.appendChild(btn);
+  list.appendChild(li);
+  input.value = '';
+}
 
 // ============================================================
 // PART 3 OF 4: AGENTS & SCHEDULE UI
@@ -2020,7 +5520,7 @@ const AgentsUI = {
 };
 
 // ============================================================
-// CHANGE: schedule extra jobs helper (linked to move support)
+// schedule extra jobs helper (linked to move support)
 // ============================================================
 
 const ScheduleExtraJobs = {
@@ -2036,7 +5536,6 @@ const ScheduleExtraJobs = {
         }
       });
     });
-    // Sort by date then time
     out.sort((a, b) => {
       const d = a.dateStr.localeCompare(b.dateStr);
       if (d !== 0) return d;
@@ -2113,83 +5612,303 @@ const ScheduleUI = {
     }
   },
 
-  // CHANGE: adds Export Day (PDF) button at top (no HTML changes needed)
   renderDay(dateStr) {
-    const container = $.get('scheduleDayDetails');
-    $.clear(container);
+  const container = $.get('scheduleDayDetails');
+  $.clear(container);
 
-    const topRow = $.el('div', { style: 'display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;' });
-    topRow.appendChild($.el('h3', { textContent: Utils.formatDate(dateStr), style: 'margin:0;' }));
+  const topRow = $.el('div', { style: 'display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;' });
+  topRow.appendChild($.el('h3', { 
+    textContent: I18n.t('dayDetails') + ': ' + Utils.formatDate(dateStr), 
+    style: 'margin:0;' 
+  }));
 
-    const exportBtn = $.el('button', { type: 'button', textContent: I18n.t('exportDayPdf') });
-    exportBtn.addEventListener('click', () => ScheduleExport.exportDayToPdf(dateStr));
-    topRow.appendChild(exportBtn);
+  const exportBtn = $.el('button', { type: 'button', textContent: I18n.t('exportDayPdf') });
+  exportBtn.addEventListener('click', () => ScheduleExport.exportDayToPdf(dateStr));
+  topRow.appendChild(exportBtn);
 
-    container.appendChild(topRow);
+  container.appendChild(topRow);
 
-    const stepsForDay = Steps.getForDate(dateStr);
+  const stepsForDay = Steps.getForDate(dateStr);
+  const extraJobs = (State.scheduleExtraJobs[dateStr] || []).map(ej => Validator.normalizeExtraJob(ej, dateStr));
+  const dayNote = State.scheduleNotes[dateStr] || '';
 
-    // NEW: move-linked additional jobs (stored on job)
-    const moveAdditionalForDay = Steps.getAdditionalForDate(dateStr);
+  // Group steps by job
+  const jobGroups = {};
+  stepsForDay.forEach(({ job, step }) => {
+    if (!jobGroups[job.id]) {
+      jobGroups[job.id] = { job, steps: [] };
+    }
+    jobGroups[job.id].steps.push(step);
+  });
 
-    // Keep day-only tasks (non-move) for cleaning etc.
-    const dayTasks = (State.scheduleExtraJobs[dateStr] || []).map(ej => Validator.normalizeExtraJob(ej, dateStr));
-    const dayNote = State.scheduleNotes[dateStr] || '';
+  // Sort each job's steps by time
+  Object.values(jobGroups).forEach(group => {
+    group.steps.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  });
 
-    if (stepsForDay.length === 0) {
-      container.appendChild($.el('p', { textContent: I18n.t('noScheduledSteps') }));
+  // Render grouped by job with visual separators
+  const jobIds = Object.keys(jobGroups);
+  
+  if (jobIds.length === 0 && extraJobs.length === 0) {
+    container.appendChild($.el('p', { textContent: I18n.t('scheduleDayDetailsHint') }));
+  } else {
+    jobIds.forEach((jobId, idx) => {
+      const group = jobGroups[jobId];
+      const job = group.job;
+      
+      const groupDiv = $.el('div', { className: 'schedule-job-group' });
+      
+      // Job header
+      const header = $.el('div', { className: 'schedule-job-header' });
+      header.appendChild($.el('div', { 
+        className: 'schedule-job-header-title', 
+        textContent: `${job.jobCode || ''} - ${job.clientName || 'No client'}` 
+      }));
+      
+      const meta = $.el('div', { className: 'schedule-job-header-meta' });
+      meta.textContent = `${Utils.location(job.originCity, job.originCountry)} -> ${Utils.location(job.destinationCity, job.destinationCountry)}`;
+      header.appendChild(meta);
+      
+      groupDiv.appendChild(header);
+      
+      // Steps for this job (using existing stepCard style but collapsible)
+      group.steps.forEach(step => {
+        groupDiv.appendChild(this.scheduleStepCardCollapsible(job, step, dateStr));
+      });
+      
+      container.appendChild(groupDiv);
+    });
+  }
+
+  // Additional jobs section
+  container.appendChild(this.extraJobsSection(dateStr, extraJobs));
+  
+  container.appendChild(this.dayNotesSection(dateStr, dayNote));
+},
+
+// Collapsible step card for Schedule view
+scheduleStepCardCollapsible(job, step, dateStr) {
+  const def = CONFIG.STEP_DEFINITIONS[step.id] || { fields: [] };
+  const card = $.el('div', { className: 'step-card-collapsible' });
+
+  // Collapse Header
+  const header = $.el('div', { className: 'step-card-collapse-header' });
+  
+  const headerLeft = $.el('div', { className: 'step-card-header-left' });
+  
+  // Status indicator
+  let status = 'pending';
+  if (step.date) {
+    const stepDate = new Date(step.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    status = stepDate < today ? 'completed' : 'scheduled';
+  }
+  
+  const statusIndicator = $.el('div', { className: `step-status-indicator ${status}` });
+  statusIndicator.textContent = status === 'completed' ? '✓' : (status === 'scheduled' ? '•' : '○');
+  headerLeft.appendChild(statusIndicator);
+  
+  // Title and time
+  const titleGroup = $.el('div');
+  titleGroup.appendChild($.el('div', { className: 'step-card-title', textContent: I18n.stepText(step) }));
+  
+  const subtitle = $.el('div', { className: 'step-card-subtitle' });
+  if (step.time) {
+    subtitle.appendChild($.el('span', { textContent: step.time }));
+  }
+  if (step.personnel) {
+    subtitle.appendChild($.el('span', { textContent: step.personnel }));
+  }
+  titleGroup.appendChild(subtitle);
+  headerLeft.appendChild(titleGroup);
+  
+  header.appendChild(headerLeft);
+  
+  // Time badge if set
+  if (step.time) {
+    const timeBadge = $.el('span', { className: 'step-time-badge', textContent: step.time });
+    header.appendChild(timeBadge);
+  }
+  
+  const arrow = $.el('span', { className: 'step-card-arrow', textContent: '▼' });
+  header.appendChild(arrow);
+  
+  card.appendChild(header);
+
+  // Collapse Body
+  const body = $.el('div', { className: 'step-card-collapse-body hidden' });
+  
+  // View section
+  const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
+  const officeComputed = step.office || Utils.detectOfficeForStep(step, job) || '-';
+
+  const fields = [
+    [I18n.t('office'), officeComputed],
+    [I18n.t('time'), step.time || '-'],
+    [I18n.t('personnel'), step.personnel || '-'],
+    [I18n.t('vehicle'), step.vehicle || '-']
+  ];
+  if (def.fields && def.fields.includes('address')) fields.push([I18n.t('address'), step.address || '-']);
+  if (def.fields && def.fields.includes('portDetails')) fields.push([I18n.t('portDetails'), step.portDetails || '-']);
+  if (def.fields && def.fields.includes('pickupAirport')) fields.push([I18n.t('pickupAirport'), step.pickupAirport || '-']);
+  if (def.fields && def.fields.includes('deliveryAirport')) fields.push([I18n.t('deliveryAirport'), step.deliveryAirport || '-']);
+  if (def.fields && def.fields.includes('pickupAddress')) fields.push([I18n.t('pickupAddress'), step.pickupAddress || '-']);
+  if (def.fields && def.fields.includes('deliveryAddress')) fields.push([I18n.t('deliveryAddress'), step.deliveryAddress || '-']);
+  fields.push([I18n.t('notesLabel'), step.notes || '-']);
+
+  fields.forEach(([label, value]) => {
+    const row = $.el('div', { className: 'schedule-field-row' });
+    row.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
+    row.appendChild($.el('span', { className: 'schedule-field-value', textContent: value }));
+    viewBox.appendChild(row);
+  });
+  body.appendChild(viewBox);
+
+  // Edit section
+  const editBox = $.el('div', { className: 'schedule-step-fields-edit hidden' });
+
+  // Office
+  const officeDiv = $.el('div');
+  officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
+  const officeSelect = $.el('select', { className: 'sched-office-input' });
+  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+  CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
+  officeSelect.value = step.office || '';
+  officeDiv.appendChild(officeSelect);
+  editBox.appendChild(officeDiv);
+
+  // Time (24-hour dropdowns)
+  const timeDiv = $.el('div');
+  timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
+  const timeSelector = TimeHelpers.createTimeSelector(step.time || '');
+  timeSelector.classList.add('sched-time-selector');
+  timeDiv.appendChild(timeSelector);
+  editBox.appendChild(timeDiv);
+
+  // Personnel
+  const pDiv = $.el('div');
+  pDiv.appendChild($.el('label', { textContent: I18n.t('personnel') }));
+  pDiv.appendChild($.el('input', { type: 'text', className: 'sched-personnel-input', value: step.personnel || '' }));
+  editBox.appendChild(pDiv);
+
+  // Vehicle
+  const vDiv = $.el('div');
+  vDiv.appendChild($.el('label', { textContent: I18n.t('vehicle') }));
+  vDiv.appendChild($.el('input', { type: 'text', className: 'sched-vehicle-input', value: step.vehicle || '' }));
+  editBox.appendChild(vDiv);
+
+  if (def.fields && def.fields.includes('address')) {
+    const addrDiv = $.el('div', { className: 'full-width' });
+    addrDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
+    addrDiv.appendChild($.el('textarea', { rows: '2', className: 'sched-address-input', textContent: step.address || '' }));
+    editBox.appendChild(addrDiv);
+  }
+
+  const notesDiv = $.el('div', { className: 'full-width' });
+  notesDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
+  notesDiv.appendChild($.el('textarea', { rows: '2', className: 'sched-notes-input', textContent: step.notes || '' }));
+  editBox.appendChild(notesDiv);
+
+  body.appendChild(editBox);
+
+  // Actions
+  const actions = $.el('div', { className: 'schedule-step-actions' });
+  
+  const openBtn = $.el('button', { type: 'button', className: 'schedule-open-btn', textContent: I18n.t('openMove') });
+  openBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    Views.show('moves');
+    JobsUI.render();
+    JobsUI.showDetails(job);
+  });
+
+  const editBtn = $.el('button', { type: 'button', className: 'schedule-edit-btn', textContent: I18n.t('edit') });
+  const saveBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('save') });
+  const cancelBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('cancel') });
+
+  editBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    $.hide(viewBox);
+    $.show(editBox);
+    $.hide(editBtn);
+    $.hide(openBtn);
+    $.show(saveBtn);
+    $.show(cancelBtn);
+  });
+
+  saveBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    step.office = card.querySelector('.sched-office-input').value || '';
+    const timeSelector = card.querySelector('.sched-time-selector');
+    step.time = TimeHelpers.getTimeFromSelector(timeSelector);
+    step.personnel = card.querySelector('.sched-personnel-input').value.trim();
+    step.vehicle = card.querySelector('.sched-vehicle-input').value.trim();
+    const addrEl = card.querySelector('.sched-address-input');
+    if (addrEl) step.address = addrEl.value.trim();
+    step.notes = card.querySelector('.sched-notes-input').value.trim();
+    Storage.saveJobs();
+    this.renderDay(dateStr);
+  });
+
+  cancelBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    this.renderDay(dateStr);
+  });
+
+  actions.appendChild(openBtn);
+  actions.appendChild(editBtn);
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  body.appendChild(actions);
+
+  card.appendChild(body);
+
+  // Toggle collapse on header click
+  header.addEventListener('click', () => {
+    const isExpanded = !body.classList.contains('hidden');
+    if (isExpanded) {
+      body.classList.add('hidden');
+      header.classList.remove('expanded');
+      arrow.classList.remove('expanded');
     } else {
-      stepsForDay.sort((a, b) => (a.step.time || '').localeCompare(b.step.time || ''));
-      stepsForDay.forEach(({ job, step }) => container.appendChild(this.stepCard(job, step, dateStr)));
+      body.classList.remove('hidden');
+      header.classList.add('expanded');
+      arrow.classList.add('expanded');
     }
+  });
 
-    // Render move-linked additional jobs exactly like steps
-    if (moveAdditionalForDay.length) {
-      moveAdditionalForDay
-        .sort((a, b) => (a.extra.time || '').localeCompare(b.extra.time || ''))
-        .forEach(({ job, extra }) => {
-          container.appendChild(this.stepCard(job, extra, dateStr, true)); // true = isAdditional
-        });
-    }
+  return card;
+},
 
-    container.appendChild(this.extraJobsSection(dateStr, dayTasks));
-    container.appendChild(this.dayNotesSection(dateStr, dayNote));
-  },
-
-  // CHANGE: schedule step view shows office + schedule edit allows office/address editing
-  stepCard(job, step, dateStr, isAdditional = false) {
+  stepCard(job, step, dateStr) {
     const def = CONFIG.STEP_DEFINITIONS[step.id] || {};
     const card = $.el('div', { className: 'schedule-step-card' });
     card.appendChild($.el('h4', { textContent: `${job.jobCode || ''} – ${job.clientName || 'No client name'}` }));
-    card.appendChild($.el('p', { textContent: step.label }));
+    card.appendChild($.el('p', { textContent: I18n.stepText(step) }));
     card.appendChild($.el('p', {
       textContent: `${Utils.location(job.originCity, job.originCountry)} → ${Utils.location(job.destinationCity, job.destinationCountry)}`
     }));
     card.appendChild($.el('p', {
       className: 'schedule-step-meta',
-      innerHTML: `${
-        job.modes && job.modes.length ? job.modes.join(' + ') : 'No mode'
-      } • ${job.tradeDirection || '-'} • ${I18n.t('statusLabel')}: ${job.status}`
+      innerHTML: `${I18n.modesText(job.modes)} • ${I18n.typeText(job.tradeDirection)} • ${I18n.t('statusLabel')}: ${I18n.statusText(job.status)}`
     }));
 
     const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
 
     const officeComputed = step.office || Utils.detectOfficeForStep(step, job) || '-';
-    const defFields = def.fields || [];
-    const hasAddress = isAdditional || defFields.includes('address');
-
     const fields = [
       [I18n.t('office'), officeComputed],
       [I18n.t('time'), step.time || '-'],
       [I18n.t('personnel'), step.personnel || '-'],
       [I18n.t('vehicle'), step.vehicle || '-']
     ];
-    if (hasAddress) fields.push([I18n.t('address'), step.address || '-']);
-    if (defFields.includes('portDetails')) fields.push([I18n.t('portDetails'), step.portDetails || '-']);
-    if (defFields.includes('pickupAirport')) fields.push([I18n.t('pickupAirport'), step.pickupAirport || '-']);
-    if (defFields.includes('deliveryAirport')) fields.push([I18n.t('deliveryAirport'), step.deliveryAirport || '-']);
-    if (defFields.includes('pickupAddress')) fields.push([I18n.t('pickupAddress'), step.pickupAddress || '-']);
-    if (defFields.includes('deliveryAddress')) fields.push([I18n.t('deliveryAddress'), step.deliveryAddress || '-']);
+    if (def.fields && def.fields.includes('address')) fields.push([I18n.t('address'), step.address || '-']);
+    if (def.fields && def.fields.includes('portDetails')) fields.push([I18n.t('portDetails'), step.portDetails || '-']);
+    if (def.fields && def.fields.includes('pickupAirport')) fields.push([I18n.t('pickupAirport'), step.pickupAirport || '-']);
+    if (def.fields && def.fields.includes('deliveryAirport')) fields.push([I18n.t('deliveryAirport'), step.deliveryAirport || '-']);
+    if (def.fields && def.fields.includes('pickupAddress')) fields.push([I18n.t('pickupAddress'), step.pickupAddress || '-']);
+    if (def.fields && def.fields.includes('deliveryAddress')) fields.push([I18n.t('deliveryAddress'), step.deliveryAddress || '-']);
     fields.push([I18n.t('notesLabel'), step.notes || '-']);
 
     fields.forEach(([label, value]) => {
@@ -2221,8 +5940,7 @@ const ScheduleUI = {
       }
     );
 
-    // address editing if step supports address or is an additional job
-    if (hasAddress) {
+    if (def.fields && def.fields.includes('address')) {
       const addrDiv = $.el('div', { className: 'full-width' });
       addrDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
       addrDiv.appendChild($.el('textarea', { rows: '2', className: 'sched-address-input', textContent: step.address || '' }));
@@ -2277,62 +5995,19 @@ const ScheduleUI = {
     return card;
   },
 
-  // CHANGE: extra jobs now have time/address/office + optional linked move + open-move button
+  // Additional jobs section - displayed as step-like cards (same style), with edit support
   extraJobsSection(dateStr, extraJobs) {
     const section = $.el('div', { className: 'schedule-extra-jobs' });
     section.appendChild($.el('h4', { textContent: I18n.t('extraJobs') }));
     const list = $.el('div');
 
-    // Only show day-only tasks here (non-move)
-    const dayOnlyTasks = (extraJobs || []).filter(ej => !ej.linkedJobId);
-
-    if (dayOnlyTasks.length === 0) {
+    if (extraJobs.length === 0) {
       list.appendChild($.el('p', { className: 'schedule-extra-empty', textContent: I18n.t('noExtraJobs') }));
     } else {
-      dayOnlyTasks
+      extraJobs
         .slice()
         .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
-        .forEach(ej => {
-          const row = $.el('div', { className: 'schedule-extra-job-row' });
-          const main = $.el('div', { className: 'schedule-extra-job-main' });
-
-          const taskName = (ej.taskType === 'Custom' && ej.customTaskName) ? ej.customTaskName : (ej.taskType || '-');
-          const office = ej.office || Utils.detectOfficeFromAddress(ej.address) || '-';
-
-          const pairs = [
-            [I18n.t('office'), office],
-            [I18n.t('time'), ej.time || '-'],
-            [I18n.t('task'), taskName],
-            [I18n.t('address'), ej.address || '-'],
-            [I18n.t('personnel'), ej.personnel || '-'],
-            [I18n.t('vehicle'), ej.vehicle || '-'],
-            [I18n.t('notesLabel'), ej.notes || '-']
-          ];
-
-          pairs.forEach(([label, value]) => {
-            const fieldRow = $.el('div', { className: 'schedule-field-row' });
-            fieldRow.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
-            fieldRow.appendChild($.el('span', { className: 'schedule-field-value', textContent: value }));
-            main.appendChild(fieldRow);
-          });
-
-          row.appendChild(main);
-
-          const actions = $.el('div', { className: 'schedule-extra-job-actions' });
-
-          const delBtn = $.el('button', { type: 'button', className: 'extra-job-delete-btn', textContent: I18n.t('delete') });
-          delBtn.addEventListener('click', () => {
-            if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
-            ScheduleExtraJobs.deleteById(dateStr, ej.id);
-            Storage.saveScheduleExtraJobs();
-            this.renderDay(dateStr);
-            this.render();
-          });
-
-          actions.appendChild(delBtn);
-          row.appendChild(actions);
-          list.appendChild(row);
-        });
+        .forEach(ej => list.appendChild(this.extraJobCard(dateStr, ej)));
     }
 
     section.appendChild(list);
@@ -2340,17 +6015,17 @@ const ScheduleUI = {
     // --- Add form (standalone or linked) ---
     const form = $.el('div', { className: 'schedule-extra-form' });
 
-    // Linked Move select
+    // Linked Move select (FIX: show jobCode + client)
     const linkDiv = $.el('div');
     linkDiv.appendChild($.el('label', { textContent: I18n.t('linkedMove') }));
     const linkSelect = $.el('select', { id: 'extraJobLinkedMove' });
     linkSelect.appendChild($.el('option', { value: '', textContent: I18n.t('none') }));
     State.jobs
       .slice()
-      .map(j => ({ id: String(j.id), code: j.jobCode || '' }))
+      .map(j => ({ id: String(j.id), code: j.jobCode || '', client: j.clientName || '' }))
       .filter(x => x.code)
       .sort((a, b) => a.code.localeCompare(b.code))
-      .forEach(x => linkSelect.appendChild($.el('option', { value: x.id, textContent: x.code })));
+      .forEach(x => linkSelect.appendChild($.el('option', { value: x.id, textContent: `${x.code} – ${x.client}`.trim() })));
     linkDiv.appendChild(linkSelect);
     form.appendChild(linkDiv);
 
@@ -2358,7 +6033,7 @@ const ScheduleUI = {
     const taskDiv = $.el('div');
     taskDiv.appendChild($.el('label', { textContent: I18n.t('task') }));
     const select = $.el('select', { id: 'extraJobType' });
-    CONFIG.EXTRA_JOB_TYPES.forEach(type => select.appendChild($.el('option', { value: type, textContent: type })));
+    CONFIG.EXTRA_JOB_TYPES.forEach(type => select.appendChild($.el('option', { value: type, textContent: I18n.taskTypeText(type) })));
     taskDiv.appendChild(select);
     form.appendChild(taskDiv);
 
@@ -2432,45 +6107,27 @@ const ScheduleUI = {
         return;
       }
 
-      if (linkedJob) {
-        if (!Array.isArray(linkedJob.additionalJobs)) linkedJob.additionalJobs = [];
-        linkedJob.additionalJobs.push({
-          id: Utils.makeId('ajob'),
-          label: (taskType === 'Custom' && customTaskName) ? customTaskName : (taskType || ((State.lang === 'tr') ? 'Ek İş' : 'Additional Job')),
-          date: dateStr,
-          time,
-          personnel,
-          vehicle,
-          address,
-          notes,
-          office
-        });
-        Storage.saveJobs();
-      } else {
-        if (!Array.isArray(State.scheduleExtraJobs[dateStr])) State.scheduleExtraJobs[dateStr] = [];
+      if (!Array.isArray(State.scheduleExtraJobs[dateStr])) State.scheduleExtraJobs[dateStr] = [];
 
-        State.scheduleExtraJobs[dateStr].push(Validator.normalizeExtraJob({
-          id: Utils.makeId('xjob'),
-          date: dateStr,
-          taskType,
-          customTaskName,
-          time,
-          office,
-          address,
-          personnel,
-          vehicle,
-          notes,
-          linkedJobId: '',
-          linkedJobCode: ''
-        }, dateStr));
+      State.scheduleExtraJobs[dateStr].push(Validator.normalizeExtraJob({
+        id: Utils.makeId('xjob'),
+        date: dateStr,
+        taskType,
+        customTaskName,
+        time,
+        office,
+        address,
+        personnel,
+        vehicle,
+        notes,
+        linkedJobId: linkedJob ? String(linkedJob.id) : '',
+        linkedJobCode: linkedJob ? (linkedJob.jobCode || '') : '',
+        linkedJobClientName: linkedJob ? (linkedJob.clientName || '') : ''
+      }, dateStr));
 
-        Storage.saveScheduleExtraJobs();
-      }
-
+      Storage.saveScheduleExtraJobs();
       this.renderDay(dateStr);
       this.render();
-
-      if (linkedJob) JobsUI.showDetails(linkedJob);
     });
 
     const actionsDiv = $.el('div', { className: 'schedule-extra-actions' });
@@ -2479,6 +6136,199 @@ const ScheduleUI = {
     section.appendChild(form);
 
     return section;
+  },
+
+  // NEW: Additional job card in schedule that matches step-card style and supports edit/delete
+  extraJobCard(dateStr, ej) {
+    const card = $.el('div', { className: 'schedule-step-card' });
+
+    const taskName = (ej.taskType === 'Custom' && ej.customTaskName)
+      ? ej.customTaskName
+      : I18n.taskTypeText(ej.taskType || '');
+
+    const linkedLabel = ej.linkedJobId ? Utils.jobLabelById(ej.linkedJobId, ej.linkedJobCode) : '';
+
+    card.appendChild($.el('h4', {
+      textContent: linkedLabel ? `${linkedLabel} • ${taskName}` : taskName
+    }));
+
+    const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
+
+    const office = ej.office || Utils.detectOfficeFromAddress(ej.address) || '-';
+    const fields = [
+      [I18n.t('office'), office],
+      [I18n.t('time'), ej.time || '-'],
+      [I18n.t('task'), taskName || '-'],
+      [I18n.t('address'), ej.address || '-'],
+      [I18n.t('personnel'), ej.personnel || '-'],
+      [I18n.t('vehicle'), ej.vehicle || '-'],
+      [I18n.t('notesLabel'), ej.notes || '-']
+    ];
+
+    if (linkedLabel) fields.unshift([I18n.t('moveId'), linkedLabel]);
+
+    fields.forEach(([label, value]) => {
+      const row = $.el('div', { className: 'schedule-field-row' });
+      row.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
+      row.appendChild($.el('span', { className: 'schedule-field-value', textContent: value }));
+      viewBox.appendChild(row);
+    });
+
+    card.appendChild(viewBox);
+
+    // edit box
+    const editBox = $.el('div', { className: 'schedule-step-fields-edit hidden' });
+
+    // linked move select
+    const linkDiv = $.el('div');
+    linkDiv.appendChild($.el('label', { textContent: I18n.t('linkedMove') }));
+    const linkSelect = $.el('select', { className: 'ej-edit-linked' });
+    linkSelect.appendChild($.el('option', { value: '', textContent: I18n.t('none') }));
+    State.jobs
+      .slice()
+      .map(j => ({ id: String(j.id), code: j.jobCode || '', client: j.clientName || '' }))
+      .filter(x => x.code)
+      .sort((a, b) => a.code.localeCompare(b.code))
+      .forEach(x => linkSelect.appendChild($.el('option', { value: x.id, textContent: `${x.code} – ${x.client}`.trim() })));
+    linkSelect.value = ej.linkedJobId || '';
+    linkDiv.appendChild(linkSelect);
+    editBox.appendChild(linkDiv);
+
+    // task type + custom
+    const taskDiv = $.el('div');
+    taskDiv.appendChild($.el('label', { textContent: I18n.t('task') }));
+    const typeSelect = $.el('select', { className: 'ej-edit-type' });
+    CONFIG.EXTRA_JOB_TYPES.forEach(type => typeSelect.appendChild($.el('option', { value: type, textContent: I18n.taskTypeText(type) })));
+    typeSelect.value = ej.taskType || 'Custom';
+    taskDiv.appendChild(typeSelect);
+    editBox.appendChild(taskDiv);
+
+    const customDiv = $.el('div');
+    customDiv.appendChild($.el('label', { textContent: I18n.t('customTaskName') }));
+    const customInput = $.el('input', { type: 'text', className: 'ej-edit-custom', value: ej.customTaskName || '' });
+    customDiv.appendChild(customInput);
+    editBox.appendChild(customDiv);
+
+    const toggleCustom = () => {
+      customDiv.style.display = (typeSelect.value === 'Custom') ? '' : 'none';
+      if (typeSelect.value !== 'Custom') customInput.value = '';
+    };
+    typeSelect.addEventListener('change', toggleCustom);
+    toggleCustom();
+
+    // time, office
+    const timeDiv = $.el('div');
+    timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
+    timeDiv.appendChild($.el('input', { type: 'time', className: 'ej-edit-time', value: ej.time || '' }));
+    editBox.appendChild(timeDiv);
+
+    const officeDiv = $.el('div');
+    officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
+    const officeSelect = $.el('select', { className: 'ej-edit-office' });
+    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+    CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
+    officeSelect.value = ej.office || '';
+    officeDiv.appendChild(officeSelect);
+    editBox.appendChild(officeDiv);
+
+    // address, personnel, vehicle, notes
+    const addrDiv = $.el('div', { className: 'full-width' });
+    addrDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
+    addrDiv.appendChild($.el('textarea', { rows: '2', className: 'ej-edit-address', textContent: ej.address || '' }));
+    editBox.appendChild(addrDiv);
+
+    const pDiv = $.el('div');
+    pDiv.appendChild($.el('label', { textContent: I18n.t('personnel') }));
+    pDiv.appendChild($.el('input', { type: 'text', className: 'ej-edit-personnel', value: ej.personnel || '' }));
+    editBox.appendChild(pDiv);
+
+    const vDiv = $.el('div');
+    vDiv.appendChild($.el('label', { textContent: I18n.t('vehicle') }));
+    vDiv.appendChild($.el('input', { type: 'text', className: 'ej-edit-vehicle', value: ej.vehicle || '' }));
+    editBox.appendChild(vDiv);
+
+    const nDiv = $.el('div', { className: 'full-width' });
+    nDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
+    nDiv.appendChild($.el('textarea', { rows: '2', className: 'ej-edit-notes', textContent: ej.notes || '' }));
+    editBox.appendChild(nDiv);
+
+    card.appendChild(editBox);
+
+    // actions (open move if linked, edit/save/cancel, delete)
+    const actions = $.el('div', { className: 'schedule-step-actions', style: 'display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;' });
+
+    const openMoveBtn = $.el('button', { type: 'button', textContent: I18n.t('openMove') });
+    openMoveBtn.addEventListener('click', () => {
+      const job = ej.linkedJobId ? State.getJob(ej.linkedJobId) : null;
+      if (job) {
+        Views.show('moves');
+        JobsUI.render();
+        JobsUI.showDetails(job);
+      }
+    });
+
+    const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit') });
+    const saveBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('save') });
+    const cancelBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('cancel') });
+    const delBtn = $.el('button', { type: 'button', textContent: I18n.t('delete') });
+
+    if (ej.linkedJobId) actions.appendChild(openMoveBtn);
+
+    editBtn.addEventListener('click', () => {
+      $.hide(viewBox);
+      $.show(editBox);
+      $.hide(editBtn);
+      if (openMoveBtn) $.hide(openMoveBtn);
+      $.show(saveBtn);
+      $.show(cancelBtn);
+    });
+
+    cancelBtn.addEventListener('click', () => this.renderDay(dateStr));
+
+    saveBtn.addEventListener('click', () => {
+      ej.linkedJobId = linkSelect.value || '';
+      const linked = ej.linkedJobId ? State.getJob(ej.linkedJobId) : null;
+      ej.linkedJobCode = linked ? (linked.jobCode || '') : '';
+      ej.linkedJobClientName = linked ? (linked.clientName || '') : '';
+
+      ej.taskType = typeSelect.value || '';
+      ej.customTaskName = customInput.value.trim();
+      ej.time = card.querySelector('.ej-edit-time').value || '';
+      ej.office = card.querySelector('.ej-edit-office').value || '';
+      ej.address = card.querySelector('.ej-edit-address').value.trim();
+      ej.personnel = card.querySelector('.ej-edit-personnel').value.trim();
+      ej.vehicle = card.querySelector('.ej-edit-vehicle').value.trim();
+      ej.notes = card.querySelector('.ej-edit-notes').value.trim();
+
+      Storage.saveScheduleExtraJobs();
+      this.renderDay(dateStr);
+      this.render();
+      // refresh move details if currently open and linked
+      if (State.selectedJobId && ej.linkedJobId && String(State.selectedJobId) === String(ej.linkedJobId)) {
+        const j = State.getJob(State.selectedJobId);
+        if (j) JobsUI.showDetails(j);
+      }
+    });
+
+    delBtn.addEventListener('click', () => {
+      if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
+      ScheduleExtraJobs.deleteById(dateStr, ej.id);
+      Storage.saveScheduleExtraJobs();
+      this.renderDay(dateStr);
+      this.render();
+      if (State.selectedJobId && ej.linkedJobId && String(State.selectedJobId) === String(ej.linkedJobId)) {
+        const j = State.getJob(State.selectedJobId);
+        if (j) JobsUI.showDetails(j);
+      }
+    });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+    actions.appendChild(delBtn);
+    card.appendChild(actions);
+
+    return card;
   },
 
   dayNotesSection(dateStr, note) {
@@ -2547,6 +6397,52 @@ const ScheduleUI = {
 // PART 4 OF 4: FORMS, EVENTS & INITIALIZATION
 // ============================================================
 
+// Toggle job form mode-specific field sections
+function toggleJobModeFields() {
+  const seaChecked = $.get('jobModeSea')?.checked;
+  const airChecked = $.get('jobModeAir')?.checked;
+  const landChecked = $.get('jobModeLand')?.checked;
+  
+  const seaFields = $.get('jobSeaFields');
+  const airFields = $.get('jobAirFields');
+  const landFields = $.get('jobLandFields');
+  
+  if (seaFields) {
+    if (seaChecked) $.show(seaFields);
+    else $.hide(seaFields);
+  }
+  if (airFields) {
+    if (airChecked) $.show(airFields);
+    else $.hide(airFields);
+  }
+  if (landFields) {
+    if (landChecked) $.show(landFields);
+    else $.hide(landFields);
+  }
+}
+
+// Toggle job form vehicle fields
+function toggleJobVehicleFields() {
+  const vehicleChecked = $.get('jobContentsVehicle')?.checked;
+  const vehicleFields = $.get('jobVehicleFields');
+  
+  if (vehicleFields) {
+    if (vehicleChecked) $.show(vehicleFields);
+    else $.hide(vehicleFields);
+  }
+}
+
+// Toggle quote form vehicle fields
+function toggleQuoteVehicleFields() {
+  const vehicleChecked = $.get('quoteContentsVehicle')?.checked;
+  const vehicleFields = $.get('quoteVehicleFields');
+  
+  if (vehicleFields) {
+    if (vehicleChecked) $.show(vehicleFields);
+    else $.hide(vehicleFields);
+  }
+}
+
 const Forms = {
   populateCountrySelects() {
     ['originCountrySelect', 'destinationCountrySelect', 'agentCountrySelect'].forEach(id => {
@@ -2571,70 +6467,89 @@ const Forms = {
   },
 
   handleJobSubmit(e) {
-    e.preventDefault();
-    const form = $.get('jobForm');
-    const job = {
-      clientName: form.clientName.value.trim(),
-      originCity: form.originCity.value.trim(),
-      originCountry: form.originCountry.value,
-      originFullAddress: form.originFullAddress.value.trim(),
-      destinationCity: form.destinationCity.value.trim(),
-      destinationCountry: form.destinationCountry.value,
-      destinationFullAddress: form.destinationFullAddress.value.trim(),
-      weight: form.weight.value ? Number(form.weight.value) : 0,
-      volume: form.volume.value ? Number(form.volume.value) : 0,
-      tradeDirection: form.tradeDirection.value,
-      status: form.status.value,
-      originAgentId: form.originAgentId.value ? String(form.originAgentId.value) : null,
-      destinationAgentId: form.destinationAgentId.value ? String(form.destinationAgentId.value) : null,
-      modes: Array.from(form.querySelectorAll('input[name="mode"]:checked')).map(cb => cb.value)
-    };
+  e.preventDefault();
+  const form = $.get('jobForm');
+  
+  // Get shipment contents
+  const shipmentContents = Array.from(form.querySelectorAll('input[name="shipmentContents"]:checked')).map(cb => cb.value);
+  
+  const job = {
+    clientName: form.clientName.value.trim(),
+    originCity: form.originCity.value.trim(),
+    originCountry: form.originCountry.value,
+    originFullAddress: form.originFullAddress.value.trim(),
+    destinationCity: form.destinationCity.value.trim(),
+    destinationCountry: form.destinationCountry.value,
+    destinationFullAddress: form.destinationFullAddress.value.trim(),
+    tradeDirection: form.tradeDirection.value,
+    status: form.status.value,
+    originAgentId: form.originAgentId.value ? String(form.originAgentId.value) : null,
+    destinationAgentId: form.destinationAgentId.value ? String(form.destinationAgentId.value) : null,
+    modes: Array.from(form.querySelectorAll('input[name="mode"]:checked')).map(cb => cb.value),
+    shipmentContents: shipmentContents.length > 0 ? shipmentContents : ['HHE'],
+    moveManager: form.moveManager?.value.trim() || '',
+    
+    // Mode-specific fields
+    seaVolume: parseFloat(form.jobSeaVolume?.value) || 0,
+    containerDetails: form.jobContainerDetails?.value.trim() || '',
+    airVolume: parseFloat(form.jobAirVolume?.value) || 0,
+    airCargoWeight: parseFloat(form.jobAirCargoWeight?.value) || 0,
+    airACW: parseFloat(form.jobAirACW?.value) || 0,
+    landVolume: parseFloat(form.jobLandVolume?.value) || 0,
+    
+    // Vehicle fields
+    vehicleType: form.jobVehicleType?.value || '',
+    vehicleMake: form.jobVehicleMake?.value.trim() || '',
+    vehicleModel: form.jobVehicleModel?.value.trim() || '',
+    vehicleYear: parseInt(form.jobVehicleYear?.value) || 0,
+    vehicleVIN: form.jobVehicleVIN?.value.trim() || '',
+    vehicleCondition: form.querySelector('input[name="jobVehicleCondition"]:checked')?.value || 'Running'
+  };
 
-    if (!job.status) {
-      alert(I18n.t('statusRequired'));
-      return;
-    }
-    if (!job.originAgentId && !job.destinationAgentId) {
-      alert(I18n.t('selectOneAgent'));
-      return;
-    }
+  if (!job.status) {
+    alert(I18n.t('statusRequired'));
+    return;
+  }
+  if (!job.originAgentId && !job.destinationAgentId) {
+    alert(I18n.t('selectOneAgent'));
+    return;
+  }
 
-    if (State.jobFormMode === 'create') {
-      // CHANGE: use safe unique id (not Date.now)
-      job.id = Utils.makeId('job');
-      job.jobCode = Utils.jobCode();
-      job.notes = [];
-      job.documents = [];
-      job.paymentReceived = false;
-      job.packDate = '';
-      const template = CONFIG.CHECKLIST_TEMPLATES[job.tradeDirection] || CONFIG.CHECKLIST_TEMPLATES.DEFAULT;
-      job.checklist = template.map(text => ({ text, done: false }));
-      job.steps = Steps.create(job);
-      State.jobs.push(job);
-    } else {
-      const existing = State.getJob(State.selectedJobId);
-      if (existing) {
-        Object.assign(existing, job);
-        const oldSteps = existing.steps || [];
-        const newSteps = Steps.create(existing);
-        newSteps.forEach(ns => {
-          const os = oldSteps.find(s => s.id === ns.id);
-          if (os) Object.assign(ns, os);
-        });
-        existing.steps = newSteps;
-      }
+  if (State.jobFormMode === 'create') {
+    job.id = Utils.makeId('job');
+    job.jobCode = Utils.jobCode();
+    job.notes = [];
+    job.documents = [];
+    job.paymentReceived = false;
+    job.packDate = '';
+    const template = CONFIG.CHECKLIST_TEMPLATES[job.tradeDirection] || CONFIG.CHECKLIST_TEMPLATES.DEFAULT;
+    job.checklist = template.map(text => ({ text, done: false }));
+    job.steps = Steps.create(job);
+    State.jobs.push(job);
+  } else {
+    const existing = State.getJob(State.selectedJobId);
+    if (existing) {
+      Object.assign(existing, job);
+      const oldSteps = existing.steps || [];
+      const newSteps = Steps.create(existing);
+      newSteps.forEach(ns => {
+        const os = oldSteps.find(s => s.id === ns.id);
+        if (os) Object.assign(ns, os);
+      });
+      existing.steps = newSteps;
     }
+  }
 
-    Storage.saveJobs();
-    Modals.closeJob();
-    JobsUI.render();
-    const lastJob =
-      State.jobFormMode === 'create'
-        ? State.jobs[State.jobs.length - 1]
-        : State.getJob(State.selectedJobId);
-    if (lastJob) JobsUI.showDetails(lastJob);
-    ScheduleUI.render();
-  },
+  Storage.saveJobs();
+  Modals.closeJob();
+  JobsUI.render();
+  const lastJob =
+    State.jobFormMode === 'create'
+      ? State.jobs[State.jobs.length - 1]
+      : State.getJob(State.selectedJobId);
+  if (lastJob) JobsUI.showDetails(lastJob);
+  ScheduleUI.render();
+},
 
   handleAgentSubmit(e) {
     e.preventDefault();
@@ -2649,7 +6564,6 @@ const Forms = {
 
     if (State.agentFormMode === 'create') {
       State.agents.push({
-        // CHANGE: use safe unique id (not Date.now)
         id: Utils.makeId('agent'),
         name,
         city,
@@ -2686,29 +6600,59 @@ function initEventHandlers() {
   });
 
   $.get('editJobBtn').addEventListener('click', () => {
-    const job = State.getJob(State.selectedJobId);
-    if (!job) return;
-    State.jobFormMode = 'edit';
-    $.get('jobModalTitle').textContent = I18n.t('editMove');
-    const form = $.get('jobForm');
-    form.clientName.value = job.clientName || '';
-    form.originCity.value = job.originCity || '';
-    form.originCountry.value = job.originCountry || '';
-    form.originFullAddress.value = job.originFullAddress || '';
-    form.destinationCity.value = job.destinationCity || '';
-    form.destinationCountry.value = job.destinationCountry || '';
-    form.destinationFullAddress.value = job.destinationFullAddress || '';
-    form.weight.value = job.weight || '';
-    form.volume.value = job.volume || '';
-    form.tradeDirection.value = job.tradeDirection || '';
-    form.status.value = job.status || '';
-    form.originAgentId.value = job.originAgentId || '';
-    form.destinationAgentId.value = job.destinationAgentId || '';
-    Array.from(form.querySelectorAll('input[name="mode"]')).forEach(cb => {
-      cb.checked = job.modes && job.modes.includes(cb.value);
-    });
-    Modals.open('createJobModal');
+  const job = State.getJob(State.selectedJobId);
+  if (!job) return;
+  State.jobFormMode = 'edit';
+  $.get('jobModalTitle').textContent = I18n.t('editMove');
+  const form = $.get('jobForm');
+  form.clientName.value = job.clientName || '';
+  form.originCity.value = job.originCity || '';
+  form.originCountry.value = job.originCountry || '';
+  form.originFullAddress.value = job.originFullAddress || '';
+  form.destinationCity.value = job.destinationCity || '';
+  form.destinationCountry.value = job.destinationCountry || '';
+  form.destinationFullAddress.value = job.destinationFullAddress || '';
+  form.tradeDirection.value = job.tradeDirection || '';
+  form.status.value = job.status || '';
+  form.originAgentId.value = job.originAgentId || '';
+  form.destinationAgentId.value = job.destinationAgentId || '';
+  
+  // Move Manager
+  if (form.moveManager) form.moveManager.value = job.moveManager || '';
+  
+  // Modes
+  Array.from(form.querySelectorAll('input[name="mode"]')).forEach(cb => {
+    cb.checked = job.modes && job.modes.includes(cb.value);
   });
+  
+  // Shipment Contents
+  Array.from(form.querySelectorAll('input[name="shipmentContents"]')).forEach(cb => {
+    cb.checked = job.shipmentContents && job.shipmentContents.includes(cb.value);
+  });
+  
+  // Mode-specific fields
+  if (form.jobSeaVolume) form.jobSeaVolume.value = job.seaVolume || '';
+  if (form.jobContainerDetails) form.jobContainerDetails.value = job.containerDetails || '';
+  if (form.jobAirVolume) form.jobAirVolume.value = job.airVolume || '';
+  if (form.jobAirCargoWeight) form.jobAirCargoWeight.value = job.airCargoWeight || '';
+  if (form.jobAirACW) form.jobAirACW.value = job.airACW || '';
+  if (form.jobLandVolume) form.jobLandVolume.value = job.landVolume || '';
+  
+  // Vehicle fields
+  if (form.jobVehicleType) form.jobVehicleType.value = job.vehicleType || '';
+  if (form.jobVehicleMake) form.jobVehicleMake.value = job.vehicleMake || '';
+  if (form.jobVehicleModel) form.jobVehicleModel.value = job.vehicleModel || '';
+  if (form.jobVehicleYear) form.jobVehicleYear.value = job.vehicleYear || '';
+  if (form.jobVehicleVIN) form.jobVehicleVIN.value = job.vehicleVIN || '';
+  const vehicleConditionRadio = form.querySelector(`input[name="jobVehicleCondition"][value="${job.vehicleCondition || 'Running'}"]`);
+  if (vehicleConditionRadio) vehicleConditionRadio.checked = true;
+  
+  // Show/hide mode-specific sections
+  toggleJobModeFields();
+  toggleJobVehicleFields();
+  
+  Modals.open('createJobModal');
+});
 
   $.get('closeModalBtn').addEventListener('click', () => Modals.closeJob());
   $.get('cancelJobBtn').addEventListener('click', () => Modals.closeJob());
@@ -2913,7 +6857,184 @@ function initEventHandlers() {
 
   const docsJobFilter = $.get('documentsJobFilter');
   if (docsJobFilter) docsJobFilter.addEventListener('change', () => DocumentsTabUI.render());
+
+  // Documents tabs
+const documentsSearchTab = $.get('documentsSearchTab');
+const resourceLibraryTab = $.get('resourceLibraryTab');
+
+if (documentsSearchTab) {
+  documentsSearchTab.addEventListener('click', () => {
+    State.documentsViewTab = 'search';
+    
+    // Update active state
+    documentsSearchTab.classList.add('active');
+    resourceLibraryTab.classList.remove('active');
+    documentsSearchTab.style.borderBottomColor = '#3b82f6';
+    resourceLibraryTab.style.borderBottomColor = 'transparent';
+    
+    DocumentsTabUI.render();
+  });
 }
+
+if (resourceLibraryTab) {
+  resourceLibraryTab.addEventListener('click', () => {
+    State.documentsViewTab = 'library';
+    
+    // Update active state
+    resourceLibraryTab.classList.add('active');
+    documentsSearchTab.classList.remove('active');
+    resourceLibraryTab.style.borderBottomColor = '#3b82f6';
+    documentsSearchTab.style.borderBottomColor = 'transparent';
+    
+    DocumentsTabUI.render();
+  });
+}
+  
+// Quotes navigation
+$.get('navQuotes').addEventListener('click', () => {
+  Views.show('quotes');
+  QuotesUI.render();
+});
+
+// Quote search
+const quoteSearchInput = $.get('quoteSearchInput');
+if (quoteSearchInput) {
+  quoteSearchInput.addEventListener('input', (e) => {
+    State.quoteFilters.search = e.target.value.trim();
+    QuotesUI.render();
+  });
+}
+
+// Create/Edit Quote buttons
+$.get('openCreateQuote').addEventListener('click', () => {
+  State.quoteFormMode = 'create';
+  QuotesUI.showModal();
+});
+
+$.get('editQuoteBtn').addEventListener('click', () => {
+  const quote = State.quotes.find(q => q.id === State.selectedQuoteId);
+  if (quote) {
+    State.quoteFormMode = 'edit';
+    QuotesUI.showModal(quote);
+  }
+});
+
+// Modal controls
+$.get('closeQuoteModalBtn').addEventListener('click', () => Modals.close('createQuoteModal'));
+$.get('cancelQuoteBtn').addEventListener('click', () => Modals.close('createQuoteModal'));
+$.get('createQuoteModal').addEventListener('click', (e) => {
+  if (e.target === $.get('createQuoteModal')) Modals.close('createQuoteModal');
+});
+
+// Form submit
+$.get('quoteForm').addEventListener('submit', (e) => QuotesUI.handleFormSubmit(e));
+
+// Mode checkbox changes
+['Sea', 'Air', 'Land'].forEach(mode => {
+  const cb = $.get(`quoteMode${mode}`);
+  if (cb) {
+    cb.addEventListener('change', () => QuotesUI.updateModeFields());
+  }
+});
+  
+  // Refresh checklist AND charge categories when key fields change (so placeholders get replaced)
+['departureAirportName', 'arrivalAirportName', 'departurePort', 'poe', 'containerDetails'].forEach(fieldName => {
+  const field = $.get('quoteForm')?.[fieldName];
+  if (field) {
+    field.addEventListener('change', () => {
+      QuotesUI.updateChecklists();
+      QuotesUI.refreshChargeCategoryPlaceholders();
+    });
+    field.addEventListener('blur', () => {
+      QuotesUI.updateChecklists();
+      QuotesUI.refreshChargeCategoryPlaceholders();
+    });
+  }
+});
+
+// Type change
+const quoteTypeSelect = $.get('quoteForm')?.querySelector('select[name="quoteType"]');
+if (quoteTypeSelect) {
+  quoteTypeSelect.addEventListener('change', () => QuotesUI.updateChecklists());
+}
+
+// Insurance toggle
+const quoteForm = $.get('quoteForm');
+if (quoteForm) {
+  quoteForm.querySelectorAll('input[name="insurance"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      QuotesUI.toggleInsuranceFields(e.target.value === 'yes');
+      QuotesUI.updateChecklists(); // Update to remove/add insurance from additional charges
+    });
+  });
+}
+
+// Add charge buttons for each mode
+['Sea', 'Air', 'Land'].forEach(mode => {
+  const btn = $.get(`add${mode}ChargeBtn`);
+  if (btn) {
+    btn.addEventListener('click', () => QuotesUI.addChargeRow(mode));
+  }
+});
+  
+  // Quote currency change - update amount placeholders
+const quoteCurrencySelect = $.get('quoteCurrency');
+if (quoteCurrencySelect) {
+  quoteCurrencySelect.addEventListener('change', () => {
+    const currency = quoteCurrencySelect.value;
+    document.querySelectorAll('.charge-amount-input').forEach(input => {
+      input.placeholder = `Amount (${currency})`;
+    });
+  });
+}
+  
+ // Custom items
+const addCustomIncludedBtn = $.get('addCustomIncludedBtn');
+if (addCustomIncludedBtn) {
+  addCustomIncludedBtn.addEventListener('click', addCustomIncluded);
+}
+
+const addAdditionalChargeBtn = $.get('addAdditionalChargeBtn');
+if (addAdditionalChargeBtn) {
+  addAdditionalChargeBtn.addEventListener('click', addAdditionalCharge);
+}
+
+// Enter key for custom inputs
+const customIncludedInput = $.get('customIncludedInput');
+if (customIncludedInput) {
+  customIncludedInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addCustomIncluded(); }
+  });
+}
+
+const additionalChargeInput = $.get('additionalChargeInput');
+if (additionalChargeInput) {
+  additionalChargeInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addAdditionalCharge(); }
+  });
+}
+  
+  // Job form mode field toggles
+['jobModeSea', 'jobModeAir', 'jobModeLand'].forEach(id => {
+  const cb = $.get(id);
+  if (cb) {
+    cb.addEventListener('change', toggleJobModeFields);
+  }
+});
+
+// Job form vehicle checkbox toggle
+const jobContentsVehicle = $.get('jobContentsVehicle');
+if (jobContentsVehicle) {
+  jobContentsVehicle.addEventListener('change', toggleJobVehicleFields);
+}
+
+// Quote form vehicle checkbox toggle
+const quoteContentsVehicle = $.get('quoteContentsVehicle');
+if (quoteContentsVehicle) {
+  quoteContentsVehicle.addEventListener('change', toggleQuoteVehicleFields);
+}
+}
+
 
 function init() {
   Storage.loadAll();
@@ -2929,6 +7050,7 @@ function init() {
   JobsUI.render();
   AgentsUI.render();
   ScheduleUI.render();
+  QuotesUI.render();
 
   if (State.jobs.length > 0) {
     const sorted = [...State.jobs].sort((a, b) => {
