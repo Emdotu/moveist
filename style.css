@@ -2541,3 +2541,59 @@ footer {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 }
+
+/* ============================================================
+   ADD MOVE STEP DROPDOWN
+   ============================================================ */
+
+.step-type-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 100;
+  min-width: 220px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.step-type-dropdown.hidden {
+  display: none;
+}
+
+.step-type-dropdown > div {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.15s;
+}
+
+.step-type-dropdown > div:last-child {
+  border-bottom: none;
+}
+
+.step-type-dropdown > div:hover {
+  background: #f3f4f6;
+}
+
+/* Time Select Group Styling */
+.time-select-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-select-group select {
+  width: auto;
+  min-width: 60px;
+}
+
+.time-select-group span {
+  font-weight: 600;
+  color: #374151;
+}
