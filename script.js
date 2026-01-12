@@ -1364,6 +1364,7 @@ const Validator = {
   if (typeof job.paymentReceived !== 'boolean') job.paymentReceived = false;
   if (!job.packDate) job.packDate = '';
   if (!job.jobCode) job.jobCode = Utils.jobCode();
+  if (!Array.isArray(job.removedAutoStepIds)) job.removedAutoStepIds = [];
 
   // Shipment contents (HHE, Vehicle)
   if (!Array.isArray(job.shipmentContents)) job.shipmentContents = ['HHE'];
@@ -1402,7 +1403,7 @@ const Validator = {
   }
 
   if (!Array.isArray(job.checklist) || job.checklist.length === 0) {
-    const template = CONFIG.CHECKLIST_TEMPLATES[job.tradeDirection] || [];
+    const template = ChecklistUtils.getTemplate(job.tradeDirection, job.modes);
     job.checklist = template.map(text => ({ text, done: false }));
   }
 
@@ -1571,24 +1572,22 @@ const Steps = {
     const modeKey = [...new Set(modes)].sort().join('/');
     const scenarioKey = `${tradeDirection}|${modeKey}`;
     const stepIds = CONFIG.STEP_SCENARIOS[scenarioKey] || [];
+    const removedStepIds = Array.isArray(job.removedAutoStepIds) ? job.removedAutoStepIds : [];
 
-    return stepIds.map(stepId => {
+    return stepIds.filter(stepId => !removedStepIds.includes(stepId)).map(stepId => {
       const def = CONFIG.STEP_DEFINITIONS[stepId] || {};
       const step = {
         id: stepId, label: def.label || stepId,
         date: '', time: '', personnel: '', vehicle: '', address: '',
         portDetails: '', pickupAirport: '', deliveryAirport: '',
         pickupAddress: '', deliveryAddress: '', notes: '',
-        office: '' // office per step (optional)
+        office: '' // office per step (manual)
       };
 
       if (def.autoFillAddress === 'origin' && job.originFullAddress) step.address = job.originFullAddress;
       if (def.autoFillAddress === 'destination' && job.destinationFullAddress) step.address = job.destinationFullAddress;
       if (def.autoFillDeliveryAddress === 'destination' && job.destinationFullAddress) step.deliveryAddress = job.destinationFullAddress;
       if (def.autoFillPickupAddress === 'origin' && job.originFullAddress) step.pickupAddress = job.originFullAddress;
-
-      // if office not set, attempt auto-detect from best available address
-      step.office = Utils.detectOfficeForStep(step, job);
 
       return step;
     });
@@ -1604,7 +1603,7 @@ const Steps = {
     } else {
       // ensure office field exists on existing data
       job.steps.forEach(step => {
-        if (typeof step.office !== 'string') step.office = Utils.detectOfficeForStep(step, job);
+        if (typeof step.office !== 'string') step.office = '';
       });
     }
   },
@@ -1625,6 +1624,17 @@ const Steps = {
       }
     });
     return result;
+  }
+};
+
+const ChecklistUtils = {
+  getTemplate(tradeDirection, modes) {
+    const typeKey = String(tradeDirection || '').toUpperCase();
+    const modeKey = Array.isArray(modes) ? [...new Set(modes)].sort().join('/') : '';
+    const scenarioKey = modeKey ? `${typeKey}|${modeKey}` : typeKey;
+    return CONFIG.CHECKLIST_TEMPLATES[scenarioKey]
+      || CONFIG.CHECKLIST_TEMPLATES[typeKey]
+      || [];
   }
 };
 
@@ -2033,7 +2043,7 @@ const ScheduleExport = {
     // Steps
     const stepsForDay = Steps.getForDate(dateStr);
     stepsForDay.forEach(({ job, step }) => {
-      const office = step.office || '-';
+      const office = step.office || '';
       const address = step.address || step.pickupAddress || step.deliveryAddress || '-';
       rows.push({
         office,
@@ -2056,7 +2066,7 @@ const ScheduleExport = {
         ? ej.customTaskName
         : I18n.taskTypeText(ej.taskType || '');
 
-      const office = ej.office || '-';
+      const office = ej.office || '';
       const linked = ej.linkedJobId ? State.getJob(ej.linkedJobId) : null;
 
       rows.push({
@@ -2073,17 +2083,25 @@ const ScheduleExport = {
       });
     });
 
-    // Sort by office first, then by time
-    rows.sort((a, b) => {
-      const officeCompare = (a.office || '').localeCompare(b.office || '');
-      if (officeCompare !== 0) return officeCompare;
-      return (a.time || '').localeCompare(b.time || '');
+    const officeGroups = {};
+    CONFIG.OFFICES.forEach(office => { officeGroups[office] = []; });
+
+    rows.forEach(row => {
+      if (row.office && officeGroups[row.office]) {
+        officeGroups[row.office].push(row);
+      }
     });
-    return rows;
+
+    Object.values(officeGroups).forEach(items => {
+      items.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    });
+
+    return officeGroups;
   },
 
   exportDayToPdf(dateStr) {
-    const rows = this.buildDayRows(dateStr);
+    const officeGroups = this.buildDayRows(dateStr);
+    const allRows = Object.values(officeGroups).flat();
 
     const title = (State.lang === 'tr')
       ? `Günlük Program: ${Utils.formatDate(dateStr)}`
@@ -2131,8 +2149,16 @@ const ScheduleExport = {
     </thead>
     <tbody>
       ${
-        rows.length
-          ? rows.map(r => `
+        allRows.length
+          ? CONFIG.OFFICES.map(office => {
+              const items = officeGroups[office] || [];
+              if (!items.length) return '';
+              const header = `
+                <tr>
+                  <td colspan="9"><strong>${Utils.escapeHtml(office)}</strong></td>
+                </tr>
+              `;
+              const body = items.map(r => `
             <tr>
               <td>${Utils.escapeHtml(r.office || '')}</td>
               <td>${Utils.escapeHtml(r.time || '')}</td>
@@ -2144,7 +2170,9 @@ const ScheduleExport = {
               <td>${Utils.escapeHtml(r.vehicle || '')}</td>
               <td>${Utils.escapeHtml(r.notes || '')}</td>
             </tr>
-          `).join('')
+              `).join('');
+              return header + body;
+            }).join('')
           : `<tr><td colspan="9">${Utils.escapeHtml((State.lang === 'tr') ? 'Bu gün için kayıt yok.' : 'No items for this day.')}</td></tr>`
       }
     </tbody>
@@ -2516,7 +2544,7 @@ stepCardCollapsible(step, idx, job) {
   let status = 'pending';
   if (step.completed) {
     status = 'completed';
-  } else if (step.date) {
+  } else if (step.date || step.time) {
     status = 'scheduled';
   }
 
@@ -2560,7 +2588,7 @@ stepCardCollapsible(step, idx, job) {
   
   // View section
   const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
-  const officeComputed = step.office || Utils.detectOfficeForStep(step, job) || '-';
+  const officeComputed = step.office || '-';
   const addrShort = (step.address || step.pickupAddress || step.deliveryAddress || '').trim();
   const addrView = addrShort ? (addrShort.length > 120 ? (addrShort.slice(0, 120) + '...') : addrShort) : '-';
 
@@ -2677,6 +2705,25 @@ stepCardCollapsible(step, idx, job) {
   const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit') });
   const saveBtn = $.el('button', { type: 'button', className: 'hidden step-save-btn', textContent: I18n.t('save') });
   const cancelBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('cancel') });
+  const deleteStepBtn = $.el('button', {
+    type: 'button',
+    className: 'delete-step-btn',
+    textContent: (State.lang === 'tr') ? 'Sil' : 'Remove'
+  });
+  const isAutoStep = Boolean(CONFIG.STEP_DEFINITIONS[step.id]);
+  const completeBtn = $.el('button', { 
+    type: 'button', 
+    className: step.completed ? 'complete-btn completed' : 'complete-btn',
+    textContent: step.completed ? ((State.lang === 'tr') ? '✓ Tamamlandı' : '✓ Completed') : ((State.lang === 'tr') ? 'Tamamla' : 'Mark Complete')
+  });
+  completeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    step.completed = !step.completed;
+    Storage.saveJobs();
+    this.showDetails(job);
+    ScheduleUI.render();
+    if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+  });
 
   editBtn.addEventListener('click', () => {
     $.hide(viewBox);
@@ -2696,7 +2743,12 @@ stepCardCollapsible(step, idx, job) {
     step.time = TimeHelpers.getTimeFromSelector(timeSelector);
     step.personnel = card.querySelector('.step-personnel-input').value.trim();
     step.vehicle = card.querySelector('.step-vehicle-input').value.trim();
-    step.office = card.querySelector('.step-office-select').value || '';
+    const officeValue = card.querySelector('.step-office-select').value || '';
+    if (!officeValue) {
+      alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+      return;
+    }
+    step.office = officeValue;
 
     if (def.fields.includes('address')) step.address = card.querySelector('.step-address-input').value.trim();
     if (def.fields.includes('portDetails')) step.portDetails = card.querySelector('.step-port-input').value.trim();
@@ -2713,9 +2765,28 @@ stepCardCollapsible(step, idx, job) {
     this.showDetails(job);
   });
 
+  deleteStepBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const confirmMsg = (State.lang === 'tr') ? 'Bu adımı silmek istediğinize emin misiniz?' : 'Are you sure you want to remove this step?';
+    if (!confirm(confirmMsg)) return;
+    if (isAutoStep) {
+      if (!Array.isArray(job.removedAutoStepIds)) job.removedAutoStepIds = [];
+      if (!job.removedAutoStepIds.includes(step.id)) {
+        job.removedAutoStepIds.push(step.id);
+      }
+    }
+    job.steps.splice(idx, 1);
+    Storage.saveJobs();
+    this.showDetails(job);
+    ScheduleUI.render();
+    if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+  });
+
+  actions.appendChild(completeBtn);
   actions.appendChild(editBtn);
   actions.appendChild(saveBtn);
   actions.appendChild(cancelBtn);
+  if (isAutoStep) actions.appendChild(deleteStepBtn);
   body.appendChild(actions);
 
   card.appendChild(body);
@@ -2740,7 +2811,7 @@ stepCardCollapsible(step, idx, job) {
   // Collapsible linked extra job card
 linkedExtraJobCollapsible(job, item) {
   const { dateStr, ej } = item;
-  const card = $.el('div', { className: 'extra-job-card-collapsible' });
+  const card = $.el('div', { className: 'step-card-collapsible' });
 
   const taskName = (ej.taskType === 'Custom' && ej.customTaskName)
     ? ej.customTaskName
@@ -2755,7 +2826,7 @@ linkedExtraJobCollapsible(job, item) {
   let ejStatus = 'pending';
   if (ej.completed) {
     ejStatus = 'completed';
-  } else if (ej.date || dateStr) {
+  } else if (ej.date || dateStr || ej.time) {
     ejStatus = 'scheduled';
   }
   const statusIndicator = $.el('div', { className: `step-status-indicator ${ejStatus}` });
@@ -2785,7 +2856,7 @@ linkedExtraJobCollapsible(job, item) {
 
   // View section
   const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
-  const office = ej.office || Utils.detectOfficeFromAddress(ej.address) || '-';
+  const office = ej.office || '-';
   const addr = (ej.address || '').trim();
   const addrView = addr ? (addr.length > 120 ? (addr.slice(0, 120) + '...') : addr) : '-';
 
@@ -2860,6 +2931,20 @@ linkedExtraJobCollapsible(job, item) {
   const saveBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('save') });
   const cancelBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('cancel') });
   const deleteBtn = $.el('button', { type: 'button', textContent: I18n.t('delete') });
+  const completeBtn = $.el('button', { 
+    type: 'button', 
+    className: ej.completed ? 'complete-btn completed' : 'complete-btn',
+    textContent: ej.completed ? ((State.lang === 'tr') ? '✓ Tamamlandı' : '✓ Completed') : ((State.lang === 'tr') ? 'Tamamla' : 'Mark Complete')
+  });
+  completeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    ej.completed = !ej.completed;
+    Storage.saveScheduleExtraJobs();
+    ScheduleUI.render();
+    if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    const current = State.getJob(State.selectedJobId);
+    if (current) this.showDetails(current);
+  });
 
   editBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -2903,6 +2988,7 @@ linkedExtraJobCollapsible(job, item) {
     if (current) this.showDetails(current);
   });
 
+  actions.appendChild(completeBtn);
   actions.appendChild(editBtn);
   actions.appendChild(saveBtn);
   actions.appendChild(cancelBtn);
@@ -2941,7 +3027,7 @@ linkedExtraJobCollapsible(job, item) {
     // ---- compact view box ----
     const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
 
-    const officeComputed = step.office || Utils.detectOfficeForStep(step, job) || '-';
+    const officeComputed = step.office || '-';
     const addrShort = (step.address || step.pickupAddress || step.deliveryAddress || '').trim();
     const addrView = addrShort ? (addrShort.length > 120 ? (addrShort.slice(0, 120) + '…') : addrShort) : '-';
 
@@ -3065,7 +3151,12 @@ linkedExtraJobCollapsible(job, item) {
       step.time = card.querySelector('.step-time-input').value || '';
       step.personnel = card.querySelector('.step-personnel-input').value.trim();
       step.vehicle = card.querySelector('.step-vehicle-input').value.trim();
-      step.office = card.querySelector('.step-office-select').value || '';
+      const officeValue = card.querySelector('.step-office-select').value || '';
+      if (!officeValue) {
+        alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+        return;
+      }
+      step.office = officeValue;
 
       if (def.fields.includes('address')) step.address = card.querySelector('.step-address-input').value.trim();
       if (def.fields.includes('portDetails')) step.portDetails = card.querySelector('.step-port-input').value.trim();
@@ -3139,7 +3230,7 @@ linkedExtraJobCollapsible(job, item) {
 
     // view
     const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
-    const office = ej.office || Utils.detectOfficeFromAddress(ej.address) || '-';
+    const office = ej.office || '-';
     const addr = (ej.address || '').trim();
     const addrView = addr ? (addr.length > 120 ? (addr.slice(0, 120) + '…') : addr) : '-';
 
@@ -3480,46 +3571,63 @@ const ChecklistUI = {
 
     // Progress bar
     const completedCount = items.filter(i => i.done).length;
-    const progressBar = $.el('div', { className: 'checklist-progress-bar' });
+    const progressBar = $.el('div', { className: 'steps-progress-bar' });
     items.forEach((item) => {
-      const segment = $.el('div', { className: 'checklist-progress-segment' });
+      const segment = $.el('div', { className: 'steps-progress-segment' });
       if (item.done) segment.classList.add('completed');
       progressBar.appendChild(segment);
     });
     const progressText = $.el('span', { 
-      className: 'checklist-progress-text',
+      className: 'steps-progress-text',
       textContent: `${completedCount}/${items.length} ` + ((State.lang === 'tr') ? 'tamamlandı' : 'completed')
     });
     progressBar.appendChild(progressText);
     container.appendChild(progressBar);
 
-    // Checklist items with checkmark style
+    // Checklist items styled like step cards
     const listContainer = $.el('div', { className: 'checklist-items-list' });
     items.forEach((item, idx) => {
-      const wrapper = $.el('div', { className: `checklist-item-card ${item.done ? 'completed' : ''}` });
-      
-      // Status indicator (checkmark style)
-      const statusIndicator = $.el('div', { className: `checklist-status-indicator ${item.done ? 'completed' : ''}` });
+      const card = $.el('div', { className: 'step-card-collapsible' });
+
+      const header = $.el('div', { className: 'step-card-collapse-header' });
+      const headerLeft = $.el('div', { className: 'step-card-header-left' });
+
+      const status = item.done ? 'completed' : 'pending';
+      const statusIndicator = $.el('div', { className: `step-status-indicator ${status}` });
       statusIndicator.textContent = item.done ? '✓' : '○';
-      
-      // Text
-      const textSpan = $.el('span', { 
-        className: 'checklist-item-text',
+      headerLeft.appendChild(statusIndicator);
+
+      const titleGroup = $.el('div');
+      titleGroup.appendChild($.el('div', {
+        className: 'step-card-title',
         textContent: I18n.checklistText(item.text)
+      }));
+      headerLeft.appendChild(titleGroup);
+      header.appendChild(headerLeft);
+
+      const arrow = $.el('span', { className: 'step-card-arrow', textContent: '▼' });
+      header.appendChild(arrow);
+      card.appendChild(header);
+
+      const body = $.el('div', { className: 'step-card-collapse-body hidden' });
+      const actions = $.el('div', { className: 'schedule-step-actions' });
+
+      const completeBtn = $.el('button', { 
+        type: 'button', 
+        className: item.done ? 'complete-btn completed' : 'complete-btn',
+        textContent: item.done ? ((State.lang === 'tr') ? '✓ Tamamlandı' : '✓ Completed') : ((State.lang === 'tr') ? 'Tamamla' : 'Mark Complete')
       });
-      
-      // Toggle on click
-      wrapper.addEventListener('click', () => {
+      completeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         job.checklist[idx].done = !job.checklist[idx].done;
         Storage.saveJobs();
         this.render(job);
       });
-      
-      // Delete button
+
       const deleteBtn = $.el('button', { 
         type: 'button', 
-        className: 'checklist-delete-btn',
-        textContent: '×'
+        className: 'delete-step-btn',
+        textContent: I18n.t('delete')
       });
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3527,11 +3635,26 @@ const ChecklistUI = {
         Storage.saveJobs();
         this.render(job);
       });
-      
-      wrapper.appendChild(statusIndicator);
-      wrapper.appendChild(textSpan);
-      wrapper.appendChild(deleteBtn);
-      listContainer.appendChild(wrapper);
+
+      actions.appendChild(completeBtn);
+      actions.appendChild(deleteBtn);
+      body.appendChild(actions);
+      card.appendChild(body);
+
+      header.addEventListener('click', () => {
+        const isExpanded = !body.classList.contains('hidden');
+        if (isExpanded) {
+          body.classList.add('hidden');
+          header.classList.remove('expanded');
+          arrow.classList.remove('expanded');
+        } else {
+          body.classList.remove('hidden');
+          header.classList.add('expanded');
+          arrow.classList.add('expanded');
+        }
+      });
+
+      listContainer.appendChild(card);
     });
     container.appendChild(listContainer);
   }
@@ -5813,7 +5936,7 @@ const ScheduleUI = {
 
   const btnGroup = $.el('div', { style: 'display:flex; gap:8px;' });
   
-  const addJobBtn = $.el('button', { type: 'button', textContent: (State.lang === 'tr') ? '+ Ek İş Ekle' : '+ Add Job' });
+  const addJobBtn = $.el('button', { type: 'button', textContent: (State.lang === 'tr') ? '+ Ek İş Ekle' : 'Add Additional Job' });
   btnGroup.appendChild(addJobBtn);
   
   const exportBtn = $.el('button', { type: 'button', textContent: I18n.t('exportDayPdf') });
@@ -5858,11 +5981,12 @@ const ScheduleUI = {
   // Group by office
   const officeGroups = {};
   CONFIG.OFFICES.forEach(office => { officeGroups[office] = []; });
-  officeGroups['Unassigned'] = [];
   
   allItems.forEach(item => {
-    const office = item.office && CONFIG.OFFICES.includes(item.office) ? item.office : 'Unassigned';
-    officeGroups[office].push(item);
+    const office = item.office && CONFIG.OFFICES.includes(item.office) ? item.office : '';
+    if (office) {
+      officeGroups[office].push(item);
+    }
   });
   
   // Sort items within each office by time
@@ -5900,25 +6024,6 @@ const ScheduleUI = {
       container.appendChild(groupDiv);
     });
     
-    // Unassigned items
-    const unassigned = officeGroups['Unassigned'];
-    if (unassigned.length > 0) {
-      const groupDiv = $.el('div', { className: 'schedule-office-group unassigned' });
-      const header = $.el('div', { className: 'schedule-office-header unassigned' });
-      header.appendChild($.el('span', { className: 'schedule-office-name', textContent: (State.lang === 'tr') ? 'Ofis Atanmamış' : 'Unassigned Office' }));
-      header.appendChild($.el('span', { className: 'schedule-office-count', textContent: `${unassigned.length} ` + ((State.lang === 'tr') ? 'iş' : 'items') }));
-      groupDiv.appendChild(header);
-      
-      unassigned.forEach(item => {
-        if (item.type === 'step') {
-          groupDiv.appendChild(this.scheduleStepCardCollapsible(item.job, item.step, dateStr));
-        } else {
-          groupDiv.appendChild(this.scheduleExtraJobCardCollapsible(dateStr, item.ej));
-        }
-      });
-      
-      container.appendChild(groupDiv);
-    }
   }
 
   // Add job form (hidden by default)
@@ -5948,11 +6053,10 @@ scheduleStepCardCollapsible(job, step, dateStr) {
   
   // Status indicator
   let status = 'pending';
-  if (step.date) {
-    const stepDate = new Date(step.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    status = stepDate < today ? 'completed' : 'scheduled';
+  if (step.completed) {
+    status = 'completed';
+  } else if (step.date || step.time) {
+    status = 'scheduled';
   }
   
   const statusIndicator = $.el('div', { className: `step-status-indicator ${status}` });
@@ -5991,7 +6095,7 @@ scheduleStepCardCollapsible(job, step, dateStr) {
   
   // View section
   const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
-  const officeComputed = step.office || Utils.detectOfficeForStep(step, job) || '-';
+  const officeComputed = step.office || '-';
 
   const fields = [
     [I18n.t('office'), officeComputed],
@@ -6076,6 +6180,18 @@ scheduleStepCardCollapsible(job, step, dateStr) {
   const editBtn = $.el('button', { type: 'button', className: 'schedule-edit-btn', textContent: I18n.t('edit') });
   const saveBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('save') });
   const cancelBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('cancel') });
+  const completeBtn = $.el('button', { 
+    type: 'button', 
+    className: step.completed ? 'complete-btn completed' : 'complete-btn',
+    textContent: step.completed ? ((State.lang === 'tr') ? '✓ Tamamlandı' : '✓ Completed') : ((State.lang === 'tr') ? 'Tamamla' : 'Mark Complete')
+  });
+  completeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    step.completed = !step.completed;
+    Storage.saveJobs();
+    this.renderDay(dateStr);
+    this.render();
+  });
 
   editBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -6083,13 +6199,19 @@ scheduleStepCardCollapsible(job, step, dateStr) {
     $.show(editBox);
     $.hide(editBtn);
     $.hide(openBtn);
+    $.hide(completeBtn);
     $.show(saveBtn);
     $.show(cancelBtn);
   });
 
   saveBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    step.office = card.querySelector('.sched-office-input').value || '';
+    const officeValue = card.querySelector('.sched-office-input').value || '';
+    if (!officeValue) {
+      alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+      return;
+    }
+    step.office = officeValue;
     const timeSelector = card.querySelector('.sched-time-selector');
     step.time = TimeHelpers.getTimeFromSelector(timeSelector);
     step.personnel = card.querySelector('.sched-personnel-input').value.trim();
@@ -6107,6 +6229,7 @@ scheduleStepCardCollapsible(job, step, dateStr) {
   });
 
   actions.appendChild(openBtn);
+  actions.appendChild(completeBtn);
   actions.appendChild(editBtn);
   actions.appendChild(saveBtn);
   actions.appendChild(cancelBtn);
@@ -6276,7 +6399,7 @@ scheduleExtraJobCardCollapsible(dateStr, ej) {
 
   // Open linked move button
   if (ej.linkedJobId) {
-    const openBtn = $.el('button', { type: 'button', className: 'schedule-open-btn', textContent: I18n.t('openMove') });
+  const openBtn = $.el('button', { type: 'button', className: 'schedule-open-btn', textContent: I18n.t('openMove') });
     openBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const job = State.getJob(ej.linkedJobId);
@@ -6306,7 +6429,12 @@ scheduleExtraJobCardCollapsible(dateStr, ej) {
 
   saveBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    ej.office = card.querySelector('.ej-edit-office').value || '';
+    const officeValue = card.querySelector('.ej-edit-office').value || '';
+    if (!officeValue) {
+      alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+      return;
+    }
+    ej.office = officeValue;
     const timeSelector = card.querySelector('.ej-edit-time-selector');
     ej.time = TimeHelpers.getTimeFromSelector(timeSelector);
     ej.personnel = card.querySelector('.ej-edit-personnel').value.trim();
@@ -6373,7 +6501,7 @@ scheduleExtraJobCardCollapsible(dateStr, ej) {
 
     const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
 
-    const officeComputed = step.office || Utils.detectOfficeForStep(step, job) || '-';
+    const officeComputed = step.office || '-';
     const fields = [
       [I18n.t('office'), officeComputed],
       [I18n.t('time'), step.time || '-'],
@@ -6431,7 +6559,12 @@ scheduleExtraJobCardCollapsible(dateStr, ej) {
 
     const saveBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('save') });
     saveBtn.addEventListener('click', () => {
-      step.office = card.querySelector('.sched-office-input').value || '';
+      const officeValue = card.querySelector('.sched-office-input').value || '';
+      if (!officeValue) {
+        alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+        return;
+      }
+      step.office = officeValue;
       step.time = card.querySelector('.sched-time-input').value || '';
       step.personnel = card.querySelector('.sched-personnel-input').value.trim();
       step.vehicle = card.querySelector('.sched-vehicle-input').value.trim();
@@ -6463,7 +6596,8 @@ scheduleExtraJobCardCollapsible(dateStr, ej) {
       $.show(cancelBtn);
     });
 
-    actions.appendChild(openBtn);
+  actions.appendChild(openBtn);
+  actions.appendChild(completeBtn);
     actions.appendChild(editBtn);
     actions.appendChild(saveBtn);
     actions.appendChild(cancelBtn);
@@ -6642,7 +6776,7 @@ extraJobsAddForm(dateStr) {
 
     const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
 
-    const office = ej.office || Utils.detectOfficeFromAddress(ej.address) || '-';
+    const office = ej.office || '-';
     const fields = [
       [I18n.t('office'), office],
       [I18n.t('time'), ej.time || '-'],
@@ -6782,7 +6916,12 @@ extraJobsAddForm(dateStr) {
       ej.taskType = typeSelect.value || '';
       ej.customTaskName = customInput.value.trim();
       ej.time = card.querySelector('.ej-edit-time').value || '';
-      ej.office = card.querySelector('.ej-edit-office').value || '';
+      const officeValue = card.querySelector('.ej-edit-office').value || '';
+      if (!officeValue) {
+        alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+        return;
+      }
+      ej.office = officeValue;
       ej.address = card.querySelector('.ej-edit-address').value.trim();
       ej.personnel = card.querySelector('.ej-edit-personnel').value.trim();
       ej.vehicle = card.querySelector('.ej-edit-vehicle').value.trim();
@@ -7010,7 +7149,8 @@ const Forms = {
     job.documents = [];
     job.paymentReceived = false;
     job.packDate = '';
-    const template = CONFIG.CHECKLIST_TEMPLATES[job.tradeDirection] || CONFIG.CHECKLIST_TEMPLATES.DEFAULT;
+    job.removedAutoStepIds = [];
+    const template = ChecklistUtils.getTemplate(job.tradeDirection, job.modes);
     job.checklist = template.map(text => ({ text, done: false }));
     job.steps = Steps.create(job);
     State.jobs.push(job);
