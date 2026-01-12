@@ -7150,7 +7150,7 @@ const Forms = {
     job.paymentReceived = false;
     job.packDate = '';
     job.removedAutoStepIds = [];
-    const template = ChecklistUtils.getTemplate(job.tradeDirection, job.modes);
+    const template = CONFIG.CHECKLIST_TEMPLATES[job.tradeDirection] || CONFIG.CHECKLIST_TEMPLATES.DEFAULT;
     job.checklist = template.map(text => ({ text, done: false }));
     job.steps = Steps.create(job);
     State.jobs.push(job);
