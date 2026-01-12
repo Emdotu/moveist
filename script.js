@@ -1403,7 +1403,7 @@ const Validator = {
   }
 
   if (!Array.isArray(job.checklist) || job.checklist.length === 0) {
-    const template = CONFIG.CHECKLIST_TEMPLATES[job.tradeDirection] || [];
+    const template = ChecklistUtils.getTemplate(job.tradeDirection, job.modes);
     job.checklist = template.map(text => ({ text, done: false }));
   }
 
@@ -1624,6 +1624,17 @@ const Steps = {
       }
     });
     return result;
+  }
+};
+
+const ChecklistUtils = {
+  getTemplate(tradeDirection, modes) {
+    const typeKey = String(tradeDirection || '').toUpperCase();
+    const modeKey = Array.isArray(modes) ? [...new Set(modes)].sort().join('/') : '';
+    const scenarioKey = modeKey ? `${typeKey}|${modeKey}` : typeKey;
+    return CONFIG.CHECKLIST_TEMPLATES[scenarioKey]
+      || CONFIG.CHECKLIST_TEMPLATES[typeKey]
+      || [];
   }
 };
 
@@ -3560,46 +3571,63 @@ const ChecklistUI = {
 
     // Progress bar
     const completedCount = items.filter(i => i.done).length;
-    const progressBar = $.el('div', { className: 'checklist-progress-bar' });
+    const progressBar = $.el('div', { className: 'steps-progress-bar' });
     items.forEach((item) => {
-      const segment = $.el('div', { className: 'checklist-progress-segment' });
+      const segment = $.el('div', { className: 'steps-progress-segment' });
       if (item.done) segment.classList.add('completed');
       progressBar.appendChild(segment);
     });
     const progressText = $.el('span', { 
-      className: 'checklist-progress-text',
+      className: 'steps-progress-text',
       textContent: `${completedCount}/${items.length} ` + ((State.lang === 'tr') ? 'tamamlandı' : 'completed')
     });
     progressBar.appendChild(progressText);
     container.appendChild(progressBar);
 
-    // Checklist items with checkmark style
+    // Checklist items styled like step cards
     const listContainer = $.el('div', { className: 'checklist-items-list' });
     items.forEach((item, idx) => {
-      const wrapper = $.el('div', { className: `checklist-item-card ${item.done ? 'completed' : ''}` });
-      
-      // Status indicator (checkmark style)
-      const statusIndicator = $.el('div', { className: `checklist-status-indicator ${item.done ? 'completed' : ''}` });
+      const card = $.el('div', { className: 'step-card-collapsible' });
+
+      const header = $.el('div', { className: 'step-card-collapse-header' });
+      const headerLeft = $.el('div', { className: 'step-card-header-left' });
+
+      const status = item.done ? 'completed' : 'pending';
+      const statusIndicator = $.el('div', { className: `step-status-indicator ${status}` });
       statusIndicator.textContent = item.done ? '✓' : '○';
-      
-      // Text
-      const textSpan = $.el('span', { 
-        className: 'checklist-item-text',
+      headerLeft.appendChild(statusIndicator);
+
+      const titleGroup = $.el('div');
+      titleGroup.appendChild($.el('div', {
+        className: 'step-card-title',
         textContent: I18n.checklistText(item.text)
+      }));
+      headerLeft.appendChild(titleGroup);
+      header.appendChild(headerLeft);
+
+      const arrow = $.el('span', { className: 'step-card-arrow', textContent: '▼' });
+      header.appendChild(arrow);
+      card.appendChild(header);
+
+      const body = $.el('div', { className: 'step-card-collapse-body hidden' });
+      const actions = $.el('div', { className: 'schedule-step-actions' });
+
+      const completeBtn = $.el('button', { 
+        type: 'button', 
+        className: item.done ? 'complete-btn completed' : 'complete-btn',
+        textContent: item.done ? ((State.lang === 'tr') ? '✓ Tamamlandı' : '✓ Completed') : ((State.lang === 'tr') ? 'Tamamla' : 'Mark Complete')
       });
-      
-      // Toggle on click
-      wrapper.addEventListener('click', () => {
+      completeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         job.checklist[idx].done = !job.checklist[idx].done;
         Storage.saveJobs();
         this.render(job);
       });
-      
-      // Delete button
+
       const deleteBtn = $.el('button', { 
         type: 'button', 
-        className: 'checklist-delete-btn',
-        textContent: '×'
+        className: 'delete-step-btn',
+        textContent: I18n.t('delete')
       });
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3607,11 +3635,26 @@ const ChecklistUI = {
         Storage.saveJobs();
         this.render(job);
       });
-      
-      wrapper.appendChild(statusIndicator);
-      wrapper.appendChild(textSpan);
-      wrapper.appendChild(deleteBtn);
-      listContainer.appendChild(wrapper);
+
+      actions.appendChild(completeBtn);
+      actions.appendChild(deleteBtn);
+      body.appendChild(actions);
+      card.appendChild(body);
+
+      header.addEventListener('click', () => {
+        const isExpanded = !body.classList.contains('hidden');
+        if (isExpanded) {
+          body.classList.add('hidden');
+          header.classList.remove('expanded');
+          arrow.classList.remove('expanded');
+        } else {
+          body.classList.remove('hidden');
+          header.classList.add('expanded');
+          arrow.classList.add('expanded');
+        }
+      });
+
+      listContainer.appendChild(card);
     });
     container.appendChild(listContainer);
   }
