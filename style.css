@@ -2157,3 +2157,387 @@ footer {
   min-width: 50px;
   text-align: center;
 }
+
+/* Checklist Progress Bar */
+.checklist-progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.checklist-progress-segment {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+}
+
+.checklist-progress-segment.completed {
+  background: #10b981;
+}
+
+.checklist-progress-text {
+  font-size: 12px;
+  color: #6b7280;
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+/* Checklist Items List */
+.checklist-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checklist-item-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.checklist-item-card:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.checklist-item-card.completed {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.checklist-item-card.completed .checklist-item-text {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+.checklist-status-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  background: #f3f4f6;
+  border: 2px solid #d1d5db;
+  color: #9ca3af;
+}
+
+.checklist-status-indicator.completed {
+  background: #d1fae5;
+  border-color: #10b981;
+  color: #059669;
+}
+
+.checklist-item-text {
+  flex: 1;
+  font-size: 13px;
+  color: #111827;
+}
+
+.checklist-delete-btn {
+  padding: 2px 8px;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.checklist-item-card:hover .checklist-delete-btn {
+  opacity: 1;
+}
+
+.checklist-delete-btn:hover {
+  color: #ef4444;
+}
+
+/* Add Checklist Item Button */
+.checklist-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.checklist-add-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+/* ============================================================
+   COMPLETION & DELETE BUTTONS
+   ============================================================ */
+
+/* Completion Toggle Button */
+.complete-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.complete-btn:hover {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #059669;
+}
+
+.complete-btn.completed {
+  background: #d1fae5;
+  border-color: #10b981;
+  color: #059669;
+}
+
+.complete-btn.completed:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+/* Delete Step Button */
+.delete-step-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.delete-step-btn:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
+/* ============================================================
+   SCHEDULE OFFICE GROUPING
+   ============================================================ */
+
+.schedule-office-group {
+  margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.schedule-office-group.unassigned {
+  border-color: #fde68a;
+}
+
+.schedule-office-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.schedule-office-header.unassigned {
+  background: #fefce8;
+  border-color: #fde68a;
+}
+
+.schedule-office-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #111827;
+}
+
+.schedule-office-count {
+  font-size: 12px;
+  color: #6b7280;
+  background: #e5e7eb;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.schedule-office-header.unassigned .schedule-office-count {
+  background: #fde68a;
+  color: #92400e;
+}
+
+/* ============================================================
+   EXTRA JOB CARD STYLING
+   ============================================================ */
+
+.extra-job-card {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.extra-job-card .step-card-collapse-header {
+  background: #fefce8;
+}
+
+.extra-job-card .step-card-collapse-header:hover {
+  background: #fef3c7;
+}
+
+/* ============================================================
+   SCHEDULE ADD FORM
+   ============================================================ */
+
+.schedule-add-job-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 16px;
+  background: #f9fafb;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.schedule-add-job-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.schedule-extra-add-form {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.schedule-extra-add-form.hidden {
+  display: none;
+}
+
+/* ============================================================
+   MEDIA (PHOTOS/VIDEOS) SECTION
+   ============================================================ */
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.media-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+  transition: box-shadow 0.2s;
+}
+
+.media-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.media-preview {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.media-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.media-icon {
+  font-size: 40px;
+}
+
+.media-label {
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-top: 1px solid #e5e7eb;
+}
+
+.media-actions {
+  display: flex;
+  gap: 4px;
+  padding: 8px 10px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.media-actions button {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.media-upload-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  align-items: end;
+}
+
+.media-upload-form > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+@media (max-width: 768px) {
+  .media-upload-form {
+    grid-template-columns: 1fr;
+  }
+  
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}

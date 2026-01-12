@@ -89,22 +89,24 @@
         <h2 data-i18n="checklistTitle">Checklist</h2>
       </div>
 
-      <div id="checklistSection" class="detail-card">
+     <div id="checklistSection" class="detail-card">
         <div id="checklistItems">
           <p data-i18n="noChecklistYet">No checklist yet.</p>
         </div>
 
-        <label data-i18n="customChecklistLabel">Custom Checklist (one item per line)</label>
-        <textarea
-          id="checklistInput"
-          rows="3"
-          data-i18n-placeholder="customChecklistPlaceholder"
-          placeholder="Example:
-Packing complete
-Customs docs ready
-Payment received"
-        ></textarea>
-        <button type="button" id="setChecklistBtn" data-i18n="btnAddChecklistItems">Add Checklist Items</button>
+        <div class="checklist-add-section">
+          <button type="button" id="openAddChecklistBtn" class="checklist-add-btn">
+            <span>+</span> Add Checklist Item
+          </button>
+          
+          <div id="checklistAddForm" class="hidden" style="margin-top: 10px;">
+            <input type="text" id="checklistNewItemInput" placeholder="Enter checklist item..." style="margin-bottom: 8px;">
+            <div style="display: flex; gap: 8px;">
+              <button type="button" id="confirmAddChecklistBtn">Add</button>
+              <button type="button" id="cancelAddChecklistBtn">Cancel</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="header-row">
@@ -135,35 +137,54 @@ Payment received"
           <p data-i18n="noDocumentsYet">No documents yet.</p>
         </div>
 
-        <div class="document-form">
+       <div class="document-form">
           <div>
-            <label data-i18n="docNameLabel">Document Name</label>
-            <input type="text" id="docNameInput" data-i18n-placeholder="docNamePlaceholder" placeholder="e.g. Quote #123, Bill of Lading, Packing List">
+            <label>Document Label</label>
+            <input type="text" id="docNameInput" placeholder="e.g. Quote, Invoice, Bill of Lading">
           </div>
 
           <div>
-            <label data-i18n="docDateLabel">Document Date (dd/mm/yyyy)</label>
-            <input type="text" id="docDateInput" data-i18n-placeholder="docDatePlaceholder" placeholder="dd/mm/yyyy">
+            <label>Document Date</label>
+            <input type="date" id="docDateInput">
           </div>
 
           <div>
-            <label data-i18n="docUploadLabel">Upload File (optional)</label>
-            <input type="file" id="docFileInput">
+            <label>Upload File</label>
+            <input type="file" id="docFileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.png,.jpg,.jpeg">
+          </div>
+
+          <div style="display:none;">
+            <input type="text" id="docUrlInput">
           </div>
 
           <div>
-            <label class="doc-url-label" data-i18n="docUrlLabel">Document URL (optional)</label>
-            <input
-              type="text"
-              id="docUrlInput"
-              class="doc-url-input"
-              data-i18n-placeholder="docUrlPlaceholder"
-              placeholder="https://... (Drive/SharePoint/etc.)"
-            >
+            <button type="button" id="addDocumentBtn">Add Document</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="header-row">
+        <h2>Photos & Videos</h2>
+      </div>
+
+      <div id="mediaSection" class="detail-card">
+        <div id="mediaList">
+          <p>No photos or videos yet.</p>
+        </div>
+
+        <div class="media-upload-form">
+          <div>
+            <label>Label / Description</label>
+            <input type="text" id="mediaLabelInput" placeholder="e.g. Living room photos, Kitchen inventory">
+          </div>
+          
+          <div>
+            <label>Upload Photo/Video</label>
+            <input type="file" id="mediaFileInput" accept="image/*,video/*">
           </div>
 
           <div>
-            <button type="button" id="addDocumentBtn" data-i18n="btnAddDocument">Add Document</button>
+            <button type="button" id="addMediaBtn">Upload</button>
           </div>
         </div>
       </div>

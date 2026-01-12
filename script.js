@@ -29,7 +29,6 @@ const CONFIG = {
   ],
 
   CHECKLIST_TEMPLATES: {
-    DEFAULT: ["Quote sent","Move reserved","Survey done - N/A","Documents complete","Packing done - N/A","In storage - N/A","En route","Payment received","Delivered"],
     IMPORT: ["Quote sent","Passport copy with entry stamp","Copy of resident permit","Signed personal application (Dilekçe)","Power of Attorney (Vekaletname)","Company application (Şirket yazısı)","Signed packing list","Turkish tax ID or foreign citizen number","Lease contract","List of all entry/exit in Turkey during the last 2 years","In transit to Turkey","Arrived at port/terminal","Delivered to warehouse","Delivered to residence","Payment received"],
     EXPORT: ["Quote sent","Survey done","Packing complete","In storage","Copy of passport","Flight ticket","Signed personal application (Dilekçe)","Power of Attorney (Vekaletname)","Company application","Signed packing list","Copy of work/residence permit","In transit to destination","Delivered","Payment received"],
     LOCAL: ["Quote sent","Survey done","Packing complete","In storage or N/A","In transit to destination address","Delivered","Payment received"]
@@ -1334,7 +1333,10 @@ const Validator = {
     // linking fields
     if (typeof ej.linkedJobId !== 'string') ej.linkedJobId = ej.linkedJobId ? String(ej.linkedJobId) : '';
     if (typeof ej.linkedJobCode !== 'string') ej.linkedJobCode = ej.linkedJobCode || '';
-    if (typeof ej.linkedJobClientName !== 'string') ej.linkedJobClientName = ej.linkedJobClientName || ''; // optional snapshot
+    if (typeof ej.linkedJobClientName !== 'string') ej.linkedJobClientName = ej.linkedJobClientName || '';
+
+    // completion tracking
+    if (typeof ej.completed !== 'boolean') ej.completed = false;
 
     return ej;
   },
@@ -1358,6 +1360,7 @@ const Validator = {
   if (!Array.isArray(job.modes)) job.modes = [];
   if (!Array.isArray(job.notes)) job.notes = [];
   if (!Array.isArray(job.documents)) job.documents = [];
+  if (!Array.isArray(job.media)) job.media = [];
   if (typeof job.paymentReceived !== 'boolean') job.paymentReceived = false;
   if (!job.packDate) job.packDate = '';
   if (!job.jobCode) job.jobCode = Utils.jobCode();
@@ -1399,11 +1402,19 @@ const Validator = {
   }
 
   if (!Array.isArray(job.checklist) || job.checklist.length === 0) {
-    const template = CONFIG.CHECKLIST_TEMPLATES[job.tradeDirection] || CONFIG.CHECKLIST_TEMPLATES.DEFAULT;
+    const template = CONFIG.CHECKLIST_TEMPLATES[job.tradeDirection] || [];
     job.checklist = template.map(text => ({ text, done: false }));
   }
 
   Steps.ensure(job);
+
+  // Ensure completed field exists on all steps
+  if (Array.isArray(job.steps)) {
+    job.steps.forEach(step => {
+      if (typeof step.completed !== 'boolean') step.completed = false;
+    });
+  }
+
   return job;
 },
   
@@ -2022,7 +2033,7 @@ const ScheduleExport = {
     // Steps
     const stepsForDay = Steps.getForDate(dateStr);
     stepsForDay.forEach(({ job, step }) => {
-      const office = step.office || Utils.detectOfficeForStep(step, job) || '-';
+      const office = step.office || '-';
       const address = step.address || step.pickupAddress || step.deliveryAddress || '-';
       rows.push({
         office,
@@ -2033,7 +2044,8 @@ const ScheduleExport = {
         address,
         personnel: step.personnel || '',
         vehicle: step.vehicle || '',
-        notes: step.notes || ''
+        notes: step.notes || '',
+        completed: step.completed ? '✓' : ''
       });
     });
 
@@ -2044,7 +2056,7 @@ const ScheduleExport = {
         ? ej.customTaskName
         : I18n.taskTypeText(ej.taskType || '');
 
-      const office = ej.office || Utils.detectOfficeFromAddress(ej.address) || '-';
+      const office = ej.office || '-';
       const linked = ej.linkedJobId ? State.getJob(ej.linkedJobId) : null;
 
       rows.push({
@@ -2056,12 +2068,17 @@ const ScheduleExport = {
         address: ej.address || '',
         personnel: ej.personnel || '',
         vehicle: ej.vehicle || '',
-        notes: ej.notes || ''
+        notes: ej.notes || '',
+        completed: ej.completed ? '✓' : ''
       });
     });
 
-    // Sort by time
-    rows.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    // Sort by office first, then by time
+    rows.sort((a, b) => {
+      const officeCompare = (a.office || '').localeCompare(b.office || '');
+      if (officeCompare !== 0) return officeCompare;
+      return (a.time || '').localeCompare(b.time || '');
+    });
     return rows;
   },
 
@@ -2365,6 +2382,7 @@ container.appendChild(modeInfoContainer);
     ChecklistUI.render(job);
     NotesUI.render(job);
     DocumentsUI.render(job);
+    MediaUI.render(job);
 
     const checklistSection = $.get('checklistSection');
     if (checklistSection) {
@@ -2422,34 +2440,41 @@ stepsSection(job) {
   section.appendChild(headerRow);
 
   const steps = job.steps || [];
+  const linked = ScheduleExtraJobs.getLinkedToJob(job.id);
+  const totalItems = steps.length + linked.length;
   
-  // Progress bar
-  if (steps.length > 0) {
+  // Progress bar - includes both steps and linked additional jobs
+  if (totalItems > 0) {
     const progressBar = $.el('div', { className: 'steps-progress-bar' });
     let completedCount = 0;
-    let scheduledCount = 0;
     
+    // Count steps
     steps.forEach(step => {
       const segment = $.el('div', { className: 'steps-progress-segment' });
-      if (step.date) {
-        const stepDate = new Date(step.date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        if (stepDate < today) {
-          segment.classList.add('completed');
-          completedCount++;
-        } else {
-          segment.classList.add('scheduled');
-          scheduledCount++;
-        }
+      if (step.completed) {
+        segment.classList.add('completed');
+        completedCount++;
+      } else if (step.date) {
+        segment.classList.add('scheduled');
+      }
+      progressBar.appendChild(segment);
+    });
+    
+    // Count additional jobs
+    linked.forEach(item => {
+      const segment = $.el('div', { className: 'steps-progress-segment extra-job-segment' });
+      if (item.ej.completed) {
+        segment.classList.add('completed');
+        completedCount++;
+      } else if (item.ej.date) {
+        segment.classList.add('scheduled');
       }
       progressBar.appendChild(segment);
     });
     
     const progressText = $.el('span', { 
       className: 'steps-progress-text',
-      textContent: `${completedCount}/${steps.length} completed`
+      textContent: `${completedCount}/${totalItems} ` + ((State.lang === 'tr') ? 'tamamlandı' : 'completed')
     });
     progressBar.appendChild(progressText);
     section.appendChild(progressBar);
@@ -2457,17 +2482,15 @@ stepsSection(job) {
 
   const container = $.el('div', { id: 'stepsContainer' });
 
-  if (steps.length === 0) {
+  if (steps.length === 0 && linked.length === 0) {
     container.appendChild($.el('p', { textContent: I18n.t('noStepsDefined') }));
   } else {
     steps.forEach((step, idx) => container.appendChild(this.stepCardCollapsible(step, idx, job)));
+    // Additional jobs use same style as steps
+    linked.forEach(item => {
+      container.appendChild(this.linkedExtraJobCollapsible(job, item));
+    });
   }
-
-  // Linked additional jobs for this move
-  const linked = ScheduleExtraJobs.getLinkedToJob(job.id);
-  linked.forEach(item => {
-    container.appendChild(this.linkedExtraJobCollapsible(job, item));
-  });
 
   section.appendChild(container);
 
@@ -2489,13 +2512,12 @@ stepCardCollapsible(step, idx, job) {
   const def = CONFIG.STEP_DEFINITIONS[step.id] || { fields: [] };
   const card = $.el('div', { className: 'step-card-collapsible' });
 
-  // Determine status
+  // Determine status - based on explicit completed flag
   let status = 'pending';
-  if (step.date) {
-    const stepDate = new Date(step.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    status = stepDate < today ? 'completed' : 'scheduled';
+  if (step.completed) {
+    status = 'completed';
+  } else if (step.date) {
+    status = 'scheduled';
   }
 
   // Collapse Header
@@ -2598,8 +2620,8 @@ stepCardCollapsible(step, idx, job) {
   // Office select
   const officeDiv = $.el('div');
   officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
-  const officeSelect = $.el('select', { className: 'step-office-select' });
-  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+  const officeSelect = $.el('select', { className: 'step-office-select', required: true });
+  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? '-- Ofis Seçin --' : '-- Select Office --' }));
   CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
   officeSelect.value = step.office || '';
   officeDiv.appendChild(officeSelect);
@@ -2729,9 +2751,15 @@ linkedExtraJobCollapsible(job, item) {
   
   const headerLeft = $.el('div', { className: 'step-card-header-left' });
   
-  // Status indicator (extra jobs shown as scheduled)
-  const statusIndicator = $.el('div', { className: 'step-status-indicator scheduled' });
-  statusIndicator.textContent = '+';
+  // Status indicator - based on explicit completed flag
+  let ejStatus = 'pending';
+  if (ej.completed) {
+    ejStatus = 'completed';
+  } else if (ej.date || dateStr) {
+    ejStatus = 'scheduled';
+  }
+  const statusIndicator = $.el('div', { className: `step-status-indicator ${ejStatus}` });
+  statusIndicator.textContent = ejStatus === 'completed' ? '✓' : (ejStatus === 'scheduled' ? '•' : '○');
   headerLeft.appendChild(statusIndicator);
   
   const titleGroup = $.el('div');
@@ -2798,7 +2826,7 @@ linkedExtraJobCollapsible(job, item) {
   const officeDiv = $.el('div');
   officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
   const officeSelect = $.el('select', { className: 'lej-office' });
-  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? '-- Ofis Seçin --' : '-- Select Office --' }));
   CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
   officeSelect.value = ej.office || '';
   officeDiv.appendChild(officeSelect);
@@ -2962,7 +2990,7 @@ linkedExtraJobCollapsible(job, item) {
     const officeDiv = $.el('div');
     officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
     const officeSelect = $.el('select', { className: 'step-office-select' });
-    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? '-- Ofis Seçin --' : '-- Select Office --' }));
     CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
     officeSelect.value = step.office || '';
     officeDiv.appendChild(officeSelect);
@@ -3054,10 +3082,44 @@ linkedExtraJobCollapsible(job, item) {
       this.showDetails(job);
     });
 
-    actions.appendChild(editBtn);
-    actions.appendChild(saveBtn);
-    actions.appendChild(cancelBtn);
-    card.appendChild(actions);
+    // Completion toggle button
+  const completeBtn = $.el('button', { 
+    type: 'button', 
+    className: step.completed ? 'complete-btn completed' : 'complete-btn',
+    textContent: step.completed ? ((State.lang === 'tr') ? '✓ Tamamlandı' : '✓ Completed') : ((State.lang === 'tr') ? 'Tamamla' : 'Mark Complete')
+  });
+  completeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    step.completed = !step.completed;
+    Storage.saveJobs();
+    this.showDetails(job);
+    ScheduleUI.render();
+    if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+  });
+
+  // Delete step button
+  const deleteStepBtn = $.el('button', { 
+    type: 'button', 
+    className: 'delete-step-btn',
+    textContent: (State.lang === 'tr') ? 'Sil' : 'Remove'
+  });
+  deleteStepBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const confirmMsg = (State.lang === 'tr') ? 'Bu adımı silmek istediğinize emin misiniz?' : 'Are you sure you want to remove this step?';
+    if (!confirm(confirmMsg)) return;
+    job.steps.splice(idx, 1);
+    Storage.saveJobs();
+    this.showDetails(job);
+    ScheduleUI.render();
+    if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+  });
+
+  actions.appendChild(completeBtn);
+  actions.appendChild(editBtn);
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  actions.appendChild(deleteStepBtn);
+  body.appendChild(actions);
     return card;
   },
 
@@ -3117,7 +3179,7 @@ linkedExtraJobCollapsible(job, item) {
     const officeDiv = $.el('div');
     officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
     const officeSelect = $.el('select', { className: 'lej-office' });
-    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? '-- Ofis Seçin --' : '-- Select Office --' }));
     CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
     officeSelect.value = ej.office || '';
     officeDiv.appendChild(officeSelect);
@@ -3180,21 +3242,39 @@ linkedExtraJobCollapsible(job, item) {
       if (current) this.showDetails(current);
     });
 
-    deleteBtn.addEventListener('click', () => {
-      if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
-      ScheduleExtraJobs.deleteById(dateStr, ej.id);
-      Storage.saveScheduleExtraJobs();
-      ScheduleUI.render();
-      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
-      const current = State.getJob(State.selectedJobId);
-      if (current) this.showDetails(current);
-    });
+    deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
+    ScheduleExtraJobs.deleteById(dateStr, ej.id);
+    Storage.saveScheduleExtraJobs();
+    ScheduleUI.render();
+    if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    const current = State.getJob(State.selectedJobId);
+    if (current) this.showDetails(current);
+  });
 
-    actions.appendChild(editBtn);
-    actions.appendChild(saveBtn);
-    actions.appendChild(cancelBtn);
-    actions.appendChild(deleteBtn);
-    card.appendChild(actions);
+  // Completion toggle button
+  const completeBtn = $.el('button', { 
+    type: 'button', 
+    className: ej.completed ? 'complete-btn completed' : 'complete-btn',
+    textContent: ej.completed ? ((State.lang === 'tr') ? '✓ Tamamlandı' : '✓ Completed') : ((State.lang === 'tr') ? 'Tamamla' : 'Mark Complete')
+  });
+  completeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    ej.completed = !ej.completed;
+    Storage.saveScheduleExtraJobs();
+    ScheduleUI.render();
+    if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    const current = State.getJob(State.selectedJobId);
+    if (current) this.showDetails(current);
+  });
+
+  actions.appendChild(completeBtn);
+  actions.appendChild(editBtn);
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  actions.appendChild(deleteBtn);
+  body.appendChild(actions);
 
     return card;
   },
@@ -3247,7 +3327,7 @@ linkedExtraJobCollapsible(job, item) {
     const officeDiv = $.el('div');
     officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
     const officeSelect = $.el('select', { id: 'moveAddJobOffice' });
-    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? '-- Ofis Seçin --' : '-- Select Office --' }));
     CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
     officeDiv.appendChild(officeSelect);
     form.appendChild(officeDiv);
@@ -3392,24 +3472,68 @@ const ChecklistUI = {
     const container = $.get('checklistItems');
     $.clear(container);
     const items = job.checklist || [];
+    
     if (items.length === 0) {
       container.appendChild($.el('p', { textContent: I18n.t('noChecklistYet') }));
       return;
     }
+
+    // Progress bar
+    const completedCount = items.filter(i => i.done).length;
+    const progressBar = $.el('div', { className: 'checklist-progress-bar' });
+    items.forEach((item) => {
+      const segment = $.el('div', { className: 'checklist-progress-segment' });
+      if (item.done) segment.classList.add('completed');
+      progressBar.appendChild(segment);
+    });
+    const progressText = $.el('span', { 
+      className: 'checklist-progress-text',
+      textContent: `${completedCount}/${items.length} ` + ((State.lang === 'tr') ? 'tamamlandı' : 'completed')
+    });
+    progressBar.appendChild(progressText);
+    container.appendChild(progressBar);
+
+    // Checklist items with checkmark style
+    const listContainer = $.el('div', { className: 'checklist-items-list' });
     items.forEach((item, idx) => {
-  const wrapper = $.el('div', { className: 'checklist-item' });
-  const label = $.el('label');
-  const cb = $.el('input', { type: 'checkbox' });
-  cb.checked = item.done;
-  cb.addEventListener('change', () => {
-    job.checklist[idx].done = cb.checked;
-    Storage.saveJobs();
-  });
-  label.appendChild(cb);
-  label.appendChild(document.createTextNode(' ' + I18n.checklistText(item.text))); // ← CHANGED
-  wrapper.appendChild(label);
-  container.appendChild(wrapper);
-});
+      const wrapper = $.el('div', { className: `checklist-item-card ${item.done ? 'completed' : ''}` });
+      
+      // Status indicator (checkmark style)
+      const statusIndicator = $.el('div', { className: `checklist-status-indicator ${item.done ? 'completed' : ''}` });
+      statusIndicator.textContent = item.done ? '✓' : '○';
+      
+      // Text
+      const textSpan = $.el('span', { 
+        className: 'checklist-item-text',
+        textContent: I18n.checklistText(item.text)
+      });
+      
+      // Toggle on click
+      wrapper.addEventListener('click', () => {
+        job.checklist[idx].done = !job.checklist[idx].done;
+        Storage.saveJobs();
+        this.render(job);
+      });
+      
+      // Delete button
+      const deleteBtn = $.el('button', { 
+        type: 'button', 
+        className: 'checklist-delete-btn',
+        textContent: '×'
+      });
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        job.checklist.splice(idx, 1);
+        Storage.saveJobs();
+        this.render(job);
+      });
+      
+      wrapper.appendChild(statusIndicator);
+      wrapper.appendChild(textSpan);
+      wrapper.appendChild(deleteBtn);
+      listContainer.appendChild(wrapper);
+    });
+    container.appendChild(listContainer);
   }
 };
 
@@ -3497,6 +3621,71 @@ const DocumentsUI = {
       row.appendChild(actions);
       container.appendChild(row);
     });
+  }
+};
+
+const MediaUI = {
+  render(job) {
+    const container = $.get('mediaList');
+    if (!container) return;
+    $.clear(container);
+    const media = job.media || [];
+    
+    if (media.length === 0) {
+      container.appendChild($.el('p', { textContent: (State.lang === 'tr') ? 'Henüz fotoğraf/video yok.' : 'No photos or videos yet.' }));
+      return;
+    }
+    
+    const grid = $.el('div', { className: 'media-grid' });
+    
+    media.forEach((item, idx) => {
+      const card = $.el('div', { className: 'media-card' });
+      
+      // Thumbnail or icon
+      const preview = $.el('div', { className: 'media-preview' });
+      if (item.fileData && item.fileType && item.fileType.startsWith('image/')) {
+        const img = $.el('img', { src: item.fileData, alt: item.label || 'Image' });
+        preview.appendChild(img);
+      } else if (item.fileData && item.fileType && item.fileType.startsWith('video/')) {
+        preview.appendChild($.el('span', { className: 'media-icon', textContent: '🎬' }));
+      } else {
+        preview.appendChild($.el('span', { className: 'media-icon', textContent: '📷' }));
+      }
+      card.appendChild(preview);
+      
+      // Label
+      const label = $.el('div', { className: 'media-label', textContent: item.label || item.fileName || 'Media' });
+      card.appendChild(label);
+      
+      // Actions
+      const actions = $.el('div', { className: 'media-actions' });
+      
+      if (item.fileData) {
+        const downloadBtn = $.el('button', { type: 'button', textContent: (State.lang === 'tr') ? 'İndir' : 'Download' });
+        downloadBtn.addEventListener('click', () => {
+          const a = document.createElement('a');
+          a.href = item.fileData;
+          a.download = item.fileName || 'media';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        });
+        actions.appendChild(downloadBtn);
+      }
+      
+      const deleteBtn = $.el('button', { type: 'button', textContent: (State.lang === 'tr') ? 'Sil' : 'Delete' });
+      deleteBtn.addEventListener('click', () => {
+        job.media.splice(idx, 1);
+        Storage.saveJobs();
+        this.render(job);
+      });
+      actions.appendChild(deleteBtn);
+      
+      card.appendChild(actions);
+      grid.appendChild(card);
+    });
+    
+    container.appendChild(grid);
   }
 };
 
@@ -5622,67 +5811,128 @@ const ScheduleUI = {
     style: 'margin:0;' 
   }));
 
+  const btnGroup = $.el('div', { style: 'display:flex; gap:8px;' });
+  
+  const addJobBtn = $.el('button', { type: 'button', textContent: (State.lang === 'tr') ? '+ Ek İş Ekle' : '+ Add Job' });
+  btnGroup.appendChild(addJobBtn);
+  
   const exportBtn = $.el('button', { type: 'button', textContent: I18n.t('exportDayPdf') });
   exportBtn.addEventListener('click', () => ScheduleExport.exportDayToPdf(dateStr));
-  topRow.appendChild(exportBtn);
-
+  btnGroup.appendChild(exportBtn);
+  
+  topRow.appendChild(btnGroup);
   container.appendChild(topRow);
 
   const stepsForDay = Steps.getForDate(dateStr);
   const extraJobs = (State.scheduleExtraJobs[dateStr] || []).map(ej => Validator.normalizeExtraJob(ej, dateStr));
   const dayNote = State.scheduleNotes[dateStr] || '';
 
-  // Group steps by job
-  const jobGroups = {};
-  stepsForDay.forEach(({ job, step }) => {
-    if (!jobGroups[job.id]) {
-      jobGroups[job.id] = { job, steps: [] };
-    }
-    jobGroups[job.id].steps.push(step);
-  });
-
-  // Sort each job's steps by time
-  Object.values(jobGroups).forEach(group => {
-    group.steps.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-  });
-
-  // Render grouped by job with visual separators
-  const jobIds = Object.keys(jobGroups);
+  // Combine all items and group by office
+  const allItems = [];
   
-  if (jobIds.length === 0 && extraJobs.length === 0) {
+  // Add steps
+  stepsForDay.forEach(({ job, step }) => {
+    allItems.push({
+      type: 'step',
+      job,
+      step,
+      office: step.office || '',
+      time: step.time || '',
+      completed: step.completed || false
+    });
+  });
+  
+  // Add extra jobs
+  extraJobs.forEach(ej => {
+    const linkedJob = ej.linkedJobId ? State.getJob(ej.linkedJobId) : null;
+    allItems.push({
+      type: 'extraJob',
+      job: linkedJob,
+      ej,
+      office: ej.office || '',
+      time: ej.time || '',
+      completed: ej.completed || false
+    });
+  });
+
+  // Group by office
+  const officeGroups = {};
+  CONFIG.OFFICES.forEach(office => { officeGroups[office] = []; });
+  officeGroups['Unassigned'] = [];
+  
+  allItems.forEach(item => {
+    const office = item.office && CONFIG.OFFICES.includes(item.office) ? item.office : 'Unassigned';
+    officeGroups[office].push(item);
+  });
+  
+  // Sort items within each office by time
+  Object.values(officeGroups).forEach(items => {
+    items.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  });
+
+  // Render grouped by office
+  const hasAnyItems = allItems.length > 0;
+  
+  if (!hasAnyItems) {
     container.appendChild($.el('p', { textContent: I18n.t('scheduleDayDetailsHint') }));
   } else {
-    jobIds.forEach((jobId, idx) => {
-      const group = jobGroups[jobId];
-      const job = group.job;
+    CONFIG.OFFICES.forEach(office => {
+      const items = officeGroups[office];
+      if (items.length === 0) return;
       
-      const groupDiv = $.el('div', { className: 'schedule-job-group' });
+      const groupDiv = $.el('div', { className: 'schedule-office-group' });
       
-      // Job header
-      const header = $.el('div', { className: 'schedule-job-header' });
-      header.appendChild($.el('div', { 
-        className: 'schedule-job-header-title', 
-        textContent: `${job.jobCode || ''} - ${job.clientName || 'No client'}` 
-      }));
-      
-      const meta = $.el('div', { className: 'schedule-job-header-meta' });
-      meta.textContent = `${Utils.location(job.originCity, job.originCountry)} -> ${Utils.location(job.destinationCity, job.destinationCountry)}`;
-      header.appendChild(meta);
-      
+      // Office header
+      const header = $.el('div', { className: 'schedule-office-header' });
+      header.appendChild($.el('span', { className: 'schedule-office-name', textContent: office }));
+      header.appendChild($.el('span', { className: 'schedule-office-count', textContent: `${items.length} ` + ((State.lang === 'tr') ? 'iş' : 'items') }));
       groupDiv.appendChild(header);
       
-      // Steps for this job (using existing stepCard style but collapsible)
-      group.steps.forEach(step => {
-        groupDiv.appendChild(this.scheduleStepCardCollapsible(job, step, dateStr));
+      // Items for this office
+      items.forEach(item => {
+        if (item.type === 'step') {
+          groupDiv.appendChild(this.scheduleStepCardCollapsible(item.job, item.step, dateStr));
+        } else {
+          groupDiv.appendChild(this.scheduleExtraJobCardCollapsible(dateStr, item.ej));
+        }
       });
       
       container.appendChild(groupDiv);
     });
+    
+    // Unassigned items
+    const unassigned = officeGroups['Unassigned'];
+    if (unassigned.length > 0) {
+      const groupDiv = $.el('div', { className: 'schedule-office-group unassigned' });
+      const header = $.el('div', { className: 'schedule-office-header unassigned' });
+      header.appendChild($.el('span', { className: 'schedule-office-name', textContent: (State.lang === 'tr') ? 'Ofis Atanmamış' : 'Unassigned Office' }));
+      header.appendChild($.el('span', { className: 'schedule-office-count', textContent: `${unassigned.length} ` + ((State.lang === 'tr') ? 'iş' : 'items') }));
+      groupDiv.appendChild(header);
+      
+      unassigned.forEach(item => {
+        if (item.type === 'step') {
+          groupDiv.appendChild(this.scheduleStepCardCollapsible(item.job, item.step, dateStr));
+        } else {
+          groupDiv.appendChild(this.scheduleExtraJobCardCollapsible(dateStr, item.ej));
+        }
+      });
+      
+      container.appendChild(groupDiv);
+    }
   }
 
-  // Additional jobs section
-  container.appendChild(this.extraJobsSection(dateStr, extraJobs));
+  // Add job form (hidden by default)
+  const addJobForm = this.extraJobsAddForm(dateStr);
+  addJobForm.classList.add('hidden');
+  container.appendChild(addJobForm);
   
+  addJobBtn.addEventListener('click', () => {
+    addJobForm.classList.toggle('hidden');
+    if (!addJobForm.classList.contains('hidden')) {
+      addJobForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
   container.appendChild(this.dayNotesSection(dateStr, dayNote));
 },
 
@@ -5771,8 +6021,8 @@ scheduleStepCardCollapsible(job, step, dateStr) {
   // Office
   const officeDiv = $.el('div');
   officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
-  const officeSelect = $.el('select', { className: 'sched-office-input' });
-  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+  const officeSelect = $.el('select', { className: 'sched-office-input', required: true });
+  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? '-- Ofis Seçin --' : '-- Select Office --' }));
   CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
   officeSelect.value = step.office || '';
   officeDiv.appendChild(officeSelect);
@@ -5881,6 +6131,233 @@ scheduleStepCardCollapsible(job, step, dateStr) {
   return card;
 },
 
+  // Extra job card in schedule with same style as step cards
+scheduleExtraJobCardCollapsible(dateStr, ej) {
+  const card = $.el('div', { className: 'step-card-collapsible extra-job-card' });
+
+  const taskName = (ej.taskType === 'Custom' && ej.customTaskName)
+    ? ej.customTaskName
+    : I18n.taskTypeText(ej.taskType || '');
+
+  // Determine status
+  let status = 'pending';
+  if (ej.completed) {
+    status = 'completed';
+  } else if (ej.date || dateStr) {
+    status = 'scheduled';
+  }
+
+  // Collapse Header
+  const header = $.el('div', { className: 'step-card-collapse-header' });
+  
+  const headerLeft = $.el('div', { className: 'step-card-header-left' });
+  
+  const statusIndicator = $.el('div', { className: `step-status-indicator ${status}` });
+  statusIndicator.textContent = status === 'completed' ? '✓' : (status === 'scheduled' ? '•' : '○');
+  headerLeft.appendChild(statusIndicator);
+  
+  const titleGroup = $.el('div');
+  
+  // Show linked job info if available
+  const linkedJob = ej.linkedJobId ? State.getJob(ej.linkedJobId) : null;
+  const titleText = linkedJob 
+    ? `${linkedJob.jobCode || ''} - ${taskName}`
+    : taskName || ((State.lang === 'tr') ? 'Ek İş' : 'Additional Job');
+  
+  titleGroup.appendChild($.el('div', { className: 'step-card-title', textContent: titleText }));
+  
+  const subtitle = $.el('div', { className: 'step-card-subtitle' });
+  if (ej.time) subtitle.appendChild($.el('span', { textContent: ej.time }));
+  if (ej.personnel) subtitle.appendChild($.el('span', { textContent: ej.personnel }));
+  if (linkedJob) {
+    subtitle.appendChild($.el('span', { textContent: linkedJob.clientName || '' }));
+  }
+  titleGroup.appendChild(subtitle);
+  headerLeft.appendChild(titleGroup);
+  
+  header.appendChild(headerLeft);
+  
+  if (ej.time) {
+    const timeBadge = $.el('span', { className: 'step-time-badge', textContent: ej.time });
+    header.appendChild(timeBadge);
+  }
+  
+  const arrow = $.el('span', { className: 'step-card-arrow', textContent: '▼' });
+  header.appendChild(arrow);
+  
+  card.appendChild(header);
+
+  // Collapse Body
+  const body = $.el('div', { className: 'step-card-collapse-body hidden' });
+  
+  // View section
+  const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
+  
+  const fields = [
+    [I18n.t('office'), ej.office || '-'],
+    [I18n.t('time'), ej.time || '-'],
+    [I18n.t('personnel'), ej.personnel || '-'],
+    [I18n.t('vehicle'), ej.vehicle || '-'],
+    [I18n.t('address'), ej.address || '-'],
+    [I18n.t('notesLabel'), ej.notes || '-']
+  ];
+
+  fields.forEach(([label, value]) => {
+    const row = $.el('div', { className: 'schedule-field-row' });
+    row.appendChild($.el('span', { className: 'schedule-field-label', textContent: label }));
+    row.appendChild($.el('span', { className: 'schedule-field-value', textContent: value }));
+    viewBox.appendChild(row);
+  });
+  body.appendChild(viewBox);
+
+  // Edit section
+  const editBox = $.el('div', { className: 'schedule-step-fields-edit hidden' });
+
+  // Office (required)
+  const officeDiv = $.el('div');
+  officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
+  const officeSelect = $.el('select', { className: 'ej-edit-office', required: true });
+  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? '-- Ofis Seçin --' : '-- Select Office --' }));
+  CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
+  officeSelect.value = ej.office || '';
+  officeDiv.appendChild(officeSelect);
+  editBox.appendChild(officeDiv);
+
+  // Time (24-hour dropdown)
+  const timeDiv = $.el('div');
+  timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
+  const timeSelector = TimeHelpers.createTimeSelector(ej.time || '');
+  timeSelector.classList.add('ej-edit-time-selector');
+  timeDiv.appendChild(timeSelector);
+  editBox.appendChild(timeDiv);
+
+  // Personnel
+  const pDiv = $.el('div');
+  pDiv.appendChild($.el('label', { textContent: I18n.t('personnel') }));
+  pDiv.appendChild($.el('input', { type: 'text', className: 'ej-edit-personnel', value: ej.personnel || '' }));
+  editBox.appendChild(pDiv);
+
+  // Vehicle
+  const vDiv = $.el('div');
+  vDiv.appendChild($.el('label', { textContent: I18n.t('vehicle') }));
+  vDiv.appendChild($.el('input', { type: 'text', className: 'ej-edit-vehicle', value: ej.vehicle || '' }));
+  editBox.appendChild(vDiv);
+
+  // Address
+  const aDiv = $.el('div', { className: 'full-width' });
+  aDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
+  aDiv.appendChild($.el('textarea', { rows: '2', className: 'ej-edit-address', textContent: ej.address || '' }));
+  editBox.appendChild(aDiv);
+
+  // Notes
+  const nDiv = $.el('div', { className: 'full-width' });
+  nDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
+  nDiv.appendChild($.el('textarea', { rows: '2', className: 'ej-edit-notes', textContent: ej.notes || '' }));
+  editBox.appendChild(nDiv);
+
+  body.appendChild(editBox);
+
+  // Actions
+  const actions = $.el('div', { className: 'schedule-step-actions' });
+  
+  // Completion toggle
+  const completeBtn = $.el('button', { 
+    type: 'button', 
+    className: ej.completed ? 'complete-btn completed' : 'complete-btn',
+    textContent: ej.completed ? ((State.lang === 'tr') ? '✓ Tamamlandı' : '✓ Completed') : ((State.lang === 'tr') ? 'Tamamla' : 'Mark Complete')
+  });
+  completeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    ej.completed = !ej.completed;
+    Storage.saveScheduleExtraJobs();
+    this.renderDay(dateStr);
+    this.render();
+  });
+
+  // Open linked move button
+  if (ej.linkedJobId) {
+    const openBtn = $.el('button', { type: 'button', className: 'schedule-open-btn', textContent: I18n.t('openMove') });
+    openBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const job = State.getJob(ej.linkedJobId);
+      if (job) {
+        Views.show('moves');
+        JobsUI.render();
+        JobsUI.showDetails(job);
+      }
+    });
+    actions.appendChild(openBtn);
+  }
+
+  const editBtn = $.el('button', { type: 'button', className: 'schedule-edit-btn', textContent: I18n.t('edit') });
+  const saveBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('save') });
+  const cancelBtn = $.el('button', { type: 'button', className: 'hidden', textContent: I18n.t('cancel') });
+  const deleteBtn = $.el('button', { type: 'button', className: 'delete-step-btn', textContent: I18n.t('delete') });
+
+  editBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    $.hide(viewBox);
+    $.show(editBox);
+    $.hide(editBtn);
+    $.hide(completeBtn);
+    $.show(saveBtn);
+    $.show(cancelBtn);
+  });
+
+  saveBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    ej.office = card.querySelector('.ej-edit-office').value || '';
+    const timeSelector = card.querySelector('.ej-edit-time-selector');
+    ej.time = TimeHelpers.getTimeFromSelector(timeSelector);
+    ej.personnel = card.querySelector('.ej-edit-personnel').value.trim();
+    ej.vehicle = card.querySelector('.ej-edit-vehicle').value.trim();
+    ej.address = card.querySelector('.ej-edit-address').value.trim();
+    ej.notes = card.querySelector('.ej-edit-notes').value.trim();
+    Storage.saveScheduleExtraJobs();
+    this.renderDay(dateStr);
+    this.render();
+  });
+
+  cancelBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    this.renderDay(dateStr);
+  });
+
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
+    ScheduleExtraJobs.deleteById(dateStr, ej.id);
+    Storage.saveScheduleExtraJobs();
+    this.renderDay(dateStr);
+    this.render();
+  });
+
+  actions.appendChild(completeBtn);
+  actions.appendChild(editBtn);
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  actions.appendChild(deleteBtn);
+  body.appendChild(actions);
+
+  card.appendChild(body);
+
+  // Toggle collapse
+  header.addEventListener('click', () => {
+    const isExpanded = !body.classList.contains('hidden');
+    if (isExpanded) {
+      body.classList.add('hidden');
+      header.classList.remove('expanded');
+      arrow.classList.remove('expanded');
+    } else {
+      body.classList.remove('hidden');
+      header.classList.add('expanded');
+      arrow.classList.add('expanded');
+    }
+  });
+
+  return card;
+},
+  
   stepCard(job, step, dateStr) {
     const def = CONFIG.STEP_DEFINITIONS[step.id] || {};
     const card = $.el('div', { className: 'schedule-step-card' });
@@ -5925,7 +6402,7 @@ scheduleStepCardCollapsible(job, step, dateStr) {
     const officeDiv = $.el('div');
     officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
     const officeSelect = $.el('select', { className: 'sched-office-input' });
-    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? '-- Ofis Seçin --' : '-- Select Office --' }));
     CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
     officeSelect.value = step.office || '';
     officeDiv.appendChild(officeSelect);
@@ -5995,148 +6472,159 @@ scheduleStepCardCollapsible(job, step, dateStr) {
     return card;
   },
 
-  // Additional jobs section - displayed as step-like cards (same style), with edit support
-  extraJobsSection(dateStr, extraJobs) {
-    const section = $.el('div', { className: 'schedule-extra-jobs' });
-    section.appendChild($.el('h4', { textContent: I18n.t('extraJobs') }));
-    const list = $.el('div');
+  // Add form for extra jobs (hidden by default, shown via button)
+extraJobsAddForm(dateStr) {
+  const formWrap = $.el('div', { className: 'schedule-extra-add-form' });
+  
+  const formTitle = $.el('h4', { 
+    textContent: (State.lang === 'tr') ? 'Yeni Ek İş Ekle' : 'Add New Job',
+    style: 'margin: 0 0 12px 0;'
+  });
+  formWrap.appendChild(formTitle);
 
-    if (extraJobs.length === 0) {
-      list.appendChild($.el('p', { className: 'schedule-extra-empty', textContent: I18n.t('noExtraJobs') }));
-    } else {
-      extraJobs
-        .slice()
-        .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
-        .forEach(ej => list.appendChild(this.extraJobCard(dateStr, ej)));
+  const form = $.el('div', { className: 'schedule-extra-form' });
+
+  // Linked Move select
+  const linkDiv = $.el('div');
+  linkDiv.appendChild($.el('label', { textContent: I18n.t('linkedMove') }));
+  const linkSelect = $.el('select', { id: 'extraJobLinkedMove_' + dateStr });
+  linkSelect.appendChild($.el('option', { value: '', textContent: I18n.t('none') }));
+  State.jobs
+    .slice()
+    .map(j => ({ id: String(j.id), code: j.jobCode || '', client: j.clientName || '' }))
+    .filter(x => x.code)
+    .sort((a, b) => a.code.localeCompare(b.code))
+    .forEach(x => linkSelect.appendChild($.el('option', { value: x.id, textContent: `${x.code} – ${x.client}`.trim() })));
+  linkDiv.appendChild(linkSelect);
+  form.appendChild(linkDiv);
+
+  // Task type
+  const taskDiv = $.el('div');
+  taskDiv.appendChild($.el('label', { textContent: I18n.t('task') }));
+  const taskSelect = $.el('select', { id: 'extraJobType_' + dateStr });
+  CONFIG.EXTRA_JOB_TYPES.forEach(type => taskSelect.appendChild($.el('option', { value: type, textContent: I18n.taskTypeText(type) })));
+  taskDiv.appendChild(taskSelect);
+  form.appendChild(taskDiv);
+
+  // Custom name
+  const customDiv = $.el('div');
+  customDiv.appendChild($.el('label', { textContent: I18n.t('customTaskName') }));
+  const customInput = $.el('input', { type: 'text', id: 'extraJobCustomName_' + dateStr });
+  customDiv.appendChild(customInput);
+  form.appendChild(customDiv);
+
+  const toggleCustom = () => {
+    customDiv.style.display = (taskSelect.value === 'Custom') ? '' : 'none';
+    if (taskSelect.value !== 'Custom') customInput.value = '';
+  };
+  taskSelect.addEventListener('change', toggleCustom);
+  toggleCustom();
+
+  // Office (required)
+  const officeDiv = $.el('div');
+  officeDiv.appendChild($.el('label', { textContent: I18n.t('office') + ' *' }));
+  const officeSelect = $.el('select', { id: 'extraJobOffice_' + dateStr, required: true });
+  officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? '-- Ofis Seçin --' : '-- Select Office --' }));
+  CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
+  officeDiv.appendChild(officeSelect);
+  form.appendChild(officeDiv);
+
+  // Time (24-hour dropdowns)
+  const timeDiv = $.el('div');
+  timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
+  const timeSelector = TimeHelpers.createTimeSelector('');
+  timeSelector.id = 'extraJobTime_' + dateStr;
+  timeDiv.appendChild(timeSelector);
+  form.appendChild(timeDiv);
+
+  // Address
+  const addressDiv = $.el('div');
+  addressDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
+  const addressInput = $.el('textarea', { id: 'extraJobAddress_' + dateStr, rows: '2' });
+  addressDiv.appendChild(addressInput);
+  form.appendChild(addressDiv);
+
+  // Personnel
+  const pDiv = $.el('div');
+  pDiv.appendChild($.el('label', { textContent: I18n.t('personnel') }));
+  pDiv.appendChild($.el('input', { type: 'text', id: 'extraJobPersonnel_' + dateStr }));
+  form.appendChild(pDiv);
+
+  // Vehicle
+  const vDiv = $.el('div');
+  vDiv.appendChild($.el('label', { textContent: I18n.t('vehicle') }));
+  vDiv.appendChild($.el('input', { type: 'text', id: 'extraJobVehicle_' + dateStr }));
+  form.appendChild(vDiv);
+
+  // Notes
+  const nDiv = $.el('div', { className: 'full-width' });
+  nDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
+  nDiv.appendChild($.el('textarea', { id: 'extraJobNotes_' + dateStr, rows: '2' }));
+  form.appendChild(nDiv);
+
+  // Actions
+  const actionsDiv = $.el('div', { className: 'schedule-extra-actions', style: 'grid-column: 1 / -1;' });
+  
+  const addBtn = $.el('button', { type: 'button', textContent: I18n.t('addJob') });
+  addBtn.addEventListener('click', () => {
+    const linkedJobId = linkSelect.value || '';
+    const linkedJob = linkedJobId ? State.getJob(linkedJobId) : null;
+    const taskType = taskSelect.value;
+    const customTaskName = customInput.value.trim();
+    const office = officeSelect.value;
+    const time = TimeHelpers.getTimeFromSelector(timeSelector);
+    const address = addressInput.value.trim();
+    const personnel = $.get('extraJobPersonnel_' + dateStr).value.trim();
+    const vehicle = $.get('extraJobVehicle_' + dateStr).value.trim();
+    const notes = $.get('extraJobNotes_' + dateStr).value.trim();
+
+    // Require office selection
+    if (!office) {
+      alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+      return;
     }
 
-    section.appendChild(list);
+    if (!taskType && !customTaskName && !time && !address && !personnel && !vehicle && !notes) {
+      alert(I18n.t('fillAtLeastOneField'));
+      return;
+    }
 
-    // --- Add form (standalone or linked) ---
-    const form = $.el('div', { className: 'schedule-extra-form' });
+    if (!Array.isArray(State.scheduleExtraJobs[dateStr])) State.scheduleExtraJobs[dateStr] = [];
 
-    // Linked Move select (FIX: show jobCode + client)
-    const linkDiv = $.el('div');
-    linkDiv.appendChild($.el('label', { textContent: I18n.t('linkedMove') }));
-    const linkSelect = $.el('select', { id: 'extraJobLinkedMove' });
-    linkSelect.appendChild($.el('option', { value: '', textContent: I18n.t('none') }));
-    State.jobs
-      .slice()
-      .map(j => ({ id: String(j.id), code: j.jobCode || '', client: j.clientName || '' }))
-      .filter(x => x.code)
-      .sort((a, b) => a.code.localeCompare(b.code))
-      .forEach(x => linkSelect.appendChild($.el('option', { value: x.id, textContent: `${x.code} – ${x.client}`.trim() })));
-    linkDiv.appendChild(linkSelect);
-    form.appendChild(linkDiv);
+    State.scheduleExtraJobs[dateStr].push(Validator.normalizeExtraJob({
+      id: Utils.makeId('xjob'),
+      date: dateStr,
+      taskType,
+      customTaskName,
+      time,
+      office,
+      address,
+      personnel,
+      vehicle,
+      notes,
+      linkedJobId: linkedJob ? String(linkedJob.id) : '',
+      linkedJobCode: linkedJob ? (linkedJob.jobCode || '') : '',
+      linkedJobClientName: linkedJob ? (linkedJob.clientName || '') : '',
+      completed: false
+    }, dateStr));
 
-    // Task type
-    const taskDiv = $.el('div');
-    taskDiv.appendChild($.el('label', { textContent: I18n.t('task') }));
-    const select = $.el('select', { id: 'extraJobType' });
-    CONFIG.EXTRA_JOB_TYPES.forEach(type => select.appendChild($.el('option', { value: type, textContent: I18n.taskTypeText(type) })));
-    taskDiv.appendChild(select);
-    form.appendChild(taskDiv);
+    Storage.saveScheduleExtraJobs();
+    this.renderDay(dateStr);
+    this.render();
+  });
 
-    // Custom name
-    const customDiv = $.el('div');
-    customDiv.appendChild($.el('label', { textContent: I18n.t('customTaskName') }));
-    const customInput = $.el('input', { type: 'text', id: 'extraJobCustomName' });
-    customDiv.appendChild(customInput);
-    form.appendChild(customDiv);
+  const cancelBtn = $.el('button', { type: 'button', textContent: I18n.t('cancel') });
+  cancelBtn.addEventListener('click', () => {
+    formWrap.classList.add('hidden');
+  });
 
-    const toggleCustom = () => {
-      customDiv.style.display = (select.value === 'Custom') ? '' : 'none';
-      if (select.value !== 'Custom') customInput.value = '';
-    };
-    select.addEventListener('change', toggleCustom);
-    toggleCustom();
+  actionsDiv.appendChild(addBtn);
+  actionsDiv.appendChild(cancelBtn);
+  form.appendChild(actionsDiv);
 
-    // Time
-    const timeDiv = $.el('div');
-    timeDiv.appendChild($.el('label', { textContent: I18n.t('time') }));
-    const timeInput = $.el('input', { type: 'time', id: 'extraJobTime' });
-    timeDiv.appendChild(timeInput);
-    form.appendChild(timeDiv);
-
-    // Office
-    const officeDiv = $.el('div');
-    officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
-    const officeSelect = $.el('select', { id: 'extraJobOffice' });
-    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
-    CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
-    officeDiv.appendChild(officeSelect);
-    form.appendChild(officeDiv);
-
-    // Address
-    const addressDiv = $.el('div');
-    addressDiv.appendChild($.el('label', { textContent: I18n.t('address') }));
-    const addressInput = $.el('textarea', { id: 'extraJobAddress', rows: '2' });
-    addressDiv.appendChild(addressInput);
-    form.appendChild(addressDiv);
-
-    // Personnel / Vehicle / Notes
-    [[I18n.t('personnel'), 'extraJobPersonnel', 'text'], [I18n.t('vehicle'), 'extraJobVehicle', 'text'], [I18n.t('notesLabel'), 'extraJobNotes', 'textarea']].forEach(
-      ([label, id, type]) => {
-        const div = $.el('div');
-        div.appendChild($.el('label', { textContent: label }));
-        div.appendChild($.el(type === 'textarea' ? 'textarea' : 'input', {
-          type: type === 'textarea' ? undefined : type,
-          id,
-          rows: type === 'textarea' ? '2' : undefined
-        }));
-        form.appendChild(div);
-      }
-    );
-
-    const addBtn = $.el('button', { type: 'button', textContent: I18n.t('addJob') });
-    addBtn.addEventListener('click', () => {
-      const linkedJobId = $.get('extraJobLinkedMove').value || '';
-      const linkedJob = linkedJobId ? State.getJob(linkedJobId) : null;
-
-      const taskType = $.get('extraJobType').value;
-      const customTaskName = $.get('extraJobCustomName').value.trim();
-      const time = $.get('extraJobTime').value || '';
-      const office = $.get('extraJobOffice').value || '';
-      const address = $.get('extraJobAddress').value.trim();
-      const personnel = $.get('extraJobPersonnel').value.trim();
-      const vehicle = $.get('extraJobVehicle').value.trim();
-      const notes = $.get('extraJobNotes').value.trim();
-
-      if (!taskType && !customTaskName && !time && !office && !address && !personnel && !vehicle && !notes) {
-        alert(I18n.t('fillAtLeastOneField'));
-        return;
-      }
-
-      if (!Array.isArray(State.scheduleExtraJobs[dateStr])) State.scheduleExtraJobs[dateStr] = [];
-
-      State.scheduleExtraJobs[dateStr].push(Validator.normalizeExtraJob({
-        id: Utils.makeId('xjob'),
-        date: dateStr,
-        taskType,
-        customTaskName,
-        time,
-        office,
-        address,
-        personnel,
-        vehicle,
-        notes,
-        linkedJobId: linkedJob ? String(linkedJob.id) : '',
-        linkedJobCode: linkedJob ? (linkedJob.jobCode || '') : '',
-        linkedJobClientName: linkedJob ? (linkedJob.clientName || '') : ''
-      }, dateStr));
-
-      Storage.saveScheduleExtraJobs();
-      this.renderDay(dateStr);
-      this.render();
-    });
-
-    const actionsDiv = $.el('div', { className: 'schedule-extra-actions' });
-    actionsDiv.appendChild(addBtn);
-    form.appendChild(actionsDiv);
-    section.appendChild(form);
-
-    return section;
-  },
+  formWrap.appendChild(form);
+  return formWrap;
+},
 
   // NEW: Additional job card in schedule that matches step-card style and supports edit/delete
   extraJobCard(dateStr, ej) {
@@ -6225,7 +6713,7 @@ scheduleStepCardCollapsible(job, step, dateStr) {
     const officeDiv = $.el('div');
     officeDiv.appendChild($.el('label', { textContent: I18n.t('office') }));
     const officeSelect = $.el('select', { className: 'ej-edit-office' });
-    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? 'Otomatik' : 'Auto' }));
+    officeSelect.appendChild($.el('option', { value: '', textContent: (State.lang === 'tr') ? '-- Ofis Seçin --' : '-- Select Office --' }));
     CONFIG.OFFICES.forEach(o => officeSelect.appendChild($.el('option', { value: o, textContent: o })));
     officeSelect.value = ej.office || '';
     officeDiv.appendChild(officeSelect);
@@ -6683,18 +7171,54 @@ function initEventHandlers() {
     JobsUI.render();
   });
 
-  $.get('setChecklistBtn').addEventListener('click', () => {
-    const job = State.getJob(State.selectedJobId);
-    if (!job) return;
-    const text = $.get('checklistInput').value.trim();
-    if (!text) return;
-    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    if (!lines.length) return;
-    job.checklist = job.checklist.concat(lines.map(text => ({ text, done: false })));
-    $.get('checklistInput').value = '';
-    ChecklistUI.render(job);
-    Storage.saveJobs();
-  });
+  // Checklist add button handlers
+  const openAddChecklistBtn = $.get('openAddChecklistBtn');
+  const checklistAddForm = $.get('checklistAddForm');
+  const confirmAddChecklistBtn = $.get('confirmAddChecklistBtn');
+  const cancelAddChecklistBtn = $.get('cancelAddChecklistBtn');
+  const checklistNewItemInput = $.get('checklistNewItemInput');
+
+  if (openAddChecklistBtn) {
+    openAddChecklistBtn.addEventListener('click', () => {
+      $.show(checklistAddForm);
+      $.hide(openAddChecklistBtn);
+      checklistNewItemInput.focus();
+    });
+  }
+
+  if (cancelAddChecklistBtn) {
+    cancelAddChecklistBtn.addEventListener('click', () => {
+      $.hide(checklistAddForm);
+      $.show(openAddChecklistBtn);
+      checklistNewItemInput.value = '';
+    });
+  }
+
+  if (confirmAddChecklistBtn) {
+    confirmAddChecklistBtn.addEventListener('click', () => {
+      const job = State.getJob(State.selectedJobId);
+      if (!job) return;
+      const text = checklistNewItemInput.value.trim();
+      if (!text) return;
+      if (!job.checklist) job.checklist = [];
+      job.checklist.push({ text, done: false });
+      checklistNewItemInput.value = '';
+      $.hide(checklistAddForm);
+      $.show(openAddChecklistBtn);
+      ChecklistUI.render(job);
+      Storage.saveJobs();
+    });
+  }
+
+  // Allow Enter key to add item
+  if (checklistNewItemInput) {
+    checklistNewItemInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        confirmAddChecklistBtn.click();
+      }
+    });
+  }
 
   $.get('addNoteBtn').addEventListener('click', () => {
     const job = State.getJob(State.selectedJobId);
@@ -6759,6 +7283,40 @@ function initEventHandlers() {
       refreshGlobalDocsIfVisible();
     }
   });
+  
+  // Media (Photos/Videos) upload handler
+  const addMediaBtn = $.get('addMediaBtn');
+  if (addMediaBtn) {
+    addMediaBtn.addEventListener('click', () => {
+      const job = State.getJob(State.selectedJobId);
+      if (!job) return;
+      const label = $.get('mediaLabelInput').value.trim();
+      const file = $.get('mediaFileInput').files[0];
+      
+      if (!file) {
+        alert((State.lang === 'tr') ? 'Lütfen bir dosya seçin.' : 'Please select a file.');
+        return;
+      }
+      
+      if (!job.media) job.media = [];
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        job.media.push({
+          label: label || file.name,
+          fileName: file.name,
+          fileType: file.type,
+          fileData: e.target.result,
+          uploadedAt: new Date().toISOString()
+        });
+        $.get('mediaLabelInput').value = '';
+        $.get('mediaFileInput').value = '';
+        Storage.saveJobs();
+        MediaUI.render(job);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 
   $.get('agentSearchInput').addEventListener('input', (e) => {
     State.agentSearch = e.target.value.trim();
