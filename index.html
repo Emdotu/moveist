@@ -2,30 +2,63 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>ISTEX Move Manager</title>
+    <title>Istanbul Ekspres - Move Manager</title>
     <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
-<header>
-  <div class="header-bar">
-    <h1 data-i18n="appTitle">ISTANBUL EKSPRES</h1>
+<!-- TOP NAVIGATION -->
+<header class="top-header">
+  <div class="header-left">
+    <h1 class="header-logo">ISTANBUL EKSPRES</h1>
+  </div>
+  
+  <nav class="header-nav">
+    <button type="button" id="navDashboard" class="nav-item active">
+      <span class="nav-label" data-i18n="dashboard">Dashboard</span>
+    </button>
+    <button type="button" id="navMoves" class="nav-item">
+      <span class="nav-label" data-i18n="moves">Moves</span>
+    </button>
+    <button type="button" id="navAgents" class="nav-item">
+      <span class="nav-label" data-i18n="agents">Agents</span>
+    </button>
+    <button type="button" id="navSchedule" class="nav-item">
+      <span class="nav-label" data-i18n="schedule">Schedule</span>
+    </button>
+    <button type="button" id="navStorage" class="nav-item">
+      <span class="nav-label" data-i18n="storage">Storage</span>
+    </button>
+    <button type="button" id="navDocuments" class="nav-item">
+      <span class="nav-label" data-i18n="documents">Documents</span>
+    </button>
+    <button type="button" id="navQuotes" class="nav-item">
+      <span class="nav-label" data-i18n="quotes">Quotes</span>
+    </button>
+  </nav>
+  
+  <div class="header-right">
+    <button type="button" id="langToggleBtn" class="lang-toggle-btn">
+      <span id="langLabel">EN</span>
+    </button>
   </div>
 </header>
 
-<!-- TOP NAV TABS -->
-<nav class="top-nav">
-  <button type="button" id="navMoves" class="nav-tab active" data-i18n="navMoves">Moves</button>
-  <button type="button" id="navAgents" class="nav-tab" data-i18n="navAgents">Agents</button>
-  <button type="button" id="navSchedule" class="nav-tab" data-i18n="navSchedule">Schedule</button>
-  <button type="button" id="navDocuments" class="nav-tab" data-i18n="navDocuments">Documents</button>
-  <button type="button" id="navQuotes" class="nav-tab" data-i18n="navQuotes">Quotes</button>
-</nav>
+<!-- MAIN CONTENT AREA -->
+<main class="main-content">
 
-<main>
+  <!-- ========== DASHBOARD VIEW ========== -->
+  <div id="dashboardView" class="dashboard-view">
+    <div class="dashboard-header">
+      <h2>Dashboard</h2>
+    </div>
+    <div id="dashboardContent" class="dashboard-content">
+      <!-- Dashboard stats will be rendered here by JavaScript -->
+    </div>
+  </div>
 
   <!-- ========== MOVES VIEW ========== -->
-  <div id="movesView" class="layout">
+  <div id="movesView" class="layout hidden">
 
     <!-- LEFT SIDE (MOVES LIST) -->
     <section id="moves" class="left-panel">
@@ -86,67 +119,50 @@
         <p data-i18n="hintSelectMove">Select a move from the left to see details here.</p>
       </div>
 
-      <div class="header-row">
-        <h2 data-i18n="moveAgentsTitle">Move Agents</h2>
-      </div>
-
-      <div id="agentDetails" class="agent-card">
-        <p data-i18n="hintAgentsAppear">Agents for this move will appear here.</p>
-      </div>
-
-      <div class="header-row">
-        <h2 data-i18n="checklistTitle">Checklist</h2>
-      </div>
-
-     <div id="checklistSection" class="detail-card">
-        <div id="checklistItems">
-          <p data-i18n="noChecklistYet">No checklist yet.</p>
+      <div class="details-section">
+        <div class="details-section-header">
+          <h4 class="details-section-title" data-i18n="moveAgentsTitle">Move Agents</h4>
         </div>
+        <div id="agentDetails">
+          <p data-i18n="hintAgentsAppear">Agents for this move will appear here.</p>
+        </div>
+      </div>
 
-        <div class="checklist-add-section">
-          <button type="button" id="openAddChecklistBtn" class="checklist-add-btn">
-            <span>+</span> Add Checklist Item
-          </button>
-          
-          <div id="checklistAddForm" class="hidden" style="margin-top: 10px;">
-            <input type="text" id="checklistNewItemInput" placeholder="Enter checklist item..." style="margin-bottom: 8px;">
-            <div style="display: flex; gap: 8px;">
-              <button type="button" id="confirmAddChecklistBtn">Add</button>
-              <button type="button" id="cancelAddChecklistBtn">Cancel</button>
+      <div class="details-section">
+        <div class="details-section-header">
+          <h4 class="details-section-title" data-i18n="checklistTitle">Checklist</h4>
+        </div>
+        <div id="checklistSection">
+          <div id="checklistItems">
+            <p data-i18n="noChecklistYet">No checklist yet.</p>
+          </div>
+
+          <div class="checklist-add-section">
+            <button type="button" id="openAddChecklistBtn" class="checklist-add-btn">
+              <span>+</span> Add Checklist Item
+            </button>
+            
+            <div id="checklistAddForm" class="hidden" style="margin-top: 10px;">
+              <input type="text" id="checklistNewItemInput" placeholder="Enter checklist item..." style="margin-bottom: 8px;">
+              <div style="display: flex; gap: 8px;">
+                <button type="button" id="confirmAddChecklistBtn">Add</button>
+                <button type="button" id="cancelAddChecklistBtn">Cancel</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="header-row">
-        <h2 data-i18n="notesTitle">Notes</h2>
-      </div>
-
-      <div id="notesSection" class="detail-card">
-        <div id="notesList">
-          <p data-i18n="noNotesYet">No notes yet.</p>
+      <div class="details-section">
+        <div class="details-section-header">
+          <h4 class="details-section-title" data-i18n="documentsTitle">Documents</h4>
         </div>
+        <div id="documentsSection">
+          <div id="documentsList">
+            <p data-i18n="noDocumentsYet">No documents yet.</p>
+          </div>
 
-        <label data-i18n="addNoteLabel">Add Note</label>
-        <textarea
-          id="newNoteText"
-          rows="2"
-          data-i18n-placeholder="addNotePlaceholder"
-          placeholder="Write a note about this move..."
-        ></textarea>
-        <button type="button" id="addNoteBtn" data-i18n="btnAddNote">Add Note</button>
-      </div>
-
-      <div class="header-row">
-        <h2 data-i18n="documentsTitle">Documents</h2>
-      </div>
-
-      <div id="documentsSection" class="detail-card">
-        <div id="documentsList">
-          <p data-i18n="noDocumentsYet">No documents yet.</p>
-        </div>
-
-       <div class="document-form">
+         <div class="document-form">
           <div>
             <label>Document Label</label>
             <input type="text" id="docNameInput" placeholder="Document Label">
@@ -159,7 +175,10 @@
 
           <div>
             <label>Upload</label>
-            <input type="file" id="docFileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.png,.jpg,.jpeg">
+            <div id="docDropZone" class="drop-zone">
+              <span class="drop-zone-text">Drag & drop file here or click to browse</span>
+              <input type="file" id="docFileInput" class="drop-zone-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.png,.jpg,.jpeg">
+            </div>
           </div>
 
           <div style="display:none;">
@@ -171,30 +190,55 @@
           </div>
         </div>
       </div>
+      </div>
       
-      <div class="header-row">
-        <h2>Photos & Videos</h2>
+      <div class="details-section">
+        <div class="details-section-header">
+          <h4 class="details-section-title">Photos & Videos</h4>
+        </div>
+        <div id="mediaSection">
+          <div id="mediaList">
+            <p>No photos or videos yet.</p>
+          </div>
+
+          <div class="media-upload-form">
+            <div>
+              <label>Label / Description</label>
+              <input type="text" id="mediaLabelInput" placeholder="Label / Description">
+            </div>
+            
+            <div>
+              <label>Upload</label>
+              <div id="mediaDropZone" class="drop-zone">
+                <span class="drop-zone-text">Drag & drop file here or click to browse</span>
+                <input type="file" id="mediaFileInput" class="drop-zone-input" accept="image/*,video/*">
+              </div>
+            </div>
+
+            <div>
+              <button type="button" id="addMediaBtn">Upload</button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div id="mediaSection" class="detail-card">
-        <div id="mediaList">
-          <p>No photos or videos yet.</p>
+      <div class="details-section">
+        <div class="details-section-header">
+          <h4 class="details-section-title" data-i18n="notesTitle">Notes</h4>
         </div>
-
-        <div class="media-upload-form">
-          <div>
-            <label>Label / Description</label>
-            <input type="text" id="mediaLabelInput" placeholder="Label / Description">
-          </div>
-          
-          <div>
-            <label>Upload</label>
-            <input type="file" id="mediaFileInput" accept="image/*,video/*">
+        <div id="notesSection">
+          <div id="notesList">
+            <p data-i18n="noNotesYet">No notes yet.</p>
           </div>
 
-          <div>
-            <button type="button" id="addMediaBtn">Upload</button>
-          </div>
+          <label data-i18n="addNoteLabel">Add Note</label>
+          <textarea
+            id="newNoteText"
+            rows="2"
+            data-i18n-placeholder="addNotePlaceholder"
+            placeholder="Write a note about this move..."
+          ></textarea>
+          <button type="button" id="addNoteBtn" data-i18n="btnAddNote">Add Note</button>
         </div>
       </div>
 
@@ -209,6 +253,12 @@
       <div class="header-row">
         <h2 data-i18n="agentsTitle">Agents</h2>
         <button type="button" id="openCreateAgentBtn" data-i18n="btnAddAgent">Add Agent</button>
+      </div>
+
+      <!-- Sub-tabs for Agents vs Brokers -->
+      <div class="agent-type-tabs">
+        <button type="button" class="agent-type-tab active" data-type="Agent" data-i18n="agentTypeAgent">Agents</button>
+        <button type="button" class="agent-type-tab" data-type="Broker" data-i18n="agentTypeBroker">Brokers</button>
       </div>
 
       <div class="search-row">
@@ -248,6 +298,15 @@
         </div>
       </div>
 
+      <!-- Office Filter Toggle -->
+      <div class="schedule-office-filter">
+        <button type="button" class="office-filter-btn active" data-office="All" data-i18n="officeAll">All</button>
+        <button type="button" class="office-filter-btn" data-office="Istanbul" data-i18n="officeIstanbul">Istanbul</button>
+        <button type="button" class="office-filter-btn" data-office="Ankara" data-i18n="officeAnkara">Ankara</button>
+        <button type="button" class="office-filter-btn" data-office="Izmir" data-i18n="officeIzmir">Izmir</button>
+        <button type="button" class="office-filter-btn" data-office="Adana" data-i18n="officeAdana">Adana</button>
+      </div>
+
       <div class="schedule-calendar-header">
         <div data-i18n="dowMon">Mon</div>
         <div data-i18n="dowTue">Tue</div>
@@ -272,35 +331,24 @@
 
   </div>
 
-<!-- ========== DOCUMENTS VIEW (GLOBAL) ========== -->
+<!-- ========== DOCUMENTS VIEW (GLOBAL) - TABBED LAYOUT ========== -->
 <div id="documentsView" class="layout hidden">
+  
+  <!-- LEFT SIDE: Search/Library List -->
   <section class="left-panel">
     <div class="header-row">
-      <h2 data-i18n="documentsTitle">Documents</h2>
+      <h2 data-i18n="documentsGlobal">Documents</h2>
+      <button type="button" id="addResourceBtn" class="add-resource-btn">+ Add Resource</button>
     </div>
 
-    <!-- ADD: Tab buttons -->
-    <div class="documents-tabs" style="display:flex; gap:8px; margin-bottom:16px; border-bottom:2px solid #e5e7eb;">
-      <button 
-        type="button" 
-        id="documentsSearchTab" 
-        class="documents-tab-btn active"
-        style="padding:10px 20px; background:none; border:none; border-bottom:2px solid #3b82f6; cursor:pointer; font-weight:500;"
-      >
-        Documents Search
-      </button>
-      <button 
-        type="button" 
-        id="resourceLibraryTab" 
-        class="documents-tab-btn"
-        style="padding:10px 20px; background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; font-weight:500;"
-      >
-        Resource Library
-      </button>
+    <!-- Tab switcher for Documents / Resource Library -->
+    <div class="documents-type-tabs">
+      <button type="button" class="documents-type-tab active" data-type="search" data-i18n="documentsSearchTab">Documents Search</button>
+      <button type="button" class="documents-type-tab" data-type="library" data-i18n="resourceLibraryTab">Resource Library</button>
     </div>
-
-    <!-- Wrap existing content in a div -->
-    <div id="documentsSearchSection">
+    
+    <!-- Documents Search Panel -->
+    <div id="documentsSearchPanel">
       <div class="search-row">
         <input
           type="text"
@@ -316,12 +364,82 @@
         </select>
       </div>
 
-      <div id="documentsListGlobal"></div>
+      <div id="documentsListGlobal" class="documents-list-container"></div>
+    </div>
+    
+    <!-- Resource Library Panel (hidden by default) -->
+    <div id="resourceLibraryPanel" class="hidden">
+      <div id="resourceLibraryContainer"></div>
+    </div>
+  </section>
+
+  <!-- RIGHT SIDE: Document/Resource Details -->
+  <section class="right-panel">
+    <div class="header-row">
+      <h2 id="documentsRightTitle">Document Details</h2>
+    </div>
+    <div id="documentsDetailsPanel" class="detail-card">
+      <p data-i18n="hintSelectDocument">Select a document or resource from the left to see details here.</p>
+    </div>
+  </section>
+  
+</div>
+
+  <!-- ========== STORAGE VIEW ========== -->
+<div id="storageView" class="layout hidden">
+  
+  <!-- LEFT SIDE (STORAGE LIST) -->
+  <section class="left-panel">
+    <div class="header-row">
+      <h2 data-i18n="storageTitle">Storage</h2>
+      <button type="button" id="openCreateStorage" data-i18n="btnAddStorage">Add Storage</button>
+    </div>
+    
+    <div class="storage-filters-row">
+      <select id="storageLocationFilter">
+        <option value="" data-i18n="allLocations">All Locations</option>
+      </select>
+      <select id="storageStatusFilter">
+        <option value="" data-i18n="allStatuses">All Statuses</option>
+        <option value="Active" data-i18n="statusActive">Active</option>
+        <option value="Closed" data-i18n="statusClosed">Closed</option>
+      </select>
+    </div>
+    
+    <div class="search-row">
+      <input
+        type="text"
+        id="storageSearchInput"
+        data-i18n-placeholder="searchStoragePlaceholder"
+        placeholder="Search by code, client, location..."
+      >
     </div>
 
-    <!-- ADD: Resource Library container -->
-    <div id="resourceLibraryContainer" style="display:none;"></div>
+    <!-- ACTIVE STORAGE SECTION -->
+    <div class="storage-section">
+      <h3 class="storage-section-title" data-i18n="activeStorage">Active Storage</h3>
+      <div id="activeStorageList" class="storage-list"></div>
+    </div>
+
+    <!-- COMPLETED STORAGE SECTION -->
+    <div class="storage-section storage-section-completed">
+      <h3 class="storage-section-title" data-i18n="completedStorage">Completed Storage</h3>
+      <div id="completedStorageList" class="storage-list"></div>
+    </div>
   </section>
+
+  <!-- RIGHT SIDE (STORAGE DETAILS) -->
+  <section class="right-panel">
+    <div class="header-row">
+      <h2 data-i18n="storageDetailsTitle">Storage Details</h2>
+      <button type="button" id="editStorageBtn" disabled data-i18n="btnEditStorage">Edit Storage</button>
+    </div>
+
+    <div id="storageDetailsPanel" class="detail-card">
+      <p data-i18n="hintSelectStorage">Select a storage record from the left to see details here.</p>
+    </div>
+  </section>
+
 </div>
 
   <!-- ========== QUOTES VIEW ========== -->
@@ -381,6 +499,46 @@
       <label data-i18n="clientNameLabel">Client Name</label>
       <input name="clientName" type="text">
 
+      <label data-i18n="organizationLabel">Organization (optional)</label>
+      <input name="organizationName" type="text">
+
+      <!-- Client Contact Fields -->
+      <div class="form-row-2col">
+        <div>
+          <label data-i18n="clientPhoneLabel">Phone</label>
+          <input name="clientPhone" type="tel" placeholder="+90 555 123 4567">
+        </div>
+        <div>
+          <label data-i18n="clientEmailLabel">Email</label>
+          <input name="clientEmail" type="email" placeholder="client@example.com">
+        </div>
+      </div>
+
+      <!-- NEW: Booking Type and Client Type side by side -->
+      <div class="form-row-2col">
+        <div>
+          <label data-i18n="bookingTypeLabel">Booking Type</label>
+          <select name="bookingType" id="jobBookingType">
+            <option value="" data-i18n="selectBookingType">Select booking type</option>
+            <option value="Door to Door" data-i18n="bookingDoorToDoor">Door to Door</option>
+            <option value="Door to Port" data-i18n="bookingDoorToPort">Door to Port</option>
+            <option value="Port to Door" data-i18n="bookingPortToDoor">Port to Door</option>
+          </select>
+        </div>
+        <div>
+          <label data-i18n="clientTypeLabel">Client Type</label>
+          <select name="clientType" id="jobClientType">
+            <option value="" data-i18n="selectClientType">Select client type</option>
+            <option value="Private" data-i18n="clientPrivate">Private</option>
+            <option value="Corporate" data-i18n="clientCorporate">Corporate</option>
+            <option value="Diplomatic" data-i18n="clientDiplomatic">Diplomatic</option>
+          </select>
+        </div>
+      </div>
+
+      <label data-i18n="tagLabel">Tag (optional)</label>
+      <input name="tag" type="text" placeholder="e.g. Diplomatic, VIP, Military...">
+
       <label data-i18n="originCityLabel">Origin City</label>
       <input name="originCity" type="text">
 
@@ -392,6 +550,27 @@
       <label data-i18n="originAddressLabel">Full Origin Address</label>
       <textarea name="originFullAddress" rows="2"></textarea>
 
+      <!-- Origin Address Details -->
+      <div class="form-row-3col">
+        <div>
+          <label data-i18n="floorLabel">Floor</label>
+          <input name="originFloor" type="text" placeholder="e.g. 3">
+        </div>
+        <div>
+          <label data-i18n="elevatorLabel">Elevator</label>
+          <select name="originElevator">
+            <option value="">-</option>
+            <option value="Yes" data-i18n="yes">Yes</option>
+            <option value="No" data-i18n="no">No</option>
+            <option value="Freight" data-i18n="freightElevator">Freight Elevator</option>
+          </select>
+        </div>
+        <div>
+          <label data-i18n="accessConditionsLabel">Access Conditions</label>
+          <input name="originAccessConditions" type="text" placeholder="e.g. Narrow stairs">
+        </div>
+      </div>
+
       <label data-i18n="destinationCityLabel">Destination City</label>
       <input name="destinationCity" type="text">
 
@@ -402,6 +581,27 @@
 
       <label data-i18n="destinationAddressLabel">Full Destination Address</label>
       <textarea name="destinationFullAddress" rows="2"></textarea>
+
+      <!-- Destination Address Details -->
+      <div class="form-row-3col">
+        <div>
+          <label data-i18n="floorLabel">Floor</label>
+          <input name="destinationFloor" type="text" placeholder="e.g. 5">
+        </div>
+        <div>
+          <label data-i18n="elevatorLabel">Elevator</label>
+          <select name="destinationElevator">
+            <option value="">-</option>
+            <option value="Yes" data-i18n="yes">Yes</option>
+            <option value="No" data-i18n="no">No</option>
+            <option value="Freight" data-i18n="freightElevator">Freight Elevator</option>
+          </select>
+        </div>
+        <div>
+          <label data-i18n="accessConditionsLabel">Access Conditions</label>
+          <input name="destinationAccessConditions" type="text" placeholder="e.g. Loading dock">
+        </div>
+      </div>
 
       <label data-i18n="moveTypeLabel">Move Type</label>
       <select name="tradeDirection">
@@ -430,6 +630,32 @@
         <option value="" data-i18n="selectDestinationAgent">Select destination agent</option>
       </select>
 
+      <!-- Brokers Section -->
+      <div class="form-section-divider">
+        <span data-i18n="brokersSection">Brokers</span>
+      </div>
+      
+      <div class="form-row-3col">
+        <div>
+          <label data-i18n="customsBrokerLabel">Customs Broker</label>
+          <select name="customsBrokerId" id="customsBrokerSelect">
+            <option value="" data-i18n="selectBroker">Select broker</option>
+          </select>
+        </div>
+        <div>
+          <label data-i18n="seaFreightBrokerLabel">Sea Freight Broker</label>
+          <select name="seaFreightBrokerId" id="seaFreightBrokerSelect">
+            <option value="" data-i18n="selectBroker">Select broker</option>
+          </select>
+        </div>
+        <div>
+          <label data-i18n="airFreightBrokerLabel">Air Freight Broker</label>
+          <select name="airFreightBrokerId" id="airFreightBrokerSelect">
+            <option value="" data-i18n="selectBroker">Select broker</option>
+          </select>
+        </div>
+      </div>
+
       <label data-i18n="modeLabel">Mode</label>
 <div class="mode-group">
   <label><input type="checkbox" name="mode" value="Sea" id="jobModeSea"> <span data-i18n="modeSea">Sea</span></label>
@@ -455,6 +681,8 @@
   <input name="jobContainerDetails" type="text" placeholder="e.g. 1x20ft FCL, 1x40ft HQ">
   <label>Sea Cargo Volume (cbm)</label>
   <input name="jobSeaVolume" type="number" step="0.01" placeholder="e.g. 14.5">
+  <label data-i18n="grossWeightOptional">Gross Weight (kg) - optional</label>
+  <input name="jobSeaGrossWeight" type="number" step="0.1" placeholder="e.g. 2500">
 </div>
 
 <!-- AIR MODE FIELDS -->
@@ -473,6 +701,8 @@
   <h4 class="job-mode-fields-title job-mode-fields-title-land">Land Freight Details</h4>
   <label>Land Cargo Volume (cbm)</label>
   <input name="jobLandVolume" type="number" step="0.01" placeholder="e.g. 14.5">
+  <label data-i18n="grossWeightOptional">Gross Weight (kg) - optional</label>
+  <input name="jobLandGrossWeight" type="number" step="0.1" placeholder="e.g. 2500">
 </div>
 
 <!-- VEHICLE FIELDS -->
@@ -502,6 +732,12 @@
   </div>
 </div>
 
+<!-- STORAGE TOGGLE -->
+<label style="margin-top: 16px;" data-i18n="storageLabel">Storage</label>
+<div class="mode-group">
+  <label><input type="checkbox" name="hasStorage" id="jobHasStorage"> <span data-i18n="storageYes">This move requires storage</span></label>
+</div>
+
 <p class="modal-hint" data-i18n="stepsHint">
         After creating the move, you can add steps (Survey, Packing, Container, Delivery, etc.) 
         manually in Move Details using the "Add Move Step" button.
@@ -524,7 +760,15 @@
     </div>
 
     <form id="agentForm">
-      <label data-i18n="agentNameLabel">Agent Name</label>
+      <label data-i18n="agentTypeLabel">Type</label>
+      <select name="agentType" id="agentTypeSelect" required>
+        <option value="Agent" data-i18n="typeAgent">Agent</option>
+        <option value="Customs Broker" data-i18n="typeCustomsBroker">Customs Broker</option>
+        <option value="Sea Freight Broker" data-i18n="typeSeaFreightBroker">Sea Freight Broker</option>
+        <option value="Air Freight Broker" data-i18n="typeAirFreightBroker">Air Freight Broker</option>
+      </select>
+
+      <label data-i18n="agentNameLabel">Name</label>
       <input name="agentName" type="text" required>
 
       <label data-i18n="cityLabel">City</label>
@@ -535,9 +779,27 @@
         <option value="" data-i18n="selectCountry">Select country</option>
       </select>
 
+      <!-- Memberships - only shown for Agent type -->
+      <div id="agentMembershipsSection">
+        <label data-i18n="membershipsLabel">Memberships</label>
+        <div class="membership-checkboxes">
+          <label class="checkbox-label">
+            <input type="checkbox" name="isFIDI">
+            <span>FIDI</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="isIAM">
+            <span>IAM</span>
+          </label>
+        </div>
+      </div>
+
+      <label data-i18n="notesLabel">Notes</label>
+      <textarea name="agentNotes" rows="2" placeholder=""></textarea>
+
       <div class="modal-actions">
         <button type="button" id="cancelAgentBtn" data-i18n="btnCancel">Cancel</button>
-        <button type="submit" data-i18n="btnSaveAgent">Save Agent</button>
+        <button type="submit" data-i18n="btnSaveAgent">Save</button>
       </div>
     </form>
   </div>
@@ -569,12 +831,19 @@
       <input name="destination" type="text" required placeholder="Dubai, UAE">
 
       <label>Type</label>
-      <select name="quoteType" required>
+      <select name="quoteType" id="quoteTypeSelect" required>
         <option value="">Select type</option>
         <option value="Export">Export</option>
         <option value="Import">Import</option>
         <option value="Local">Local</option>
       </select>
+
+      <label>Quote Recipient</label>
+      <select name="recipientType" id="quoteRecipientType">
+        <option value="Client">Client (Direct)</option>
+        <option value="Agent">Agent / Partner</option>
+      </select>
+      <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">Affects which fields and charges are shown</p>
 
       <label>Mode(s)</label>
 <div class="mode-group">
@@ -636,8 +905,10 @@
       <div id="seaFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
         <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #0369a1;">Sea Freight Details</h4>
         
-        <label>Departure Port</label>
-        <input name="departurePort" type="text" placeholder="e.g. Istanbul">
+        <div id="seaDeparturePortField">
+          <label>Departure Port</label>
+          <input name="departurePort" type="text" placeholder="e.g. Istanbul">
+        </div>
         
         <label>Port of Entry (POE)</label>
         <input name="poe" type="text" placeholder="e.g. Dubai">
@@ -648,19 +919,23 @@
         <label>Sea Cargo Volume (cbm)</label>
         <input name="seaVolume" type="number" step="0.01" placeholder="e.g. 14.5">
         
-        <label>Estimated Transit Time (days)</label>
-        <input name="seaTransitTime" type="number" placeholder="e.g. 15">
+        <div id="seaTransitTimeField">
+          <label>Estimated Transit Time (days)</label>
+          <input name="seaTransitTime" type="number" placeholder="e.g. 15">
+        </div>
       </div>
 
  <!-- AIR FIELDS SECTION -->
 <div id="airFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px;">
   <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #7c3aed;">Air Freight Details</h4>
   
-  <label>Departure Airport Name</label>
-  <input name="departureAirportName" type="text" placeholder="e.g. Istanbul Ataturk">
-  
-  <label>Departure Airport IATA Code</label>
-  <input name="departureAirportIATA" type="text" placeholder="e.g. IST" maxlength="3" style="text-transform: uppercase;">
+  <div id="airDepartureFields">
+    <label>Departure Airport Name</label>
+    <input name="departureAirportName" type="text" placeholder="e.g. Istanbul Ataturk">
+    
+    <label>Departure Airport IATA Code</label>
+    <input name="departureAirportIATA" type="text" placeholder="e.g. IST" maxlength="3" style="text-transform: uppercase;">
+  </div>
   
   <label>Arrival Airport Name</label>
   <input name="arrivalAirportName" type="text" placeholder="e.g. Dubai International">
@@ -668,8 +943,10 @@
   <label>Arrival Airport IATA Code</label>
   <input name="arrivalAirportIATA" type="text" placeholder="e.g. DXB" maxlength="3" style="text-transform: uppercase;">
   
-  <label>Airline</label>
-  <input name="airlineName" type="text" placeholder="e.g. Turkish Airlines">
+  <div id="airAirlineField">
+    <label>Airline</label>
+    <input name="airlineName" type="text" placeholder="e.g. Turkish Airlines">
+  </div>
   
   <label>Actual Cargo Weight (kg)</label>
   <input name="airCargoWeight" type="number" step="0.1" placeholder="e.g. 500">
@@ -681,22 +958,9 @@
   <input name="airACW" type="number" step="0.1" placeholder="e.g. 835">
   <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">Enter the chargeable weight (ACW) manually</p>
   
-  <label>Estimated Transit Time (days)</label>
-  <input name="airTransitTime" type="number" placeholder="e.g. 3">
-  
-  <!-- Air Quote Type (Client vs Agent) -->
-  <div style="margin-top: 12px; padding: 10px; background: #ede9fe; border: 1px solid #c4b5fd; border-radius: 6px;">
-    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Quote Format:</label>
-    <div class="mode-group">
-      <label>
-        <input type="radio" name="airQuoteType" value="client" checked>
-        Client (show actual amounts + total)
-      </label>
-      <label>
-        <input type="radio" name="airQuoteType" value="agent">
-        Agent (show per ACW rates, no total)
-      </label>
-    </div>
+  <div id="airTransitTimeField">
+    <label>Estimated Transit Time (days)</label>
+    <input name="airTransitTime" type="number" placeholder="e.g. 3">
   </div>
 </div>
 
@@ -717,46 +981,88 @@
         <input name="landTransitTime" type="number" placeholder="e.g. 7">
       </div>
 
-          <!-- Insurance Section -->
-<h3 class="form-section-title" style="margin-top: 24px;">Insurance</h3>
-
-<label>Insurance Required?</label>
-<div class="mode-group">
-  <label><input type="radio" name="insurance" value="no" checked> No</label>
-  <label><input type="radio" name="insurance" value="yes"> Yes</label>
-</div>
-
-<div id="insuranceFields" class="hidden" style="margin-top: 12px; padding: 12px; background: #fefce8; border: 1px solid #fde047; border-radius: 6px;">
-  <label>HHG Value (Household Goods)</label>
-  <input name="hhgValue" type="number" step="0.01" placeholder="e.g. 50000">
-  
-  <label>Coverage Percentage (%)</label>
-  <input name="insurancePercentage" type="number" step="0.1" value="1.5" min="0" max="100" placeholder="e.g. 1.5">
-  <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">Default is 1.5%. Adjust as needed.</p>
-</div>
-
       <!-- SEA CHARGES SECTION -->
       <div id="seaChargesSection" class="mode-charges-section hidden" style="margin-top: 24px; padding: 16px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
         <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #0369a1;">Sea Freight Charges</h4>
-        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on mode and type. You can edit or add more.</p>
+        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on recipient and type. You can edit or add more.</p>
         <div id="seaChargesList" style="margin-bottom: 12px;"></div>
-        <button type="button" id="addSeaChargeBtn" style="padding: 8px 16px; font-size: 13px;">+ Add Sea Charge</button>
+        <button type="button" id="addSeaChargeBtn" class="btn-secondary" style="margin-bottom: 16px;">+ Add Charge</button>
+        
+        <!-- Sea Insurance -->
+        <div class="insurance-toggle-section">
+          <label class="insurance-toggle-label">
+            <input type="checkbox" name="seaInsurance" id="seaInsuranceCheck">
+            <span>Include Transit Insurance</span>
+          </label>
+          <div id="seaInsuranceFields" class="insurance-fields hidden">
+            <div class="insurance-fields-grid">
+              <div>
+                <label>Declared Value</label>
+                <input name="seaInsuranceValue" type="number" step="0.01" placeholder="e.g. 50000">
+              </div>
+              <div>
+                <label>Rate (%)</label>
+                <input name="seaInsuranceRate" type="number" step="0.1" value="1.5" placeholder="1.5">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- AIR CHARGES SECTION -->
       <div id="airChargesSection" class="mode-charges-section hidden" style="margin-top: 16px; padding: 16px; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px;">
         <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #7c3aed;">Air Freight Charges</h4>
-        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on mode and type. You can edit or add more.</p>
+        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on recipient and type. You can edit or add more.</p>
         <div id="airChargesList" style="margin-bottom: 12px;"></div>
-        <button type="button" id="addAirChargeBtn" style="padding: 8px 16px; font-size: 13px;">+ Add Air Charge</button>
+        <button type="button" id="addAirChargeBtn" class="btn-secondary" style="margin-bottom: 16px;">+ Add Charge</button>
+        
+        <!-- Air Insurance -->
+        <div class="insurance-toggle-section">
+          <label class="insurance-toggle-label">
+            <input type="checkbox" name="airInsurance" id="airInsuranceCheck">
+            <span>Include Transit Insurance</span>
+          </label>
+          <div id="airInsuranceFields" class="insurance-fields hidden">
+            <div class="insurance-fields-grid">
+              <div>
+                <label>Declared Value</label>
+                <input name="airInsuranceValue" type="number" step="0.01" placeholder="e.g. 50000">
+              </div>
+              <div>
+                <label>Rate (%)</label>
+                <input name="airInsuranceRate" type="number" step="0.1" value="1.5" placeholder="1.5">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- LAND CHARGES SECTION -->
       <div id="landChargesSection" class="mode-charges-section hidden" style="margin-top: 16px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
         <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #059669;">Land Freight Charges</h4>
-        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on mode and type. You can edit or add more.</p>
+        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on recipient and type. You can edit or add more.</p>
         <div id="landChargesList" style="margin-bottom: 12px;"></div>
-        <button type="button" id="addLandChargeBtn" style="padding: 8px 16px; font-size: 13px;">+ Add Land Charge</button>
+        <button type="button" id="addLandChargeBtn" class="btn-secondary" style="margin-bottom: 16px;">+ Add Charge</button>
+        
+        <!-- Land Insurance -->
+        <div class="insurance-toggle-section">
+          <label class="insurance-toggle-label">
+            <input type="checkbox" name="landInsurance" id="landInsuranceCheck">
+            <span>Include Transit Insurance</span>
+          </label>
+          <div id="landInsuranceFields" class="insurance-fields hidden">
+            <div class="insurance-fields-grid">
+              <div>
+                <label>Declared Value</label>
+                <input name="landInsuranceValue" type="number" step="0.01" placeholder="e.g. 50000">
+              </div>
+              <div>
+                <label>Rate (%)</label>
+                <input name="landInsuranceRate" type="number" step="0.1" value="1.5" placeholder="1.5">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- OUR QUOTATION INCLUDES - CHECKLIST -->
@@ -791,6 +1097,30 @@
       <!-- Custom additional charges list -->
       <ul id="additionalChargesList" style="margin-top: 8px; padding-left: 20px; list-style: none;"></ul>
 
+      <!-- CONSIGNMENT / IMPORT REQUIREMENTS SECTION -->
+      <div id="consignmentInstructionsSection" style="margin-top: 24px; padding: 16px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: bold; color: #92400e;">Import Requirements & Consignment Instructions</h4>
+        
+        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <input type="checkbox" id="includeConsignmentInstructions" name="includeConsignmentInstructions">
+          <span>Include consignment instructions and import requirements in quote</span>
+        </label>
+        
+        <div id="consignmentOptionsWrapper" class="hidden">
+          <label>Client Category</label>
+          <select name="clientCategory" id="quoteClientCategory" style="margin-bottom: 12px;">
+            <option value="foreign_national">Foreign National (relocating to Turkey)</option>
+            <option value="returning_turkish">Returning Turkish Citizen</option>
+            <option value="diplomatic">Foreign National (Diplomatic)</option>
+          </select>
+          <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Select the appropriate category to include relevant import documentation requirements</p>
+          
+          <div id="consignmentPreview" style="background: white; padding: 12px; border-radius: 4px; font-size: 12px; max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; font-style: italic;">Select a category to preview the requirements that will be included.</p>
+          </div>
+        </div>
+      </div>
+
       <!-- TERMS & CONDITIONS -->
       <h4 style="margin: 24px 0 12px 0; font-size: 14px; font-weight: bold;">Terms & Conditions</h4>
       <textarea name="termsAndConditions" rows="4" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 13px;">Our quotation is based on stated weights and normal access conditions. It is subject to change if actual volume/weight differs or if there are unforeseen difficulties (e.g. inspections, force majeure delays, etc.)</textarea>
@@ -805,6 +1135,137 @@
         <button type="submit">Save Quote</button>
       </div>
 
+    </form>
+  </div>
+</div>
+
+<!-- ========== STORAGE MODAL ========== -->
+<div id="storageModal" class="modal hidden">
+  <div class="modal-card storage-modal-card">
+    <div class="modal-header">
+      <h2 id="storageModalTitle" data-i18n="modalAddStorageTitle">Add Storage</h2>
+      <button type="button" class="close-button" id="closeStorageModalBtn">×</button>
+    </div>
+
+    <form id="storageForm">
+      <!-- Basic Info -->
+      <h3 class="form-section-title" data-i18n="basicInfo">Basic Information</h3>
+      
+      <label data-i18n="labelStorageCode">Storage Code</label>
+      <input name="storageCode" type="text" readonly style="background: #f3f4f6; color: #6b7280;">
+      
+      <label data-i18n="labelClientName">Client Name</label>
+      <input name="clientName" type="text" placeholder="Enter client name">
+      
+      <label data-i18n="labelOrganization">Organization</label>
+      <input name="organizationName" type="text" placeholder="Enter organization name (optional)">
+      
+      <label data-i18n="labelLinkedJob">Linked Job (Optional)</label>
+      <select name="linkedJobId" id="storageLinkedJobSelect">
+        <option value="">No linked job (standalone storage)</option>
+      </select>
+      <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">Link to an existing job or leave empty for standalone storage</p>
+      
+      <!-- Location & Contents -->
+      <h3 class="form-section-title" style="margin-top: 20px;" data-i18n="locationContents">Location & Contents</h3>
+      
+      <label data-i18n="storageLocation">Storage Location</label>
+      <select name="location" id="storageLocationSelect" required>
+        <option value="">Select location...</option>
+      </select>
+      
+      <label data-i18n="storageContents">Contents Type</label>
+      <div class="mode-group">
+        <label><input type="checkbox" name="contents" value="HHE"> HHE (Household Effects)</label>
+        <label><input type="checkbox" name="contents" value="Auto"> Auto (Vehicle)</label>
+      </div>
+      
+      <div class="two-col-row">
+        <div>
+          <label data-i18n="totalCBM">Total CBM</label>
+          <input name="totalCBM" type="number" step="0.01" placeholder="0.00">
+        </div>
+        <div>
+          <label data-i18n="grossWeight">Gross Weight (kg)</label>
+          <input name="grossWeight" type="number" step="0.1" placeholder="0">
+        </div>
+      </div>
+      
+      <!-- Dates -->
+      <h3 class="form-section-title" style="margin-top: 20px;" data-i18n="dates">Dates</h3>
+      
+      <div class="two-col-row">
+        <div>
+          <label data-i18n="entryDate">Entry Date</label>
+          <input name="dateEntered" type="date">
+        </div>
+        <div>
+          <label data-i18n="exitDate">Exit Date</label>
+          <input name="dateExited" type="date">
+        </div>
+      </div>
+      
+      <!-- Billing -->
+      <h3 class="form-section-title" style="margin-top: 20px;" data-i18n="billingInfo">Billing Information</h3>
+      
+      <label data-i18n="billingType">Billing Type</label>
+      <select name="billingType" id="storageBillingTypeSelect">
+        <option value="Per CBM">Per CBM</option>
+        <option value="Flat Rate">Flat Rate</option>
+      </select>
+      
+      <div id="storageCbmBillingFields">
+        <label data-i18n="ratePerCBM">Rate per CBM</label>
+        <div class="billing-rate-row">
+          <input name="ratePerCBM" type="number" step="0.01" placeholder="0.00">
+          <select name="rateCurrency">
+            <option value="TRY">TRY</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          </select>
+          <span>/</span>
+          <select name="ratePeriod">
+            <option value="Monthly" data-i18n="monthly">Monthly</option>
+            <option value="Daily" data-i18n="daily">Daily</option>
+          </select>
+        </div>
+      </div>
+      
+      <div id="storageFlatRateFields" class="hidden">
+        <label data-i18n="flatRate">Flat Rate</label>
+        <div class="billing-rate-row">
+          <input name="flatRate" type="number" step="0.01" placeholder="0.00">
+          <select name="flatRateCurrency">
+            <option value="TRY">TRY</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          </select>
+        </div>
+      </div>
+      
+      <label data-i18n="freeDays">Free Days</label>
+      <input name="freeDays" type="number" placeholder="0" min="0">
+      
+      <label data-i18n="billingNotes">Billing Notes</label>
+      <textarea name="billingNotes" rows="2" placeholder="Additional billing notes..."></textarea>
+      
+      <!-- Status & Notes -->
+      <h3 class="form-section-title" style="margin-top: 20px;" data-i18n="statusNotes">Status & Notes</h3>
+      
+      <label data-i18n="status">Status</label>
+      <select name="status">
+        <option value="Active" data-i18n="statusActive">Active</option>
+        <option value="Closed" data-i18n="statusClosed">Closed</option>
+      </select>
+      
+      <label data-i18n="notesLabel">Notes</label>
+      <textarea name="notes" rows="3" placeholder="Additional notes about this storage..."></textarea>
+
+      <!-- Modal Actions -->
+      <div class="modal-actions">
+        <button type="button" id="cancelStorageFormBtn" data-i18n="cancel">Cancel</button>
+        <button type="submit" data-i18n="save">Save</button>
+      </div>
     </form>
   </div>
 </div>
@@ -833,7 +1294,25 @@
   <p data-i18n="footerCopyright">© 2025 Istanbul Ekspres</p>
 </footer>
 
-     <script src="app.js"></script>
+</main>
+
+<!-- Generic Confirm/Input Modal -->
+<div id="genericModal" class="modal hidden">
+  <div class="modal-content generic-modal-content">
+    <h2 id="genericModalTitle">Confirm</h2>
+    <p id="genericModalMessage"></p>
+    
+    <div id="genericModalInputs" class="generic-modal-inputs hidden">
+      <!-- Dynamic inputs will be added here -->
+    </div>
+    
+    <div class="generic-modal-buttons">
+      <button type="button" id="genericModalCancel" class="btn-secondary">Cancel</button>
+      <button type="button" id="genericModalConfirm" class="btn-primary">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
 </body>
-  </body>
 </html>
