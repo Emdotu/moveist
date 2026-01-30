@@ -10,8 +10,28 @@ const CONFIG = {
     SCHEDULE_EXTRA_JOBS: 'istex_schedule_extra_jobs',
     LANG: 'istex_lang',
     RESOURCE_LIBRARY: 'istex_resource_library',
-    QUOTES: 'istex_quotes'
+    QUOTES: 'istex_quotes',
+    STORAGE: 'istex_storage',
+    INVOICES: 'istex_invoices'
   },
+  
+  // Booking types - determines workflow and customer relationship
+  BOOKING_TYPES: ['Door to Door', 'Door to Port', 'Port to Door'],
+  
+  // Client types - affects documentation requirements and consignment instructions
+  CLIENT_TYPES: ['Private', 'Corporate', 'Diplomatic'],
+  
+  // Agent/Broker types - for filtering in Agents tab
+  AGENT_TYPES: ['Agent', 'Customs Broker', 'Sea Freight Broker', 'Air Freight Broker'],
+  
+  // Quote statuses
+  QUOTE_STATUSES: ['Draft', 'Sent', 'Approved', 'Rejected', 'Expired'],
+  
+  // Invoice statuses
+  INVOICE_STATUSES: ['Draft', 'Sent', 'Paid', 'Cancelled'],
+  
+  // Storage statuses
+  STORAGE_STATUSES: ['Active', 'Closed'],
   
   COUNTRIES: [
     "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia",
@@ -29,14 +49,14 @@ const CONFIG = {
   ],
 
   CHECKLIST_TEMPLATES: {
-    IMPORT: ["Quote sent","Passport copy with entry stamp","Copy of resident permit","Signed personal application (Dilekçe)","Power of Attorney (Vekaletname)","Company application (Şirket yazısı)","Signed packing list","Turkish tax ID or foreign citizen number","Lease contract","List of all entry/exit in Turkey during the last 2 years","In transit to Turkey","Arrived at port/terminal","Delivered to warehouse","Delivered to residence","Payment received"],
-    EXPORT: ["Quote sent","Survey done","Packing complete","In storage","Copy of passport","Flight ticket","Signed personal application (Dilekçe)","Power of Attorney (Vekaletname)","Company application","Signed packing list","Copy of work/residence permit","In transit to destination","Delivered","Payment received"],
-    LOCAL: ["Quote sent","Survey done","Packing complete","In storage or N/A","In transit to destination address","Delivered","Payment received"]
+    IMPORT: ["Quote sent","Passport copy with entry stamp","Copy of resident permit","Signed personal application (Dilekçe)","Power of Attorney (Vekaletname)","Company application (Şirket yazısı)","Signed packing list","Inventory list received","Turkish tax ID or foreign citizen number","Lease contract","List of all entry/exit in Turkey during the last 2 years","Insurance documents","Customs forms completed","In transit to Turkey","Arrived at port/terminal","Delivered to warehouse","Delivered to residence","Proof of Delivery (POD) signed","Payment received"],
+    EXPORT: ["Quote sent","Survey done","Packing complete","In storage","Copy of passport","Flight ticket","Signed personal application (Dilekçe)","Power of Attorney (Vekaletname)","Company application","Signed packing list","Inventory list received","Copy of work/residence permit","Insurance documents","Customs forms completed","In transit to destination","Delivered","Proof of Delivery (POD) signed","Payment received"],
+    LOCAL: ["Quote sent","Survey done","Packing complete","In storage or N/A","Inventory list received","In transit to destination address","Delivered","Proof of Delivery (POD) signed","Payment received"]
   },
 
   STEP_DEFINITIONS: {
     packing: { label: "Packing", fields: ["date","time","personnel","vehicle","address","notes"], autoFillAddress: "origin" },
-    survey: { label: "Survey", fields: ["date","time","personnel","vehicle","address","notes"], autoFillAddress: "origin" },
+    survey: { label: "Survey", fields: ["date","time","personnel","vehicle","address","estimatedVolume","notes"], autoFillAddress: "origin" },
     delivery_to_residence: { label: "Delivery to Residence", fields: ["date","time","personnel","vehicle","address","notes"], autoFillAddress: "destination" },
     container_delivery: { label: "Container Delivery", fields: ["date","time","personnel","vehicle","portDetails","notes"] },
     container_pickup: { label: "Container Pickup", fields: ["date","time","personnel","vehicle","portDetails","notes"] },
@@ -82,6 +102,26 @@ const CONFIG = {
 
   // Offices list for filtering/exporting/assignment
   OFFICES: ["Istanbul", "Ankara", "Adana", "Izmir"],
+
+  // Storage warehouse locations
+  STORAGE_LOCATIONS: [
+    { id: 'istanbul_esenler', name: 'Istanbul (Esenler)' },
+    { id: 'ankara', name: 'Ankara' },
+    { id: 'izmir_bornova', name: 'Izmir (Bornova)' },
+    { id: 'adana', name: 'Adana' }
+  ],
+
+  // Storage billing types
+  STORAGE_BILLING_TYPES: ['Per CBM', 'Flat Rate'],
+  
+  // Storage billing periods
+  STORAGE_BILLING_PERIODS: ['Monthly', 'Daily'],
+  
+  // Storage inventory item types
+  STORAGE_INVENTORY_TYPES: ['HHE', 'Auto'],
+
+  // Currencies
+  CURRENCIES: ['TRY', 'USD', 'EUR'],
 
   // very simple address keyword rules (you can expand later)
   OFFICE_RULES: {
@@ -130,15 +170,18 @@ const DEFAULT_RESOURCE_LIBRARY = {
 //==============================================// QUOTE TEMPLATES // =========================
 
 const QUOTE_TEMPLATES = {
-  'Sea|Export': {
+  // ============================================================
+  // AGENT TEMPLATES - Detailed breakdown
+  // ============================================================
+  
+  // Agent + Sea + Export - Full details, you handle origin
+  'Sea|Export|Agent': {
     chargeCategories: [
       'Origin Services',
       'Local Container Drayage',
-      'Export Customs Clearance',
-      'Sea Freight from [DEPARTURE_PORT] to [POE]'
-    ],
-    additionalChargeCategories: [
-      'Destination Terminal Handling Cost and Port Fees',
+      'Export Customs Clearance (billed at actual cost)',
+      'Sea Freight from [DEPARTURE_PORT] to [POE]',
+      'Destination Terminal Handling (billed at actual cost)',
       'Destination Services'
     ],
     includes: [
@@ -159,18 +202,34 @@ const QUOTE_TEMPLATES = {
     }
   },
 
-  'Air|Export': {
+  // Agent + Sea + Import - NO freight (origin pays), only destination services
+  'Sea|Import|Agent': {
+    chargeCategories: [
+      'Import Clearance (billed at actual cost)',
+      'SS Line Port Agent "Delivery Order" Charge (billed at actual cost)',
+      '[POE] Port "Terminal Handling & Bonded Storage" Charges (billed at actual cost)',
+      'Destination Services'
+    ],
+    includes: [
+      'Import clearance in arrival port',
+      'Delivery up to and including 1st floor residence with normal access within [DESTINATION] city limits',
+      'Full unpacking of boxes onto flat surfaces, re-assembly of basic furniture, removal of the debris, and return of empty container to port'
+    ],
+    conditionalIncludes: {}
+  },
+
+  // Agent + Air + Export - Full details with per ACW rate
+  'Air|Export|Agent': {
     chargeCategories: [
       'Origin Services',
       'Air Freight',
-      'Airwaybill Charge',
-      'Export Customs Clearance',
-      '[DEPARTURE_AIRPORT] Terminal Handling Cost'
+      'Airwaybill Charge (billed at actual cost)',
+      'Export Customs Clearance (billed at actual cost)',
+      '[DEPARTURE_AIRPORT] Terminal Handling (billed at actual cost)',
+      'Destination Terminal Handling (billed at actual cost)',
+      'Destination Services'
     ],
-    additionalChargeCategories: [
-      'Destination Services',
-      'Destination Terminal Handling Cost'
-    ],
+    airFreightPerACW: true,
     includes: [
       'Full export packing and wrapping at origin residence for air freight',
       'Preparation of detailed inventory lists for each separate shipment',
@@ -189,13 +248,29 @@ const QUOTE_TEMPLATES = {
     }
   },
 
-  'Land|Export': {
+  // Agent + Air + Import - NO freight (origin pays), only destination services
+  'Air|Import|Agent': {
+    chargeCategories: [
+      'Import Clearance (billed at actual cost)',
+      'Delivery Order Charge (billed at actual cost)',
+      '[ARRIVAL_AIRPORT] Terminal Handling Charges (billed at actual cost)',
+      'Destination Services'
+    ],
+    includes: [
+      'Payment of mandatory airline delivery order and [ARRIVAL_AIRPORT] terminal fees',
+      'Turkish import formalities',
+      'Inland haulage from airport to a residence in [DESTINATION]',
+      'Delivery, unpacking, and removal of the debris upon completion of delivery services'
+    ],
+    conditionalIncludes: {}
+  },
+
+  // Agent + Land + Export
+  'Land|Export|Agent': {
     chargeCategories: [
       'Origin Services',
-      'Turkish Export Clearance',
-      'Road Transportation from [ORIGIN] to [DESTINATION]'
-    ],
-    additionalChargeCategories: [
+      'Export Customs Clearance (billed at actual cost)',
+      'Road Transportation from [ORIGIN] to [DESTINATION]',
       'Destination Services'
     ],
     includes: [
@@ -213,69 +288,12 @@ const QUOTE_TEMPLATES = {
     }
   },
 
-  'Sea|Import': {
-    chargeCategories: [
-      'Sea Freight from [DEPARTURE_PORT] to [POE]',
-      'Import Clearance',
-      'Destination Services',
-      'SS Line Port Agent "Delivery Order" charge',
-      '[POE] Port "Terminal Handling & Bonded Storage" charges'
-    ],
-    additionalChargeCategories: [
-      'Origin Services'
-    ],
-    includes: [
-      'Import clearance in arrival port',
-      'Delivery up to and including 1st floor residence with normal access within [DESTINATION] city limits',
-      'Full unpacking of boxes onto flat surfaces, re-assembly of basic furniture, removal of the debris, and return of empty container to port'
-    ],
-    conditionalIncludes: {
-      'Origin Services': [
-        'Professional packing of personal and household goods',
-        'Preparation of detailed inventory list',
-        'Inland haulage from storage or address to [ORIGIN] port',
-        'Origin terminal handling in departure port',
-        'Local charges at departure port for customs documentation and Bill of Lading',
-        'Ocean freight from [ORIGIN] port to [POE] port in a [CONTAINER_DETAILS]'
-      ]
-    }
-  },
-
-  'Air|Import': {
-    chargeCategories: [
-      'Destination Services',
-      'Delivery Order',
-      'Terminal Handling Charges at [ARRIVAL_AIRPORT]'
-    ],
-    additionalChargeCategories: [
-      'Origin Services'
-    ],
-    includes: [
-      'Payment of mandatory airline delivery order and [ARRIVAL_AIRPORT] terminal fees',
-      'Turkish import formalities',
-      'Inland haulage from airport to a residence in [DESTINATION]',
-      'Delivery, unpacking, and removal of the debris upon completion of delivery services'
-    ],
-    conditionalIncludes: {
-      'Origin Services': [
-        'Professional export packing and wrapping (for air transport) in [ORIGIN] residence, issue of detailed inventory list',
-        'Inland haulage from residence to [DEPARTURE_AIRPORT]',
-        'Payment of departure airport terminal handling fees',
-        '[DEPARTURE_AIRPORT] export formalities',
-        'Air freight from [DEPARTURE_AIRPORT] to [ARRIVAL_AIRPORT]'
-      ]
-    }
-  },
-
-  'Land|Import': {
+  // Agent + Land + Import
+  'Land|Import|Agent': {
     chargeCategories: [
       'Road Transport from [ORIGIN] to [DESTINATION]',
-      'Import Customs Clearance',
+      'Import Customs Clearance (billed at actual cost)',
       'Destination Services'
-    ],
-    additionalChargeCategories: [
-      'Origin Services',
-      'Shuttle Service'
     ],
     includes: [
       'Transport from [ORIGIN] to [DESTINATION]',
@@ -288,21 +306,146 @@ const QUOTE_TEMPLATES = {
       'Origin Services': [
         'Full export packing and wrapping at origin residence',
         'Preparation of detailed inventory lists'
-      ],
-      'Shuttle Service': ['Shuttle service']
+      ]
     }
   },
 
-  'Land|Local': {
+  // Agent + Land + Local
+  'Land|Local|Agent': {
     chargeCategories: [
       'Local Moving Charge'
-    ],
-    additionalChargeCategories: [
-      'Storage Charge'
     ],
     includes: [
       'Packing and wrapping at origin',
       'Local door-to-door transport from address at [ORIGIN] to address at [DESTINATION]',
+      'Unpacking and unwrapping at destination',
+      'Removal of debris'
+    ],
+    conditionalIncludes: {}
+  },
+
+  // ============================================================
+  // CLIENT TEMPLATES - Simplified door-to-door
+  // ============================================================
+  
+  'Sea|Export|Client': {
+    chargeCategories: [
+      'Origin Services',
+      'Sea Freight',
+      'Customs and Port Handling Fees (billed at actual cost)',
+      'Destination Services'
+    ],
+    includes: [
+      'Professional packing and wrapping at origin residence',
+      'Preparation of detailed inventory lists',
+      'Local transport to departure port',
+      'Export customs clearance',
+      'Sea freight from [DEPARTURE_PORT] to [POE]',
+      'Import clearance at destination',
+      'Delivery and unpacking at destination residence',
+      'Removal of packing debris'
+    ],
+    conditionalIncludes: {}
+  },
+
+  'Sea|Import|Client': {
+    chargeCategories: [
+      'Origin Services',
+      'Sea Freight',
+      'Customs and Port Handling Fees (billed at actual cost)',
+      'Destination Services'
+    ],
+    includes: [
+      'Professional packing and wrapping at origin residence',
+      'Local transport to departure port',
+      'Sea freight to [POE]',
+      'Import clearance in Turkey',
+      'Delivery to residence in [DESTINATION]',
+      'Unpacking and debris removal'
+    ],
+    conditionalIncludes: {}
+  },
+
+  'Air|Export|Client': {
+    chargeCategories: [
+      'Origin Services',
+      'Air Freight',
+      'Customs and Terminal Fees (billed at actual cost)',
+      'Destination Services'
+    ],
+    includes: [
+      'Professional packing and wrapping for air transport',
+      'Preparation of detailed inventory lists',
+      'Local transport to airport',
+      'Export customs clearance',
+      'Air freight to [ARRIVAL_AIRPORT]',
+      'Import clearance at destination',
+      'Delivery and unpacking at destination residence',
+      'Removal of packing debris'
+    ],
+    conditionalIncludes: {}
+  },
+
+  'Air|Import|Client': {
+    chargeCategories: [
+      'Origin Services',
+      'Air Freight',
+      'Customs and Terminal Fees (billed at actual cost)',
+      'Destination Services'
+    ],
+    includes: [
+      'Professional packing and wrapping at origin',
+      'Transport to departure airport',
+      'Air freight to [ARRIVAL_AIRPORT]',
+      'Turkish import customs clearance',
+      'Delivery to residence in [DESTINATION]',
+      'Unpacking and debris removal'
+    ],
+    conditionalIncludes: {}
+  },
+
+  'Land|Export|Client': {
+    chargeCategories: [
+      'Origin Services',
+      'Road Transportation',
+      'Customs Fees (billed at actual cost)',
+      'Destination Services'
+    ],
+    includes: [
+      'Professional packing and wrapping at origin residence',
+      'Preparation of detailed inventory lists',
+      'Road transport from [ORIGIN] to [DESTINATION]',
+      'Export and import customs clearance',
+      'Delivery and unpacking at destination',
+      'Removal of packing debris'
+    ],
+    conditionalIncludes: {}
+  },
+
+  'Land|Import|Client': {
+    chargeCategories: [
+      'Origin Services',
+      'Road Transportation',
+      'Customs Fees (billed at actual cost)',
+      'Destination Services'
+    ],
+    includes: [
+      'Professional packing and wrapping at origin',
+      'Road transport from [ORIGIN] to [DESTINATION]',
+      'Turkish import customs clearance',
+      'Delivery to residence in [DESTINATION]',
+      'Unpacking and debris removal'
+    ],
+    conditionalIncludes: {}
+  },
+
+  'Land|Local|Client': {
+    chargeCategories: [
+      'Moving Services'
+    ],
+    includes: [
+      'Professional packing and wrapping at origin',
+      'Door-to-door transport from [ORIGIN] to [DESTINATION]',
       'Unpacking and unwrapping at destination',
       'Removal of debris'
     ],
@@ -358,6 +501,63 @@ const ADDITIONAL_CHARGES_CONFIG = {
     'Moving/Transit Insurance coverage (available upon request)',
     'Storage and warehouse handling charges in our nearest warehouse (if more than 7-day free time offer)'
   ]
+};
+
+// Consignment Instructions for Import Requirements
+const CONSIGNMENT_INSTRUCTIONS = {
+  consignee_template: `CONSIGNMENT INSTRUCTION (for express release Bill of Lading):
+Consignee:
+[CLIENT_NAME]
+C/O ISTANBUL EKSPRES A.S.
+Izzetpasa Mahallesi, Yeniyol Caddesi
+Nurol Tower, No:3, Daire:1403
+Sisli, Istanbul, Turkiye
+Tax ID: OSTIM 4810032912
+
+Notify:
+ISTANBUL EKSPRES A.S.
+T. +90 212 217 49 68
+F. +90 212 217 49 67
+movers@istanbulekspres.com.tr`,
+
+  foreign_national: {
+    title: 'IMPORT REQUIREMENTS - FOREIGN NATIONALS',
+    description: 'Relocating to Turkey for temporary work/residence purpose should have applied for OR already obtained Turkish Residence/Work Permit and have arranged a Local Property Rental Contract (valid for a minimum term of 12 months) for tax-free importation of used household and personal effects into Turkey.',
+    note: 'Client must not have resided in Turkey for more than 180 days (within the last 365 days) at the time of actual import clearance formalities to be eligible for the tax-free importation.',
+    documents: [
+      'Passport copy',
+      'Notarized Power of Attorney (we will supply sample document for the public notary)',
+      'Turkish ID number (for foreign nationals)',
+      'Property Rental Contract (with a minimum validity of 1 year and notarized by a public notary)',
+      'Statement listing border entries/departures to/from Turkey (to be obtained via "e-devlet" website)'
+    ]
+  },
+
+  returning_turkish: {
+    title: 'IMPORT REQUIREMENTS - RETURNING TURKISH NATIONALS',
+    description: 'Documents required from returning Turkish nationals (non-diplomat) for tax-free importation of used Household and Personal Effects into Turkey.',
+    note: 'Client must not have resided in Turkey for more than 180 days (within the last 365 days) at the time of actual import clearance formalities to be eligible for the tax-free importation.',
+    documents: [
+      'Deed of a Local Property in Turkey (TAPU) --or-- Local Property Rental Contract in Turkey (KIRA KONTRATI) valid for a minimum term of 12 months and issued in client\'s name (or in his/her legal partner\'s name)',
+      'Passport copy',
+      'Turkish National Identity No. (TC KIMLIK NO)',
+      'Power of Attorney notarized by a Turkish public notary (NOTER TASDIKLI SAHSI VEKALETNAME) -- we will supply client with a sample form',
+      'Statement of Turkish border entry/departure list for client for the last 2 years (YURDA GIRIS-CIKIS BELGESI) -- this document can be obtained online from Turkish government\'s "e-devlet" portal',
+      'Extract of Turkish Civil Registry Record (VUKUATLI NUFUS KAYIT ORNEGI) -- this document can be obtained online from Turkish government\'s "e-devlet" portal'
+    ]
+  },
+
+  diplomatic: {
+    title: 'IMPORT REQUIREMENTS - FOREIGN NATIONALS (DIPLOMATIC)',
+    description: 'Relocating to Turkey for diplomatic duty must obtain "diplomatic franchise" (TAKRIR) for tax-free importation of household and personal effects into Turkey. This application can only be submitted to the Turkish Foreign Ministry upon physical arrival of the container into Turkish port. Diplomatic mission will be in charge to obtain the required "diplomatic franchise" from Turkish Ministry of Foreign Affairs.',
+    note: '',
+    documents: [
+      'Packing list',
+      'Power of Attorney (Diplomatic Mission will issue)',
+      'Client\'s Passport and Turkish Diplomatic I.D. Card copy',
+      'TAKRIR --Diplomatic Franchise-- (Diplomatic Mission will apply to Turkish Ministry of Foreign Affairs for this document)'
+    ]
+  }
 };
 
 // ============================================================
@@ -579,10 +779,111 @@ const I18n = {
   dict: {
     en: {
       langShort: 'EN',
+      dashboard: 'Dashboard',
       moves: 'Moves',
       agents: 'Agents',
       schedule: 'Schedule',
+      storage: 'Storage',
       documents: 'Documents',
+      quotes: 'Quotes',
+      // Storage translations
+      storageTitle: 'Storage',
+      activeStorage: 'Active Storage',
+      activeStorageDesc: 'Items currently in storage or partially retrieved',
+      completedStorage: 'Completed Storage',
+      completedStorageDesc: 'Fully retrieved items',
+      noActiveStorage: 'No items currently in storage.',
+      noCompletedStorage: 'No completed storage records.',
+      allLocations: 'All Locations',
+      allStatuses: 'All Statuses',
+      statusActive: 'Active',
+      statusClosed: 'Closed',
+      storageDetails: 'Storage Details',
+      storageDetailsTitle: 'Storage Details',
+      hintSelectStorage: 'Select a storage record from the left to see details here.',
+      editStorage: 'Edit',
+      btnAddStorage: 'Add Storage',
+      btnEditStorage: 'Edit Storage',
+      modalAddStorageTitle: 'Add Storage',
+      modalEditStorageTitle: 'Edit Storage',
+      storageLocation: 'Storage Location',
+      selectLocation: 'Select location',
+      storageContents: 'Storage Contents',
+      storageCode: 'Storage Code',
+      entryDate: 'Entry Date',
+      exitDate: 'Exit Date',
+      daysInStorage: 'Days in Storage',
+      billingInfo: 'Billing Information',
+      billingType: 'Billing Type',
+      rate: 'Rate',
+      currency: 'Currency',
+      freeDays: 'Free Days',
+      billableDays: 'Billable Days',
+      billingNotes: 'Billing Notes',
+      storageInventory: 'Storage Inventory',
+      addItem: 'Add Item',
+      noInventoryItems: 'No inventory items added yet.',
+      enterItemDescription: 'Enter item description:',
+      enterQuantity: 'Enter quantity:',
+      enterCBM: 'Enter CBM (optional):',
+      retrieve: 'Retrieve',
+      confirmDeleteItem: 'Are you sure you want to delete this item?',
+      confirmDeleteStorage: 'Are you sure you want to delete this storage record?',
+      storageLabel: 'Storage',
+      storageYes: 'This move requires storage',
+      viewStorage: 'View in Storage Tab',
+      clientInfo: 'Client Information',
+      clientName: 'Client Name',
+      organization: 'Organization',
+      organizationLabel: 'Organization (optional)',
+      linkedJob: 'Linked Job',
+      locationContents: 'Location & Contents',
+      location: 'Location',
+      grossWeight: 'Gross Weight',
+      grossWeightOptional: 'Gross Weight (kg) - optional',
+      dates: 'Dates',
+      inventoryStatus: 'Inventory Status',
+      estimatedCost: 'Estimated Cost',
+      totalCost: 'Total Cost',
+      statusNotes: 'Status & Notes',
+      searchStoragePlaceholder: 'Search by code, client, location...',
+      jobCode: 'Job Code',
+      client: 'Client',
+      contents: 'Contents',
+      totalCBM: 'Total CBM',
+      ratePerCBM: 'Rate per CBM',
+      flatRate: 'Flat Rate',
+      monthly: 'Month',
+      daily: 'Day',
+      billingNotesPlaceholder: 'Special arrangements, discounts, etc.',
+      addInventoryItem: 'Add Inventory Item',
+      itemDescription: 'Item Description',
+      itemDescriptionPlaceholder: 'e.g. Sofa, Box #12, Kitchen items...',
+      quantity: 'Quantity',
+      itemCBM: 'CBM',
+      itemNotes: 'Notes',
+      itemNotesPlaceholder: 'Optional notes about this item',
+      save: 'Save',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      add: 'Add',
+      movesByStatus: 'Moves by Status',
+      movesByType: 'Moves by Type',
+      paymentStatus: 'Payment Status',
+      movesThisMonth: 'Moves This Month',
+      activeMovesLabel: 'Active Moves',
+      scheduledThisMonth: 'With Activity',
+      upcomingJobs: 'Upcoming Jobs (3 days)',
+      upcomingSchedule: 'Upcoming Schedule (14 days)',
+      overdueItems: 'Overdue Items',
+      unpaidMoves: 'Unpaid Moves',
+      noUpcomingJobs: 'No jobs scheduled in the next 3 days.',
+      noUpcomingItems: 'No upcoming scheduled items.',
+      noOverdueItems: 'No overdue items.',
+      noUnpaidMoves: 'All moves are paid.',
+      task: 'task',
+      tasks: 'tasks',
+      total: 'Total',
       addNewMove: 'Add New Move',
       editMove: 'Edit Move',
       moveDetails: 'Move Details',
@@ -594,6 +895,13 @@ const I18n = {
       addNote: 'Add Note',
       addDocument: 'Add Document',
       documentsGlobal: 'Documents',
+      documentsSearchTab: 'Documents Search',
+      resourceLibraryTab: 'Resource Library',
+      officeAll: 'All',
+      officeIstanbul: 'Istanbul',
+      officeAnkara: 'Ankara',
+      officeIzmir: 'Izmir',
+      officeAdana: 'Adana',
       searchMovesPh: 'Search by move ID, client, origin, destination, agent...',
       searchAgentsPh: 'Search agents by name, city, country...',
       searchDocsPh: 'Search by job ID, client, document name, agent...',
@@ -617,6 +925,7 @@ const I18n = {
       noNotesYet: 'No notes yet.',
       noDocumentsYet: 'No documents yet.',
       noAgentsYet: 'No agents yet.',
+      noBrokersYet: 'No brokers yet.',
       createNewMove: 'Create New Move',
       saveMove: 'Save Move',
       cancel: 'Cancel',
@@ -657,6 +966,13 @@ const I18n = {
       destination: 'Destination',
       fullOriginAddress: 'Full Origin Address',
       fullDestinationAddress: 'Full Destination Address',
+      clientPhoneLabel: 'Phone',
+      clientEmailLabel: 'Email',
+      floorLabel: 'Floor',
+      elevatorLabel: 'Elevator',
+      freightElevator: 'Freight Elevator',
+      accessConditionsLabel: 'Access Conditions',
+      estimatedVolume: 'Estimated Volume',
       weight: 'Weight',
       volume: 'Volume',
       moveId: 'Move ID',
@@ -677,6 +993,7 @@ const I18n = {
       deleteDayNotesConfirm: 'Delete day notes?',
       deleteExtraJobConfirm: 'Delete this additional job?',
       deleteAgentConfirm: 'Delete this agent?',
+      deleteBrokerConfirm: 'Delete this broker?',
       deleteContactConfirm: 'Delete this contact?',
       fillAtLeastOneField: 'Please fill at least one field.',
       noDocumentsFound: 'No documents found.',
@@ -685,13 +1002,35 @@ const I18n = {
       openLinkWin: 'Open Link',
       recentMoves: 'Recent Moves',
       noMovesLinked: 'No moves linked yet.',
-      location: 'Location: ',
+      location: 'Location',
       editAgent: 'Edit Agent',
       deleteAgent: 'Delete Agent',
+      memberships: 'Memberships',
       contacts: 'Contacts',
+      // Agent/Broker types
+      agentTypeAgent: 'Agents',
+      agentTypeBroker: 'Brokers',
+      addAgent: 'Add Agent',
+      addBroker: 'Add Broker',
+      addAgentTitle: 'Add Agent',
+      addBrokerTitle: 'Add Broker',
+      editAgentTitle: 'Edit Agent',
+      editBrokerTitle: 'Edit Broker',
+      typeAgent: 'Agent',
+      typeCustomsBroker: 'Customs Broker',
+      typeSeaFreightBroker: 'Sea Freight Broker',
+      typeAirFreightBroker: 'Air Freight Broker',
+      agentTypeLabel: 'Type',
+      hintSelectAgent: 'Select an agent from the left to see details.',
+      hintSelectBroker: 'Select a broker from the left to see details.',
+      jobsUsingBroker: 'Jobs Using This Broker',
+      noBrokerJobs: 'Not used in any jobs yet.',
+      originAgent: 'Origin Agent',
+      destinationAgent: 'Destination Agent',
       contactName: 'Contact Name',
       email: 'Email',
       phone: 'Phone',
+      addContact: 'Add Contact',
       addUpdateContact: 'Add / Update Contact',
       updateContact: 'Update Contact',
       addAgentTitle: 'Add Agent',
@@ -751,14 +1090,138 @@ const I18n = {
       step_container_loading: 'Container Loading',
       step_air_cargo_packing: 'Air Cargo Packing',
       step_air_cargo_delivery_to_address: 'Air Cargo Delivery to Address',
-      step_air_cargo_delivery_to_airport: 'Air Cargo Delivery to Airport'
+      step_air_cargo_delivery_to_airport: 'Air Cargo Delivery to Airport',
+      
+      // Booking and Client Types
+      bookingTypeLabel: 'Booking Type',
+      selectBookingType: 'Select booking type',
+      bookingDoorToDoor: 'Door to Door',
+      bookingDoorToPort: 'Door to Port',
+      bookingPortToDoor: 'Port to Door',
+      clientTypeLabel: 'Client Type',
+      selectClientType: 'Select client type',
+      clientPrivate: 'Private',
+      clientCorporate: 'Corporate',
+      clientDiplomatic: 'Diplomatic',
+      
+      // Brokers
+      brokersSection: 'Brokers',
+      customsBrokerLabel: 'Customs Broker',
+      seaFreightBrokerLabel: 'Sea Freight Broker',
+      airFreightBrokerLabel: 'Air Freight Broker',
+      selectBroker: 'Select broker',
+      
+      // Additional labels
+      moveManager: 'Move Manager',
+      shipmentContents: 'Shipment Contents'
     },
     tr: {
       langShort: 'TR',
+      dashboard: 'Gösterge Paneli',
       moves: 'Taşımalar',
       agents: 'Acenteler',
       schedule: 'Takvim',
+      storage: 'Depolama',
       documents: 'Belgeler',
+      quotes: 'Teklifler',
+      // Storage translations
+      storageTitle: 'Depolama',
+      activeStorage: 'Aktif Depolama',
+      activeStorageDesc: 'Şu anda depoda veya kısmen alınmış öğeler',
+      completedStorage: 'Tamamlanan Depolama',
+      completedStorageDesc: 'Tamamen alınmış öğeler',
+      noActiveStorage: 'Şu anda depoda öğe yok.',
+      noCompletedStorage: 'Tamamlanan depolama kaydı yok.',
+      allLocations: 'Tüm Lokasyonlar',
+      allStatuses: 'Tüm Durumlar',
+      statusActive: 'Aktif',
+      statusClosed: 'Kapalı',
+      storageDetails: 'Depolama Detayları',
+      storageDetailsTitle: 'Depolama Detayları',
+      hintSelectStorage: 'Detayları görmek için soldan bir depolama kaydı seçin.',
+      editStorage: 'Düzenle',
+      btnAddStorage: 'Depolama Ekle',
+      btnEditStorage: 'Depolamayı Düzenle',
+      modalAddStorageTitle: 'Depolama Ekle',
+      modalEditStorageTitle: 'Depolamayı Düzenle',
+      storageLocation: 'Depo Lokasyonu',
+      selectLocation: 'Lokasyon seçin',
+      storageContents: 'Depo İçeriği',
+      storageCode: 'Depolama Kodu',
+      entryDate: 'Giriş Tarihi',
+      exitDate: 'Çıkış Tarihi',
+      daysInStorage: 'Depoda Gün',
+      billingInfo: 'Fatura Bilgisi',
+      billingType: 'Fatura Tipi',
+      rate: 'Ücret',
+      currency: 'Para Birimi',
+      freeDays: 'Ücretsiz Günler',
+      billableDays: 'Faturalanabilir Günler',
+      billingNotes: 'Fatura Notları',
+      storageInventory: 'Depo Envanteri',
+      addItem: 'Öğe Ekle',
+      noInventoryItems: 'Henüz envanter öğesi eklenmedi.',
+      enterItemDescription: 'Öğe açıklaması girin:',
+      enterQuantity: 'Miktar girin:',
+      enterCBM: 'CBM girin (opsiyonel):',
+      retrieve: 'Al',
+      confirmDeleteItem: 'Bu öğeyi silmek istediğinizden emin misiniz?',
+      confirmDeleteStorage: 'Bu depolama kaydını silmek istediğinizden emin misiniz?',
+      storageLabel: 'Depolama',
+      storageYes: 'Bu taşıma depolama gerektirir',
+      viewStorage: 'Depolama Sekmesinde Görüntüle',
+      clientInfo: 'Müşteri Bilgisi',
+      clientName: 'Müşteri Adı',
+      organization: 'Organizasyon',
+      organizationLabel: 'Organizasyon (isteğe bağlı)',
+      linkedJob: 'Bağlantılı Taşıma',
+      locationContents: 'Lokasyon ve İçerik',
+      location: 'Lokasyon',
+      grossWeight: 'Brüt Ağırlık',
+      grossWeightOptional: 'Brüt Ağırlık (kg) - isteğe bağlı',
+      dates: 'Tarihler',
+      inventoryStatus: 'Envanter Durumu',
+      estimatedCost: 'Tahmini Maliyet',
+      totalCost: 'Toplam Maliyet',
+      statusNotes: 'Durum ve Notlar',
+      searchStoragePlaceholder: 'Kod, müşteri, lokasyon ile ara...',
+      jobCode: 'Taşıma Kodu',
+      client: 'Müşteri',
+      contents: 'İçerik',
+      totalCBM: 'Toplam CBM',
+      ratePerCBM: 'CBM Başına Ücret',
+      flatRate: 'Sabit Ücret',
+      monthly: 'Ay',
+      daily: 'Gün',
+      billingNotesPlaceholder: 'Özel düzenlemeler, indirimler vb.',
+      addInventoryItem: 'Envanter Öğesi Ekle',
+      itemDescription: 'Öğe Açıklaması',
+      itemDescriptionPlaceholder: 'örn. Kanepe, Kutu #12, Mutfak eşyaları...',
+      quantity: 'Miktar',
+      itemCBM: 'CBM',
+      itemNotes: 'Notlar',
+      itemNotesPlaceholder: 'Bu öğe hakkında opsiyonel notlar',
+      save: 'Kaydet',
+      cancel: 'İptal',
+      delete: 'Sil',
+      add: 'Ekle',
+      movesByStatus: 'Duruma Göre Taşımalar',
+      movesByType: 'Türe Göre Taşımalar',
+      paymentStatus: 'Ödeme Durumu',
+      movesThisMonth: 'Bu Ay Taşımalar',
+      activeMovesLabel: 'Aktif Taşımalar',
+      scheduledThisMonth: 'Aktiviteli',
+      upcomingJobs: 'Yaklaşan İşler (3 gün)',
+      upcomingSchedule: 'Yaklaşan Takvim (14 gün)',
+      overdueItems: 'Gecikmiş Öğeler',
+      unpaidMoves: 'Ödenmemiş Taşımalar',
+      noUpcomingJobs: 'Önümüzdeki 3 günde planlanmış iş yok.',
+      noUpcomingItems: 'Yaklaşan planlanmış öğe yok.',
+      noOverdueItems: 'Gecikmiş öğe yok.',
+      noUnpaidMoves: 'Tüm taşımalar ödendi.',
+      task: 'görev',
+      tasks: 'görev',
+      total: 'Toplam',
       addNewMove: 'Yeni Taşıma',
       editMove: 'Taşımayı Düzenle',
       moveDetails: 'Taşıma Detayları',
@@ -770,6 +1233,13 @@ const I18n = {
       addNote: 'Not Ekle',
       addDocument: 'Belge Ekle',
       documentsGlobal: 'Belgeler',
+      documentsSearchTab: 'Belge Arama',
+      resourceLibraryTab: 'Kaynak Kütüphanesi',
+      officeAll: 'Hepsi',
+      officeIstanbul: 'İstanbul',
+      officeAnkara: 'Ankara',
+      officeIzmir: 'İzmir',
+      officeAdana: 'Adana',
       searchMovesPh: 'Taşıma no, müşteri, çıkış, varış, acente ile ara...',
       searchAgentsPh: 'Acente adı, şehir, ülke ile ara...',
       searchDocsPh: 'Taşıma no, müşteri, belge adı, acente ile ara...',
@@ -793,6 +1263,7 @@ const I18n = {
       noNotesYet: 'Henüz not yok.',
       noDocumentsYet: 'Henüz belge yok.',
       noAgentsYet: 'Henüz acente yok.',
+      noBrokersYet: 'Henüz broker yok.',
       createNewMove: 'Yeni Taşıma Oluştur',
       saveMove: 'Taşımayı Kaydet',
       cancel: 'İptal',
@@ -836,6 +1307,13 @@ const I18n = {
       destination: 'Varış',
       fullOriginAddress: 'Çıkış Adresi',
       fullDestinationAddress: 'Varış Adresi',
+      clientPhoneLabel: 'Telefon',
+      clientEmailLabel: 'E-posta',
+      floorLabel: 'Kat',
+      elevatorLabel: 'Asansör',
+      freightElevator: 'Yük Asansörü',
+      accessConditionsLabel: 'Erişim Koşulları',
+      estimatedVolume: 'Tahmini Hacim',
       weight: 'Ağırlık',
       volume: 'Hacim',
       moveId: 'Taşıma No',
@@ -856,8 +1334,29 @@ const I18n = {
       deleteDayNotesConfirm: 'Gün notları silinsin mi?',
       deleteExtraJobConfirm: 'Bu ek iş silinsin mi?',
       deleteAgentConfirm: 'Bu acente silinsin mi?',
+      deleteBrokerConfirm: 'Bu broker silinsin mi?',
       deleteContactConfirm: 'Bu kontak silinsin mi?',
       fillAtLeastOneField: 'Lütfen en az bir alan doldurun.',
+      // Agent/Broker types
+      agentTypeAgent: 'Acenteler',
+      agentTypeBroker: 'Brokerlar',
+      addAgent: 'Acente Ekle',
+      addBroker: 'Broker Ekle',
+      addAgentTitle: 'Acente Ekle',
+      addBrokerTitle: 'Broker Ekle',
+      editAgentTitle: 'Acente Düzenle',
+      editBrokerTitle: 'Broker Düzenle',
+      typeAgent: 'Acente',
+      typeCustomsBroker: 'Gümrük Broker',
+      typeSeaFreightBroker: 'Deniz Navlun Broker',
+      typeAirFreightBroker: 'Hava Navlun Broker',
+      agentTypeLabel: 'Tip',
+      hintSelectAgent: 'Detayları görmek için soldan bir acente seçin.',
+      hintSelectBroker: 'Detayları görmek için soldan bir broker seçin.',
+      jobsUsingBroker: 'Bu Broker Kullanan İşler',
+      noBrokerJobs: 'Henüz hiçbir işte kullanılmadı.',
+      originAgent: 'Çıkış Acentesi',
+      destinationAgent: 'Varış Acentesi',
       noDocumentsFound: 'Belge bulunamadı.',
       documentsSearchTab: 'Belge Arama',
       resourceLibraryTab: 'Kaynak Kütüphanesi',
@@ -866,10 +1365,12 @@ const I18n = {
       location: 'Konum: ',
       editAgent: 'Acenteyi Düzenle',
       deleteAgent: 'Acenteyi Sil',
+      memberships: 'Üyelikler',
       contacts: 'Kontaklar',
       contactName: 'Kontak Adı',
       email: 'E-posta',
       phone: 'Telefon',
+      addContact: 'Kontak Ekle',
       addUpdateContact: 'Kontak Ekle / Güncelle',
       updateContact: 'Kontak Güncelle',
       addAgentTitle: 'Acente Ekle',
@@ -933,7 +1434,30 @@ const I18n = {
       step_container_loading: 'Konteyner Yükleme',
       step_air_cargo_packing: 'Hava Kargo Paketleme',
       step_air_cargo_delivery_to_address: 'Hava Kargo Adrese Teslim',
-      step_air_cargo_delivery_to_airport: 'Hava Kargo Havalimanına Teslim'
+      step_air_cargo_delivery_to_airport: 'Hava Kargo Havalimanına Teslim',
+      
+      // Booking and Client Types
+      bookingTypeLabel: 'Rezervasyon Tipi',
+      selectBookingType: 'Rezervasyon tipi seçin',
+      bookingDoorToDoor: 'Kapıdan Kapıya',
+      bookingDoorToPort: 'Kapıdan Limana',
+      bookingPortToDoor: 'Limandan Kapıya',
+      clientTypeLabel: 'Müşteri Tipi',
+      selectClientType: 'Müşteri tipi seçin',
+      clientPrivate: 'Bireysel',
+      clientCorporate: 'Kurumsal',
+      clientDiplomatic: 'Diplomatik',
+      
+      // Brokers
+      brokersSection: 'Brokerlar',
+      customsBrokerLabel: 'Gümrük Broker',
+      seaFreightBrokerLabel: 'Deniz Navlun Broker',
+      airFreightBrokerLabel: 'Hava Navlun Broker',
+      selectBroker: 'Broker seçin',
+      
+      // Additional labels
+      moveManager: 'Taşıma Yöneticisi',
+      shipmentContents: 'Gönderi İçeriği'
     }
   },
 
@@ -1006,25 +1530,24 @@ checklistText(text) {
   },
 
   ensureToggle() {
-    // Add a small language toggle button into the header (without changing HTML/CSS files).
-    const header = document.querySelector('header');
-    if (!header) return;
+    // Language toggle is now in the top header HTML, just attach event handler
+    const langBtn = document.getElementById('langToggleBtn');
+    const langLabel = document.getElementById('langLabel');
+    
+    if (langBtn && !langBtn.hasAttribute('data-initialized')) {
+      langBtn.setAttribute('data-initialized', 'true');
+      
+      // Set initial label (short form)
+      if (langLabel) {
+        langLabel.textContent = State.lang === 'tr' ? 'TR' : 'EN';
+      }
 
-    if (!document.getElementById('langToggleBtn')) {
-      header.style.display = header.style.display || 'flex';
-      header.style.alignItems = header.style.alignItems || 'center';
-      header.style.justifyContent = header.style.justifyContent || 'space-between';
-      header.style.gap = header.style.gap || '10px';
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.id = 'langToggleBtn';
-      btn.title = 'Language';
-      btn.textContent = this.t('langShort');
-
-      btn.addEventListener('click', () => {
+      langBtn.addEventListener('click', () => {
         const next = (State.lang === 'tr') ? 'en' : 'tr';
         this.saveLang(next);
+        if (langLabel) {
+          langLabel.textContent = next === 'tr' ? 'TR' : 'EN';
+        }
         this.applyStaticTexts();
         JobsUI.render();
         if (State.selectedJobId) {
@@ -1040,35 +1563,55 @@ checklistText(text) {
         if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
         DocumentsTabUI.render();
       });
-
-      header.appendChild(btn);
-    } else {
-      document.getElementById('langToggleBtn').textContent = this.t('langShort');
+    } else if (langLabel) {
+      langLabel.textContent = State.lang === 'tr' ? 'Türkçe' : 'English';
     }
   },
 
   applyStaticTexts() {
-    const navMoves = $.get('navMoves'); if (navMoves) navMoves.textContent = this.t('moves');
-    const navAgents = $.get('navAgents'); if (navAgents) navAgents.textContent = this.t('agents');
-    const navSchedule = $.get('navSchedule'); if (navSchedule) navSchedule.textContent = this.t('schedule');
+    // Update sidebar nav labels (they have nested .nav-label spans)
+    const navDashboard = $.get('navDashboard'); 
+    if (navDashboard) {
+      const label = navDashboard.querySelector('.nav-label');
+      if (label) label.textContent = this.t('dashboard');
+    }
+    const navMoves = $.get('navMoves'); 
+    if (navMoves) {
+      const label = navMoves.querySelector('.nav-label');
+      if (label) label.textContent = this.t('moves');
+    }
+    const navAgents = $.get('navAgents'); 
+    if (navAgents) {
+      const label = navAgents.querySelector('.nav-label');
+      if (label) label.textContent = this.t('agents');
+    }
+    const navSchedule = $.get('navSchedule'); 
+    if (navSchedule) {
+      const label = navSchedule.querySelector('.nav-label');
+      if (label) label.textContent = this.t('schedule');
+    }
+    const navDocuments = $.get('navDocuments'); 
+    if (navDocuments) {
+      const label = navDocuments.querySelector('.nav-label');
+      if (label) label.textContent = this.t('documents');
+    }
+    const navQuotes = $.get('navQuotes'); 
+    if (navQuotes) {
+      const label = navQuotes.querySelector('.nav-label');
+      if (label) label.textContent = this.t('quotes');
+    }
+    
+    // Dashboard title
+    const dashboardTitle = document.querySelector('#dashboardView .dashboard-header h2');
+    if (dashboardTitle) dashboardTitle.textContent = this.t('dashboard');
+    
 const scheduleDayDetailsTitle = document.querySelector('#scheduleView .right-panel .header-row h2');
 if (scheduleDayDetailsTitle) scheduleDayDetailsTitle.textContent = this.t('dayDetails');
     const scheduleViewTitle = document.querySelector('#scheduleView .left-panel .header-row h2');
 if (scheduleViewTitle) scheduleViewTitle.textContent = this.t('schedule');
     const scheduleHintText = document.querySelector('#scheduleDayDetails p[data-i18n="hintSelectDay"]');
 if (scheduleHintText) scheduleHintText.textContent = this.t('scheduleDayDetailsHint');
-    const navDocuments = $.get('navDocuments'); if (navDocuments) navDocuments.textContent = this.t('documents');
-    const documentsSearchTab = $.get('documentsSearchTab');
-  if (documentsSearchTab) {
-    const span = documentsSearchTab.querySelector('span');
-    if (span) span.textContent = this.t('documentsSearchTab');
-  }
 
-  const resourceLibraryTab = $.get('resourceLibraryTab');
-  if (resourceLibraryTab) {
-    const span = resourceLibraryTab.querySelector('span');
-    if (span) span.textContent = this.t('resourceLibraryTab');
-  }
 const checklistSection = $.get('checklistSection');
 if (checklistSection) {
   const label = checklistSection.querySelector('label');
@@ -1194,14 +1737,18 @@ if (docUrlInput) {
 const State = {
   jobs: [],
   agents: [],
+  storageRecords: [],  // NEW - separate storage entity
+  invoices: [],        // NEW - for billing tab
   scheduleNotes: {},
   scheduleExtraJobs: {}, // { "YYYY-MM-DD": [ extraJob, ... ] }
+  scheduleOfficeFilter: 'All', // NEW - for schedule office filter
   selectedJobId: null,
   jobFormMode: 'create',
   filters: { status: 'All', type: 'All', payment: 'All', search: '' },
   selectedAgentId: null,
   agentFormMode: 'create',
   agentSearch: '',
+  agentTypeFilter: 'Agent',  // NEW - for Agent/Broker tabs
   editingContactIndex: null,
   schedule: { year: new Date().getFullYear(), month: new Date().getMonth(), selectedDate: null },
 
@@ -1213,10 +1760,21 @@ const State = {
   selectedQuoteId: null,
   quoteFormMode: 'create',
   quoteFilters: { search: '' },
+  
+  // NEW - storage tab state
+  selectedStorageId: null,
+  storageFormMode: 'create',
+  storageFilters: { location: '', status: 'Active' },
+  
+  // NEW - invoice/billing state
+  selectedInvoiceId: null,
+  invoiceFormMode: 'create',
 
   getJob(id) { return this.jobs.find(j => j.id === id); },
   getAgent(id) { return this.agents.find(a => a.id === id); },
-  getAgentName(id) { const a = this.getAgent(id); return a ? a.name : ''; }
+  getAgentName(id) { const a = this.getAgent(id); return a ? a.name : ''; },
+  getStorage(id) { return this.storageRecords.find(s => s.id === id); },  // NEW
+  getInvoice(id) { return this.invoices.find(i => i.id === id); }         // NEW
 };
 
 // ============================================================
@@ -1262,13 +1820,23 @@ loadResourceLibrary() {
   saveAgents() { this.save(CONFIG.STORAGE_KEYS.AGENTS, State.agents); },
   saveScheduleNotes() { this.save(CONFIG.STORAGE_KEYS.SCHEDULE_NOTES, State.scheduleNotes); },
   saveScheduleExtraJobs() { this.save(CONFIG.STORAGE_KEYS.SCHEDULE_EXTRA_JOBS, State.scheduleExtraJobs); },
-    saveQuotes() { 
-    this.save(CONFIG.STORAGE_KEYS.QUOTES, State.quotes); 
-  },
+  saveQuotes() { this.save(CONFIG.STORAGE_KEYS.QUOTES, State.quotes); },
+  saveStorageRecords() { this.save(CONFIG.STORAGE_KEYS.STORAGE, State.storageRecords); },  // NEW
+  saveInvoices() { this.save(CONFIG.STORAGE_KEYS.INVOICES, State.invoices); },            // NEW
 
   loadQuotes() {
     State.quotes = this.load(CONFIG.STORAGE_KEYS.QUOTES, []);
     State.quotes = State.quotes.map(q => Validator.normalizeQuote(q));
+  },
+  
+  loadStorageRecords() {  // NEW
+    State.storageRecords = this.load(CONFIG.STORAGE_KEYS.STORAGE, []);
+    State.storageRecords = State.storageRecords.map(s => Validator.normalizeStorageRecord(s));
+  },
+  
+  loadInvoices() {  // NEW
+    State.invoices = this.load(CONFIG.STORAGE_KEYS.INVOICES, []);
+    State.invoices = State.invoices.map(i => Validator.normalizeInvoice(i));
   },
 
   loadAll() {
@@ -1278,7 +1846,10 @@ loadResourceLibrary() {
     State.scheduleExtraJobs = this.load(CONFIG.STORAGE_KEYS.SCHEDULE_EXTRA_JOBS, {});
     this.loadResourceLibrary();
     this.loadQuotes();
+    this.loadStorageRecords();  // NEW
+    this.loadInvoices();        // NEW
     Validator.normalizeAll();
+    Validator.migrateEmbeddedStorage();  // NEW - migrate old embedded storage to new entity
   },
 
   exportData() {
@@ -1287,7 +1858,9 @@ loadResourceLibrary() {
       agents: State.agents,
       scheduleNotes: State.scheduleNotes,
       scheduleExtraJobs: State.scheduleExtraJobs,
-      quotes: State.quotes
+      quotes: State.quotes,
+      storageRecords: State.storageRecords,  // NEW
+      invoices: State.invoices               // NEW
     };
   },
 
@@ -1299,13 +1872,17 @@ loadResourceLibrary() {
     State.agents = data.agents;
     State.scheduleNotes = data.scheduleNotes || {};
     State.scheduleExtraJobs = data.scheduleExtraJobs || {};
-    State.quotes = data.quotes || {};
+    State.quotes = data.quotes || [];
+    State.storageRecords = data.storageRecords || [];  // NEW
+    State.invoices = data.invoices || [];              // NEW
     Validator.normalizeAll();
     this.saveJobs();
     this.saveAgents();
     this.saveScheduleNotes();
     this.saveScheduleExtraJobs();
     this.saveQuotes();
+    this.saveStorageRecords();  // NEW
+    this.saveInvoices();        // NEW
   }
 };
 
@@ -1315,9 +1892,25 @@ loadResourceLibrary() {
 
 const Validator = {
   normalizeAgent(agent) {
-    if (!agent || typeof agent !== 'object') return { id: Utils.makeId('agent'), name: '', city: '', country: '', contacts: [] };
+    if (!agent || typeof agent !== 'object') {
+      return { 
+        id: Utils.makeId('agent'), 
+        name: '', 
+        type: 'Agent',  // NEW: Agent, Customs Broker, Sea Freight Broker, Air Freight Broker
+        city: '', 
+        country: '', 
+        isFIDI: false,
+        isIAM: false,
+        contacts: [],
+        notes: ''
+      };
+    }
     if (!agent.id) agent.id = Utils.makeId('agent');
+    if (!agent.type) agent.type = 'Agent';  // NEW - default to Agent for existing records
+    if (typeof agent.isFIDI !== 'boolean') agent.isFIDI = false;
+    if (typeof agent.isIAM !== 'boolean') agent.isIAM = false;
     if (!Array.isArray(agent.contacts)) agent.contacts = [];
+    if (typeof agent.notes !== 'string') agent.notes = '';
     return agent;
   },
 
@@ -1363,14 +1956,34 @@ const Validator = {
   normalizeJob(job) {
   if (!job || typeof job !== 'object') job = {};
   if (!job.id) job.id = Utils.makeId('job');
+  if (!job.jobCode) job.jobCode = Utils.jobCode();
+  
+  // NEW: Booking and Client classification
+  if (typeof job.bookingType !== 'string') job.bookingType = '';  // Door to Door, Door to Port, Port to Door
+  if (typeof job.clientType !== 'string') job.clientType = '';    // Private, Corporate, Diplomatic
+  
+  // Client contact info
+  if (typeof job.clientPhone !== 'string') job.clientPhone = '';
+  if (typeof job.clientEmail !== 'string') job.clientEmail = '';
+  
+  // Origin address details
+  if (typeof job.originFloor !== 'string') job.originFloor = '';
+  if (typeof job.originElevator !== 'string') job.originElevator = '';
+  if (typeof job.originAccessConditions !== 'string') job.originAccessConditions = '';
+  
+  // Destination address details
+  if (typeof job.destinationFloor !== 'string') job.destinationFloor = '';
+  if (typeof job.destinationElevator !== 'string') job.destinationElevator = '';
+  if (typeof job.destinationAccessConditions !== 'string') job.destinationAccessConditions = '';
+  
   if (!job.tradeDirection) job.tradeDirection = '';
+  if (!job.status) job.status = 'Planned';
   if (!Array.isArray(job.modes)) job.modes = [];
   if (!Array.isArray(job.notes)) job.notes = [];
   if (!Array.isArray(job.documents)) job.documents = [];
   if (!Array.isArray(job.media)) job.media = [];
   if (typeof job.paymentReceived !== 'boolean') job.paymentReceived = false;
   if (!job.packDate) job.packDate = '';
-  if (!job.jobCode) job.jobCode = Utils.jobCode();
   if (!Array.isArray(job.removedAutoStepIds)) job.removedAutoStepIds = [];
 
   // Shipment contents (HHE, Vehicle)
@@ -1379,9 +1992,26 @@ const Validator = {
   // Move Manager
   if (typeof job.moveManager !== 'string') job.moveManager = '';
 
+  // Tag field for special moves (Diplomatic, VIP, Military, etc.)
+  if (typeof job.tag !== 'string') job.tag = '';
+  
+  // NEW: Broker references
+  if (typeof job.customsBrokerId !== 'string') job.customsBrokerId = '';
+  if (typeof job.seaFreightBrokerId !== 'string') job.seaFreightBrokerId = '';
+  if (typeof job.airFreightBrokerId !== 'string') job.airFreightBrokerId = '';
+  
+  // NEW: Quote link (when job created from quote)
+  if (typeof job.linkedQuoteId !== 'string') job.linkedQuoteId = '';
+  
+  // NEW: Financial data (from quote conversion)
+  if (!Array.isArray(job.chargeItems)) job.chargeItems = [];
+  if (typeof job.quotedTotal !== 'number') job.quotedTotal = 0;
+  if (typeof job.currency !== 'string') job.currency = 'USD';
+
   // Mode-specific fields - Sea
   if (typeof job.seaVolume !== 'number') job.seaVolume = 0;
   if (typeof job.containerDetails !== 'string') job.containerDetails = '';
+  if (typeof job.seaGrossWeight !== 'number') job.seaGrossWeight = 0;
 
   // Mode-specific fields - Air
   if (typeof job.airVolume !== 'number') job.airVolume = 0;
@@ -1390,6 +2020,7 @@ const Validator = {
 
   // Mode-specific fields - Land
   if (typeof job.landVolume !== 'number') job.landVolume = 0;
+  if (typeof job.landGrossWeight !== 'number') job.landGrossWeight = 0;
 
   // Vehicle fields
   if (typeof job.vehicleType !== 'string') job.vehicleType = '';
@@ -1398,6 +2029,27 @@ const Validator = {
   if (typeof job.vehicleYear !== 'number') job.vehicleYear = 0;
   if (typeof job.vehicleVIN !== 'string') job.vehicleVIN = '';
   if (typeof job.vehicleCondition !== 'string') job.vehicleCondition = 'Running';
+
+  // Storage - NOW A REFERENCE to separate Storage entity
+  if (typeof job.storageId !== 'string') job.storageId = '';  // Links to Storage entity
+  
+  // LEGACY: Keep old embedded storage fields for migration, but mark as deprecated
+  // These will be migrated to separate Storage entity
+  if (typeof job.hasStorage !== 'boolean') job.hasStorage = false;
+  if (typeof job.storageLocation !== 'string') job.storageLocation = '';
+  if (!Array.isArray(job.storageContents)) job.storageContents = [];
+  if (typeof job.storageCBM !== 'number') job.storageCBM = 0;
+  if (typeof job.storageDateEntered !== 'string') job.storageDateEntered = '';
+  if (typeof job.storageDateExited !== 'string') job.storageDateExited = '';
+  if (!Array.isArray(job.storageInventory)) job.storageInventory = [];
+  if (typeof job.storageBillingType !== 'string') job.storageBillingType = 'Per CBM';
+  if (typeof job.storageBillingRate !== 'number') job.storageBillingRate = 0;
+  if (typeof job.storageBillingCurrency !== 'string') job.storageBillingCurrency = 'TRY';
+  if (typeof job.storageBillingPeriod !== 'string') job.storageBillingPeriod = 'Monthly';
+  if (typeof job.storageFlatRate !== 'number') job.storageFlatRate = 0;
+  if (typeof job.storageFlatCurrency !== 'string') job.storageFlatCurrency = 'TRY';
+  if (typeof job.storageFreeDays !== 'number') job.storageFreeDays = 0;
+  if (typeof job.storageBillingNotes !== 'string') job.storageBillingNotes = '';
 
   // Legacy field migration (if old jobs have weight/volume, migrate to primary mode)
   if (job.weight && !job.airCargoWeight && job.modes && job.modes.includes('Air')) {
@@ -1431,6 +2083,14 @@ const Validator = {
   if (!Array.isArray(quote.modes)) quote.modes = [];
   if (!quote.type) quote.type = 'Export';
   if (typeof quote.insurance !== 'boolean') quote.insurance = false;
+  
+  // NEW: Quote status and recipient type
+  if (!quote.status) quote.status = 'Draft';  // Draft, Sent, Approved, Rejected, Expired
+  if (!quote.recipientType) quote.recipientType = 'Client';  // Client or Agent
+  
+  // NEW: Conversion tracking
+  if (typeof quote.convertedToJobId !== 'string') quote.convertedToJobId = '';
+  if (typeof quote.convertedAt !== 'string') quote.convertedAt = '';
   
   // chargesByMode structure
   if (!quote.chargesByMode || typeof quote.chargesByMode !== 'object') {
@@ -1553,9 +2213,174 @@ if (!quote.quoteCurrency) quote.quoteCurrency = 'USD';
   };
 },
 
+  // NEW: Storage Record normalizer
+  normalizeStorageRecord(storage) {
+    if (!storage || typeof storage !== 'object') storage = {};
+    
+    // Identity
+    if (!storage.id) storage.id = Utils.makeId('storage');
+    if (!storage.storageCode) storage.storageCode = Utils.storageCode();
+    
+    // Linking
+    if (typeof storage.linkedJobId !== 'string') storage.linkedJobId = '';  // empty = standalone
+    
+    // Client info (for standalone or display)
+    if (typeof storage.clientName !== 'string') storage.clientName = '';
+    if (typeof storage.organizationName !== 'string') storage.organizationName = '';
+    
+    // Location
+    if (typeof storage.location !== 'string') storage.location = '';
+    
+    // Contents
+    if (!Array.isArray(storage.contents)) storage.contents = [];  // ['HHE', 'Auto']
+    if (typeof storage.totalCBM !== 'number') storage.totalCBM = 0;
+    if (typeof storage.grossWeight !== 'number') storage.grossWeight = 0;
+    
+    // Dates
+    if (typeof storage.dateEntered !== 'string') storage.dateEntered = '';
+    if (typeof storage.dateExited !== 'string') storage.dateExited = '';
+    
+    // Inventory - items with type (HHE or Auto)
+    if (!Array.isArray(storage.inventory)) storage.inventory = [];
+    storage.inventory = storage.inventory.map(item => {
+      if (!item.id) item.id = Utils.makeId('item');
+      if (typeof item.type !== 'string') item.type = 'HHE';  // HHE or Auto
+      if (typeof item.description !== 'string') item.description = '';
+      if (typeof item.quantity !== 'number') item.quantity = 1;
+      if (typeof item.cbm !== 'number') item.cbm = 0;
+      // Auto-specific fields
+      if (typeof item.make !== 'string') item.make = '';
+      if (typeof item.model !== 'string') item.model = '';
+      if (typeof item.year !== 'number') item.year = 0;
+      if (typeof item.vin !== 'string') item.vin = '';
+      // Status
+      if (typeof item.status !== 'string') item.status = 'In Storage';  // In Storage, Retrieved
+      if (typeof item.dateRetrieved !== 'string') item.dateRetrieved = '';
+      return item;
+    });
+    
+    // Billing
+    if (typeof storage.billingType !== 'string') storage.billingType = 'Per CBM';  // Per CBM, Flat Rate
+    if (typeof storage.ratePerCBM !== 'number') storage.ratePerCBM = 0;
+    if (typeof storage.ratePeriod !== 'string') storage.ratePeriod = 'Monthly';  // Monthly, Daily
+    if (typeof storage.rateCurrency !== 'string') storage.rateCurrency = 'TRY';
+    if (typeof storage.flatRate !== 'number') storage.flatRate = 0;
+    if (typeof storage.flatRateCurrency !== 'string') storage.flatRateCurrency = 'TRY';
+    if (typeof storage.freeDays !== 'number') storage.freeDays = 0;
+    if (typeof storage.billingNotes !== 'string') storage.billingNotes = '';
+    
+    // Meta
+    if (typeof storage.status !== 'string') storage.status = 'Active';  // Active, Closed
+    if (typeof storage.createdAt !== 'string') storage.createdAt = new Date().toISOString();
+    if (typeof storage.notes !== 'string') storage.notes = '';
+    
+    return storage;
+  },
+  
+  // NEW: Invoice normalizer
+  normalizeInvoice(invoice) {
+    if (!invoice || typeof invoice !== 'object') invoice = {};
+    
+    // Identity
+    if (!invoice.id) invoice.id = Utils.makeId('invoice');
+    if (!invoice.invoiceNumber) invoice.invoiceNumber = Utils.invoiceNumber();
+    
+    // Links
+    if (typeof invoice.linkedJobId !== 'string') invoice.linkedJobId = '';
+    if (typeof invoice.linkedStorageId !== 'string') invoice.linkedStorageId = '';
+    if (typeof invoice.linkedQuoteId !== 'string') invoice.linkedQuoteId = '';
+    
+    // Client
+    if (typeof invoice.clientName !== 'string') invoice.clientName = '';
+    if (typeof invoice.clientAddress !== 'string') invoice.clientAddress = '';
+    
+    // Line items
+    if (!Array.isArray(invoice.lineItems)) invoice.lineItems = [];
+    invoice.lineItems = invoice.lineItems.map(item => {
+      if (!item.id) item.id = Utils.makeId('line');
+      if (typeof item.description !== 'string') item.description = '';
+      if (typeof item.quantity !== 'number') item.quantity = 1;
+      if (typeof item.rate !== 'number') item.rate = 0;
+      if (typeof item.amount !== 'number') item.amount = 0;
+      if (typeof item.source !== 'string') item.source = 'manual';  // quote, storage, manual
+      return item;
+    });
+    
+    // Totals
+    if (typeof invoice.subtotal !== 'number') invoice.subtotal = 0;
+    if (typeof invoice.taxRate !== 'number') invoice.taxRate = 0;
+    if (typeof invoice.taxAmount !== 'number') invoice.taxAmount = 0;
+    if (typeof invoice.total !== 'number') invoice.total = 0;
+    if (typeof invoice.currency !== 'string') invoice.currency = 'USD';
+    
+    // Status
+    if (typeof invoice.status !== 'string') invoice.status = 'Draft';  // Draft, Sent, Paid, Cancelled
+    
+    // Dates
+    if (typeof invoice.issueDate !== 'string') invoice.issueDate = '';
+    if (typeof invoice.dueDate !== 'string') invoice.dueDate = '';
+    if (typeof invoice.paidDate !== 'string') invoice.paidDate = '';
+    
+    // Meta
+    if (typeof invoice.notes !== 'string') invoice.notes = '';
+    if (typeof invoice.createdAt !== 'string') invoice.createdAt = new Date().toISOString();
+    
+    return invoice;
+  },
+  
+  // Migration: Convert embedded storage in jobs to separate Storage records
+  migrateEmbeddedStorage() {
+    let migrated = false;
+    
+    State.jobs.forEach(job => {
+      // Check if job has embedded storage data but no storageId reference
+      if (job.hasStorage && !job.storageId && (job.storageLocation || job.storageCBM > 0 || job.storageInventory.length > 0)) {
+        // Create new Storage record from embedded data
+        const storageRecord = this.normalizeStorageRecord({
+          linkedJobId: job.id,
+          clientName: job.clientName || '',
+          location: job.storageLocation || '',
+          contents: job.storageContents || [],
+          totalCBM: job.storageCBM || 0,
+          dateEntered: job.storageDateEntered || '',
+          dateExited: job.storageDateExited || '',
+          inventory: (job.storageInventory || []).map(item => ({
+            ...item,
+            type: 'HHE'  // Default existing items to HHE
+          })),
+          billingType: job.storageBillingType || 'Per CBM',
+          ratePerCBM: job.storageBillingRate || 0,
+          ratePeriod: job.storageBillingPeriod || 'Monthly',
+          rateCurrency: job.storageBillingCurrency || 'TRY',
+          flatRate: job.storageFlatRate || 0,
+          flatRateCurrency: job.storageFlatCurrency || 'TRY',
+          freeDays: job.storageFreeDays || 0,
+          billingNotes: job.storageBillingNotes || '',
+          status: job.storageDateExited ? 'Closed' : 'Active'
+        });
+        
+        // Add to storage records
+        State.storageRecords.push(storageRecord);
+        
+        // Link job to new storage record
+        job.storageId = storageRecord.id;
+        
+        migrated = true;
+        console.log(`Migrated storage for job ${job.jobCode} to storage record ${storageRecord.storageCode}`);
+      }
+    });
+    
+    if (migrated) {
+      Storage.saveJobs();
+      Storage.saveStorageRecords();
+    }
+  },
+
   normalizeAll() {
     State.agents = (State.agents || []).map(a => this.normalizeAgent(a));
     State.jobs = (State.jobs || []).map(j => this.normalizeJob(j));
+    State.storageRecords = (State.storageRecords || []).map(s => this.normalizeStorageRecord(s));
+    State.invoices = (State.invoices || []).map(i => this.normalizeInvoice(i));
     this.normalizeScheduleExtraJobs();
   }
 };
@@ -1663,6 +2488,12 @@ const Utils = {
     try { return new Date(iso).toLocaleString(); } catch (e) { return '-'; }
   },
 
+  formatCurrency(amount, currency) {
+    const num = Number(amount) || 0;
+    const cur = currency || 'USD';
+    return `${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur}`;
+  },
+
   location(city, country) {
     return [city, country].filter(Boolean).join(', ') || '-';
   },
@@ -1683,6 +2514,36 @@ const Utils = {
       const code = j && j.jobCode ? String(j.jobCode) : '';
       if (!code.startsWith(prefix)) return;
       const tail = code.slice(prefix.length);
+      const n = parseInt(tail, 10);
+      if (!isNaN(n)) maxNum = Math.max(maxNum, n);
+    });
+    return `${prefix}${String(maxNum + 1).padStart(4, '0')}`;
+  },
+  
+  // IES-YEAR-#### for storage records (Istanbul Ekspres Storage)
+  storageCode() {
+    const year = new Date().getFullYear();
+    const prefix = `IES-${year}-`;
+    let maxNum = 0;
+    (State.storageRecords || []).forEach(s => {
+      const code = s && s.storageCode ? String(s.storageCode) : '';
+      if (!code.startsWith(prefix)) return;
+      const tail = code.slice(prefix.length);
+      const n = parseInt(tail, 10);
+      if (!isNaN(n)) maxNum = Math.max(maxNum, n);
+    });
+    return `${prefix}${String(maxNum + 1).padStart(4, '0')}`;
+  },
+  
+  // IEI-YEAR-#### for invoices (Istanbul Ekspres Invoice) - resets yearly
+  invoiceNumber() {
+    const year = new Date().getFullYear();
+    const prefix = `IEI-${year}-`;
+    let maxNum = 0;
+    (State.invoices || []).forEach(i => {
+      const num = i && i.invoiceNumber ? String(i.invoiceNumber) : '';
+      if (!num.startsWith(prefix)) return;
+      const tail = num.slice(prefix.length);
       const n = parseInt(tail, 10);
       if (!isNaN(n)) maxNum = Math.max(maxNum, n);
     });
@@ -1757,9 +2618,14 @@ const QuoteUtils = {
   return (hhgValue || 0) * (percentage / 100);
 },
 
-  getTemplate(mode, type) {
-    if (type === 'Local') return QUOTE_TEMPLATES['Land|Local'] || null;
-    return QUOTE_TEMPLATES[`${mode}|${type}`] || null;
+  getTemplate(mode, type, recipientType = 'Agent') {
+    // Build the template key: Mode|Type|RecipientType
+    if (type === 'Local') {
+      const key = `Land|Local|${recipientType}`;
+      return QUOTE_TEMPLATES[key] || QUOTE_TEMPLATES['Land|Local|Agent'] || null;
+    }
+    const key = `${mode}|${type}|${recipientType}`;
+    return QUOTE_TEMPLATES[key] || QUOTE_TEMPLATES[`${mode}|${type}|Agent`] || null;
   },
 
   replacePlaceholders(text, data) {
@@ -1789,8 +2655,8 @@ const QuoteUtils = {
     return result;
   },
 
-  getChargeCategories(mode, type, data) {
-    const tpl = this.getTemplate(mode, type);
+  getChargeCategories(mode, type, data, recipientType = 'Agent') {
+    const tpl = this.getTemplate(mode, type, recipientType);
     if (!tpl) return { main: [], additional: [] };
     return {
       main: (tpl.chargeCategories || []).map(c => this.replacePlaceholders(c, data)),
@@ -1798,14 +2664,14 @@ const QuoteUtils = {
     };
   },
 
-  getBaseIncludes(mode, type, data) {
-    const tpl = this.getTemplate(mode, type);
+  getBaseIncludes(mode, type, data, recipientType = 'Agent') {
+    const tpl = this.getTemplate(mode, type, recipientType);
     if (!tpl) return [];
     return (tpl.includes || []).map(i => this.replacePlaceholders(i, data));
   },
 
-  getConditionalIncludes(mode, type, data, selectedChargeCategories) {
-    const tpl = this.getTemplate(mode, type);
+  getConditionalIncludes(mode, type, data, selectedChargeCategories, recipientType = 'Agent') {
+    const tpl = this.getTemplate(mode, type, recipientType);
     if (!tpl || !tpl.conditionalIncludes) return [];
     
     let items = [];
@@ -1992,24 +2858,609 @@ const Modals = {
     if (modal) { document.body.classList.remove('modal-open'); $.hide(modal); }
   },
   closeJob() { this.close('createJobModal'); },
-  closeAgent() { this.close('createAgentModal'); }
+  closeAgent() { this.close('createAgentModal'); },
+  
+  // Simple alert dialog (just OK button)
+  alert(options) {
+    return new Promise((resolve) => {
+      const modal = $.get('genericModal');
+      const title = $.get('genericModalTitle');
+      const message = $.get('genericModalMessage');
+      const inputsContainer = $.get('genericModalInputs');
+      const cancelBtn = $.get('genericModalCancel');
+      const confirmBtn = $.get('genericModalConfirm');
+      
+      title.textContent = options.title || ((State.lang === 'tr') ? 'Bilgi' : 'Notice');
+      message.textContent = options.message || '';
+      
+      // Hide inputs and cancel button for simple alert
+      $.hide(inputsContainer);
+      $.clear(inputsContainer);
+      $.hide(cancelBtn);
+      
+      // Set OK button
+      confirmBtn.textContent = options.okText || 'OK';
+      confirmBtn.className = 'btn-primary';
+      
+      const cleanup = () => {
+        this.close('genericModal');
+        confirmBtn.removeEventListener('click', onConfirm);
+        $.show(cancelBtn); // Restore cancel button visibility for other dialogs
+      };
+      
+      const onConfirm = () => { cleanup(); resolve(true); };
+      
+      confirmBtn.addEventListener('click', onConfirm);
+      
+      this.open('genericModal');
+    });
+  },
+  
+  // Generic confirm dialog
+  confirm(options) {
+    return new Promise((resolve) => {
+      const modal = $.get('genericModal');
+      const title = $.get('genericModalTitle');
+      const message = $.get('genericModalMessage');
+      const inputsContainer = $.get('genericModalInputs');
+      const cancelBtn = $.get('genericModalCancel');
+      const confirmBtn = $.get('genericModalConfirm');
+      
+      title.textContent = options.title || ((State.lang === 'tr') ? 'Onayla' : 'Confirm');
+      message.textContent = options.message || '';
+      
+      // Hide inputs for simple confirm
+      $.hide(inputsContainer);
+      $.clear(inputsContainer);
+      
+      // Set button labels
+      cancelBtn.textContent = options.cancelText || ((State.lang === 'tr') ? 'İptal' : 'Cancel');
+      confirmBtn.textContent = options.confirmText || ((State.lang === 'tr') ? 'Onayla' : 'Confirm');
+      confirmBtn.className = options.danger ? 'btn-danger' : 'btn-primary';
+      
+      const cleanup = () => {
+        this.close('genericModal');
+        cancelBtn.removeEventListener('click', onCancel);
+        confirmBtn.removeEventListener('click', onConfirm);
+      };
+      
+      const onCancel = () => { cleanup(); resolve(false); };
+      const onConfirm = () => { cleanup(); resolve(true); };
+      
+      cancelBtn.addEventListener('click', onCancel);
+      confirmBtn.addEventListener('click', onConfirm);
+      
+      this.open('genericModal');
+    });
+  },
+  
+  // Generic input dialog
+  prompt(options) {
+    return new Promise((resolve) => {
+      const modal = $.get('genericModal');
+      const title = $.get('genericModalTitle');
+      const message = $.get('genericModalMessage');
+      const inputsContainer = $.get('genericModalInputs');
+      const cancelBtn = $.get('genericModalCancel');
+      const confirmBtn = $.get('genericModalConfirm');
+      
+      title.textContent = options.title || ((State.lang === 'tr') ? 'Giriş' : 'Input');
+      message.textContent = options.message || '';
+      
+      // Clear and show inputs
+      $.clear(inputsContainer);
+      $.show(inputsContainer);
+      
+      // Build input fields
+      const fields = options.fields || [{ name: 'value', label: 'Value', type: 'text' }];
+      fields.forEach(field => {
+        const wrapper = $.el('div');
+        wrapper.appendChild($.el('label', { textContent: field.label || field.name }));
+        
+        let input;
+        if (field.type === 'select' && field.options) {
+          input = $.el('select', { name: field.name });
+          field.options.forEach(opt => {
+            const option = $.el('option', { value: opt.value || opt, textContent: opt.label || opt });
+            if (field.value === (opt.value || opt)) option.selected = true;
+            input.appendChild(option);
+          });
+        } else if (field.type === 'textarea') {
+          input = $.el('textarea', { name: field.name, rows: '3' });
+          input.textContent = field.value || '';
+        } else {
+          input = $.el('input', { 
+            type: field.type || 'text', 
+            name: field.name,
+            value: field.value || '',
+            placeholder: field.placeholder || ''
+          });
+          if (field.type === 'number') {
+            input.step = field.step || 'any';
+          }
+        }
+        wrapper.appendChild(input);
+        inputsContainer.appendChild(wrapper);
+      });
+      
+      // Set button labels
+      cancelBtn.textContent = options.cancelText || ((State.lang === 'tr') ? 'İptal' : 'Cancel');
+      confirmBtn.textContent = options.confirmText || ((State.lang === 'tr') ? 'Kaydet' : 'Save');
+      confirmBtn.className = 'btn-primary';
+      
+      const cleanup = () => {
+        this.close('genericModal');
+        cancelBtn.removeEventListener('click', onCancel);
+        confirmBtn.removeEventListener('click', onConfirm);
+      };
+      
+      const onCancel = () => { cleanup(); resolve(null); };
+      const onConfirm = () => {
+        const values = {};
+        fields.forEach(field => {
+          const input = inputsContainer.querySelector(`[name="${field.name}"]`);
+          if (input) {
+            values[field.name] = field.type === 'number' ? parseFloat(input.value) || 0 : input.value;
+          }
+        });
+        cleanup();
+        resolve(values);
+      };
+      
+      cancelBtn.addEventListener('click', onCancel);
+      confirmBtn.addEventListener('click', onConfirm);
+      
+      this.open('genericModal');
+      
+      // Focus first input
+      const firstInput = inputsContainer.querySelector('input, select, textarea');
+      if (firstInput) firstInput.focus();
+    });
+  }
+};
+
+// ============================================================
+// Dashboard UI
+// ============================================================
+const DashboardUI = {
+  render() {
+    const content = $.get('dashboardContent');
+    if (!content) return;
+    $.clear(content);
+
+    // Top row: Moves by Status, Upcoming Jobs (3 days), Overdue Items
+    const topRow = $.el('div', { className: 'dashboard-row' });
+    
+    // Moves by status
+    const statusStats = this.getStatusStats();
+    topRow.appendChild(this.createStatCard(I18n.t('movesByStatus'), statusStats));
+    
+    // Upcoming Jobs (next 3 days with details)
+    topRow.appendChild(this.createUpcomingJobsSection());
+    
+    // Overdue items
+    topRow.appendChild(this.createOverdueSection());
+    
+    content.appendChild(topRow);
+    
+    // Bottom row: Upcoming Schedule (14 days), Unpaid Moves, Payment Status
+    const bottomRow = $.el('div', { className: 'dashboard-row' });
+    
+    // Upcoming Schedule (14 days)
+    bottomRow.appendChild(this.createUpcomingScheduleSection());
+    
+    // Unpaid moves
+    bottomRow.appendChild(this.createUnpaidSection());
+    
+    // Payment status
+    const paymentStats = this.getPaymentStats();
+    bottomRow.appendChild(this.createStatCard(I18n.t('paymentStatus'), paymentStats));
+    
+    content.appendChild(bottomRow);
+  },
+
+  getStatusStats() {
+    const counts = { Planned: 0, Ongoing: 0, Completed: 0, Cancelled: 0 };
+    State.jobs.forEach(job => {
+      if (counts.hasOwnProperty(job.status)) {
+        counts[job.status]++;
+      }
+    });
+    return [
+      { label: I18n.t('planned'), value: counts.Planned, color: 'var(--color-status-planned)' },
+      { label: I18n.t('ongoing'), value: counts.Ongoing, color: 'var(--color-status-ongoing)' },
+      { label: I18n.t('completed'), value: counts.Completed, color: 'var(--color-status-completed)' },
+      { label: I18n.t('cancelled'), value: counts.Cancelled, color: 'var(--color-status-cancelled)' }
+    ];
+  },
+
+  getPaymentStats() {
+    let paid = 0;
+    let unpaid = 0;
+    State.jobs.forEach(job => {
+      if (job.paymentReceived) paid++;
+      else unpaid++;
+    });
+    return [
+      { label: I18n.t('paid'), value: paid, color: '#22c55e' },
+      { label: I18n.t('unpaid'), value: unpaid, color: '#ef4444' }
+    ];
+  },
+
+  createStatCard(title, stats) {
+    const card = $.el('div', { className: 'dashboard-stat-card' });
+    
+    const header = $.el('h3', { className: 'dashboard-stat-title', textContent: title });
+    card.appendChild(header);
+    
+    const statsList = $.el('div', { className: 'dashboard-stat-list' });
+    stats.forEach(stat => {
+      const row = $.el('div', { className: 'dashboard-stat-row' });
+      
+      const indicator = $.el('span', { className: 'dashboard-stat-indicator' });
+      indicator.style.backgroundColor = stat.color;
+      row.appendChild(indicator);
+      
+      const label = $.el('span', { className: 'dashboard-stat-label', textContent: stat.label });
+      row.appendChild(label);
+      
+      const value = $.el('span', { className: 'dashboard-stat-value', textContent: stat.value });
+      row.appendChild(value);
+      
+      statsList.appendChild(row);
+    });
+    card.appendChild(statsList);
+    
+    // Total row
+    const total = stats.reduce((sum, s) => sum + s.value, 0);
+    const totalRow = $.el('div', { className: 'dashboard-stat-total' });
+    totalRow.innerHTML = `<span>${I18n.t('total')}</span><span>${total}</span>`;
+    card.appendChild(totalRow);
+    
+    return card;
+  },
+
+  // Upcoming Jobs section - next 3 days including today, with full details
+  createUpcomingJobsSection() {
+    const section = $.el('div', { className: 'dashboard-list-section' });
+    
+    const header = $.el('h3', { className: 'dashboard-section-title', textContent: I18n.t('upcomingJobs') });
+    section.appendChild(header);
+    
+    const items = this.getUpcomingItems(3);
+    
+    if (items.length === 0) {
+      const empty = $.el('p', { className: 'dashboard-empty-message', textContent: I18n.t('noUpcomingJobs') });
+      section.appendChild(empty);
+      return section;
+    }
+    
+    const list = $.el('div', { className: 'dashboard-upcoming-list' });
+    items.forEach(item => {
+      const row = $.el('div', { className: 'dashboard-upcoming-item' });
+      
+      const dateEl = $.el('span', { className: 'dashboard-upcoming-date', textContent: Utils.formatDate(item.date) });
+      row.appendChild(dateEl);
+      
+      const jobEl = $.el('span', { className: 'dashboard-upcoming-job', textContent: item.jobCode });
+      row.appendChild(jobEl);
+      
+      const stepEl = $.el('span', { className: 'dashboard-upcoming-step', textContent: item.stepName });
+      row.appendChild(stepEl);
+      
+      const clientEl = $.el('span', { className: 'dashboard-upcoming-client', textContent: item.clientName });
+      row.appendChild(clientEl);
+      
+      list.appendChild(row);
+    });
+    section.appendChild(list);
+    
+    return section;
+  },
+
+  // Upcoming Schedule section - next 14 days, compact (tasks count per day)
+  createUpcomingScheduleSection() {
+    const section = $.el('div', { className: 'dashboard-list-section' });
+    
+    const header = $.el('h3', { className: 'dashboard-section-title', textContent: I18n.t('upcomingSchedule') });
+    section.appendChild(header);
+    
+    const dayItems = this.getUpcomingByDay(14);
+    
+    if (dayItems.length === 0) {
+      const empty = $.el('p', { className: 'dashboard-empty-message', textContent: I18n.t('noUpcomingItems') });
+      section.appendChild(empty);
+      return section;
+    }
+    
+    const list = $.el('div', { className: 'dashboard-schedule-compact-list' });
+    dayItems.forEach(day => {
+      const row = $.el('div', { className: 'dashboard-schedule-compact-item' });
+      
+      const dateEl = $.el('span', { className: 'dashboard-schedule-date', textContent: Utils.formatDate(day.date) });
+      row.appendChild(dateEl);
+      
+      const countEl = $.el('span', { className: 'dashboard-schedule-count', textContent: `${day.count} ${day.count === 1 ? I18n.t('task') : I18n.t('tasks')}` });
+      row.appendChild(countEl);
+      
+      list.appendChild(row);
+    });
+    section.appendChild(list);
+    
+    return section;
+  },
+
+  // Get upcoming items grouped by day (for compact schedule view)
+  getUpcomingByDay(days) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const futureDate = new Date(today);
+    futureDate.setDate(futureDate.getDate() + days);
+    
+    const dayCounts = {};
+    
+    State.jobs.forEach(job => {
+      if (job.status === 'Completed' || job.status === 'Cancelled') return;
+      
+      (job.steps || []).forEach(step => {
+        if (!step.date) return;
+        
+        const stepDate = new Date(step.date);
+        stepDate.setHours(0, 0, 0, 0);
+        
+        if (stepDate >= today && stepDate <= futureDate) {
+          dayCounts[step.date] = (dayCounts[step.date] || 0) + 1;
+        }
+      });
+    });
+    
+    // Also count extra jobs
+    Object.entries(State.scheduleExtraJobs || {}).forEach(([dateStr, extraJobs]) => {
+      const stepDate = new Date(dateStr);
+      stepDate.setHours(0, 0, 0, 0);
+      
+      if (stepDate >= today && stepDate <= futureDate) {
+        const count = (extraJobs || []).filter(ej => !ej.completed).length;
+        if (count > 0) {
+          dayCounts[dateStr] = (dayCounts[dateStr] || 0) + count;
+        }
+      }
+    });
+    
+    return Object.entries(dayCounts)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  getUpcomingItems(days) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const futureDate = new Date(today);
+    futureDate.setDate(futureDate.getDate() + days);
+    
+    const items = [];
+    
+    // Job steps
+    State.jobs.forEach(job => {
+      if (job.status === 'Completed' || job.status === 'Cancelled') return;
+      
+      (job.steps || []).forEach(step => {
+        if (!step.date || step.completed) return;
+        
+        const stepDate = new Date(step.date);
+        stepDate.setHours(0, 0, 0, 0);
+        
+        if (stepDate >= today && stepDate <= futureDate) {
+          let stepName = step.label || step.customLabel || '';
+          if (!stepName && step.id) {
+            const translationKey = 'step_' + step.id;
+            stepName = I18n.t(translationKey);
+            if (stepName === translationKey || stepName.startsWith('step_')) {
+              stepName = step.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            }
+          }
+          if (!stepName) stepName = 'Step';
+          
+          items.push({
+            date: step.date,
+            jobCode: job.jobCode,
+            stepName: stepName,
+            clientName: job.clientName || ''
+          });
+        }
+      });
+    });
+    
+    // Extra jobs (including standalone with manually entered client names)
+    Object.entries(State.scheduleExtraJobs || {}).forEach(([dateStr, extraJobs]) => {
+      const stepDate = new Date(dateStr);
+      stepDate.setHours(0, 0, 0, 0);
+      
+      if (stepDate >= today && stepDate <= futureDate) {
+        (extraJobs || []).forEach(ej => {
+          if (ej.completed) return;
+          
+          // Get task name
+          let taskName = (ej.taskType === 'Custom' && ej.customTaskName)
+            ? ej.customTaskName
+            : I18n.taskTypeText(ej.taskType || '');
+          if (!taskName) taskName = (State.lang === 'tr') ? 'Ek İş' : 'Additional Job';
+          
+          // Get client name - from linked job or standalone clientName field
+          const linkedJob = ej.linkedJobId ? State.getJob(ej.linkedJobId) : null;
+          const clientName = linkedJob ? (linkedJob.clientName || '') : (ej.clientName || '');
+          const jobCode = linkedJob ? linkedJob.jobCode : '';
+          
+          items.push({
+            date: dateStr,
+            jobCode: jobCode,
+            stepName: taskName,
+            clientName: clientName
+          });
+        });
+      }
+    });
+    
+    return items.sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  createOverdueSection() {
+    const section = $.el('div', { className: 'dashboard-list-section' });
+    
+    const header = $.el('h3', { className: 'dashboard-section-title', textContent: I18n.t('overdueItems') });
+    section.appendChild(header);
+    
+    const items = this.getOverdueItems();
+    
+    if (items.length === 0) {
+      const empty = $.el('p', { className: 'dashboard-empty-message', textContent: I18n.t('noOverdueItems') });
+      section.appendChild(empty);
+      return section;
+    }
+    
+    const list = $.el('div', { className: 'dashboard-overdue-list' });
+    items.forEach(item => {
+      const row = $.el('div', { className: 'dashboard-overdue-item' });
+      
+      const dateEl = $.el('span', { className: 'dashboard-overdue-date', textContent: Utils.formatDate(item.date) });
+      row.appendChild(dateEl);
+      
+      const identifier = item.clientName || item.jobCode || '-';
+      const jobEl = $.el('span', { className: 'dashboard-overdue-job', textContent: identifier });
+      row.appendChild(jobEl);
+      
+      const stepEl = $.el('span', { className: 'dashboard-overdue-step', textContent: item.stepName });
+      row.appendChild(stepEl);
+      
+      list.appendChild(row);
+    });
+    section.appendChild(list);
+    
+    return section;
+  },
+
+  getOverdueItems() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const items = [];
+    
+    // Check job steps
+    State.jobs.forEach(job => {
+      if (job.status === 'Completed' || job.status === 'Cancelled') return;
+      
+      (job.steps || []).forEach(step => {
+        if (!step.date || step.completed) return;
+        
+        const stepDate = new Date(step.date);
+        stepDate.setHours(0, 0, 0, 0);
+        
+        if (stepDate < today) {
+          let stepName = step.label || step.customLabel || '';
+          if (!stepName && step.id) {
+            const translationKey = 'step_' + step.id;
+            stepName = I18n.t(translationKey);
+            if (stepName === translationKey || stepName.startsWith('step_')) {
+              stepName = step.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            }
+          }
+          if (!stepName) stepName = 'Step';
+          
+          items.push({
+            date: step.date,
+            jobCode: job.jobCode,
+            stepName: stepName,
+            clientName: job.clientName || ''
+          });
+        }
+      });
+    });
+    
+    // Check schedule extra jobs (items added directly to schedule without a job)
+    Object.entries(State.scheduleExtraJobs || {}).forEach(([dateStr, extraJobs]) => {
+      const stepDate = new Date(dateStr);
+      stepDate.setHours(0, 0, 0, 0);
+      
+      if (stepDate < today) {
+        (extraJobs || []).forEach(ej => {
+          if (ej.completed) return;
+          
+          // Get task name
+          let taskName = (ej.taskType === 'Custom' && ej.customTaskName)
+            ? ej.customTaskName
+            : I18n.taskTypeText(ej.taskType || '');
+          if (!taskName) taskName = (State.lang === 'tr') ? 'Ek İş' : 'Additional Job';
+          
+          // Get client name - from linked job or standalone
+          const linkedJob = ej.linkedJobId ? State.getJob(ej.linkedJobId) : null;
+          const clientName = linkedJob ? (linkedJob.clientName || '') : (ej.clientName || '');
+          const jobCode = linkedJob ? linkedJob.jobCode : null;
+          
+          items.push({
+            date: dateStr,
+            jobCode: jobCode,
+            stepName: taskName,
+            clientName: clientName
+          });
+        });
+      }
+    });
+    
+    return items.sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  createUnpaidSection() {
+    const section = $.el('div', { className: 'dashboard-list-section' });
+    
+    const header = $.el('h3', { className: 'dashboard-section-title', textContent: I18n.t('unpaidMoves') });
+    section.appendChild(header);
+    
+    const unpaidJobs = State.jobs.filter(j => !j.paymentReceived && j.status !== 'Cancelled');
+    
+    if (unpaidJobs.length === 0) {
+      const empty = $.el('p', { className: 'dashboard-empty-message', textContent: I18n.t('noUnpaidMoves') });
+      section.appendChild(empty);
+      return section;
+    }
+    
+    const list = $.el('div', { className: 'dashboard-unpaid-list' });
+    unpaidJobs.slice(0, 10).forEach(job => {
+      const row = $.el('div', { className: 'dashboard-unpaid-item' });
+      
+      const jobEl = $.el('span', { className: 'dashboard-unpaid-job', textContent: job.jobCode || '-' });
+      row.appendChild(jobEl);
+      
+      const clientEl = $.el('span', { className: 'dashboard-unpaid-client', textContent: job.clientName || '-' });
+      row.appendChild(clientEl);
+      
+      const statusEl = $.el('span', { className: 'dashboard-unpaid-status', textContent: job.status || '-' });
+      row.appendChild(statusEl);
+      
+      list.appendChild(row);
+    });
+    section.appendChild(list);
+    
+    return section;
+  }
 };
 
 const Views = {
   show(name) {
-    ['movesView', 'agentsView', 'scheduleView', 'documentsView', 'quotesView']
+    ['dashboardView', 'movesView', 'agentsView', 'scheduleView', 'storageView', 'documentsView', 'quotesView']
       .forEach(id => $.hide($.get(id)));
 
-    ['navMoves', 'navAgents', 'navSchedule', 'navDocuments', 'navQuotes']
+    ['navDashboard', 'navMoves', 'navAgents', 'navSchedule', 'navStorage', 'navDocuments', 'navQuotes']
       .forEach(id => {
         const el = $.get(id);
         if (el) el.classList.remove('active');
       });
 
     const map = {
+      'dashboard': { view: 'dashboardView', nav: 'navDashboard' },
       'moves':     { view: 'movesView',     nav: 'navMoves' },
       'agents':    { view: 'agentsView',    nav: 'navAgents' },
       'schedule':  { view: 'scheduleView',  nav: 'navSchedule' },
+      'storage':   { view: 'storageView',   nav: 'navStorage' },
       'documents': { view: 'documentsView', nav: 'navDocuments' },
       'quotes':    { view: 'quotesView',    nav: 'navQuotes' }
     };
@@ -2020,13 +3471,17 @@ const Views = {
       const navEl = $.get(v.nav);
       if (navEl) navEl.classList.add('active');
 
-      if (name === 'schedule') {
+      if (name === 'dashboard') {
+        DashboardUI.render();
+      } else if (name === 'schedule') {
         ScheduleUI.render();
+      } else if (name === 'storage') {
+        StorageUI.render();
       } else if (name === 'documents') {
         DocumentsTabUI.render();
       } else if (name === 'quotes') {
-  QuotesUI.render();
-}
+        QuotesUI.render();
+      }
     }
   }
 };
@@ -2111,6 +3566,46 @@ const ScheduleExport = {
       ? `Günlük Program: ${Utils.formatDate(dateStr)}`
       : `Daily Schedule: ${Utils.formatDate(dateStr)}`;
 
+    // Build separate tables for each office
+    const officeTables = CONFIG.OFFICES.map(office => {
+      const items = officeGroups[office] || [];
+      if (!items.length) return '';
+      
+      return `
+        <div class="office-section">
+          <h2 class="office-title">${Utils.escapeHtml(office)}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>${Utils.escapeHtml(I18n.t('time'))}</th>
+                <th>${Utils.escapeHtml(I18n.t('moveId'))}</th>
+                <th>${Utils.escapeHtml((State.lang === 'tr') ? 'Müşteri' : 'Client')}</th>
+                <th>${Utils.escapeHtml(I18n.t('task'))}</th>
+                <th>${Utils.escapeHtml(I18n.t('address'))}</th>
+                <th>${Utils.escapeHtml(I18n.t('personnel'))}</th>
+                <th>${Utils.escapeHtml(I18n.t('vehicle'))}</th>
+                <th>${Utils.escapeHtml(I18n.t('notesLabel'))}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(r => `
+                <tr>
+                  <td>${Utils.escapeHtml(r.time || '')}</td>
+                  <td>${Utils.escapeHtml(r.jobCode || '')}</td>
+                  <td>${Utils.escapeHtml(r.client || '')}</td>
+                  <td>${Utils.escapeHtml(r.task || '')}</td>
+                  <td>${Utils.escapeHtml(r.address || '')}</td>
+                  <td>${Utils.escapeHtml(r.personnel || '')}</td>
+                  <td>${Utils.escapeHtml(r.vehicle || '')}</td>
+                  <td>${Utils.escapeHtml(r.notes || '')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }).join('');
+
     const html = `
 <!doctype html>
 <html>
@@ -2119,75 +3614,39 @@ const ScheduleExport = {
   <title>${Utils.escapeHtml(title)}</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 18px; color: #111; }
-    h1 { font-size: 18px; margin: 0 0 12px 0; }
-    .meta { font-size: 12px; color: #555; margin-bottom: 12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { border: 1px solid #ccc; padding: 6px; vertical-align: top; }
-    th { background: #f2f2f2; text-align: left; }
+    h1 { font-size: 18px; margin: 0 0 16px 0; }
+    .meta { font-size: 12px; color: #555; margin-bottom: 20px; }
+    .office-section { margin-bottom: 24px; }
+    .office-title { font-size: 14px; margin: 0 0 8px 0; padding: 8px 12px; background: #f0f0f0; border-left: 4px solid #333; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 8px; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: top; text-align: left; }
+    th { background: #f8f8f8; font-weight: 600; }
     .small { color:#555; font-size: 11px; }
+    .no-items { color: #666; font-style: italic; padding: 20px; text-align: center; }
     @media print {
       body { padding: 0; }
       h1 { font-size: 16px; }
-      table { font-size: 11px; }
+      .office-section { page-break-inside: avoid; }
+      table { font-size: 10px; }
     }
   </style>
 </head>
 <body>
   <h1>${Utils.escapeHtml(title)}</h1>
   <div class="meta small">
-    ${Utils.escapeHtml((State.lang === 'tr') ? 'Not: PDF almak için yazdır penceresinde “PDF olarak kaydet” seçin.' : 'Tip: In the print dialog choose “Save as PDF”.')}
+    ${Utils.escapeHtml((State.lang === 'tr') ? 'Not: PDF almak için yazdır penceresinde "PDF olarak kaydet" seçin.' : 'Tip: In the print dialog choose "Save as PDF".')}
   </div>
-  <table>
-    <thead>
-      <tr>
-        <th>${Utils.escapeHtml(I18n.t('office'))}</th>
-        <th>${Utils.escapeHtml(I18n.t('time'))}</th>
-        <th>${Utils.escapeHtml(I18n.t('moveId'))}</th>
-        <th>${Utils.escapeHtml((State.lang === 'tr') ? 'Müşteri' : 'Client')}</th>
-        <th>${Utils.escapeHtml(I18n.t('task'))}</th>
-        <th>${Utils.escapeHtml(I18n.t('address'))}</th>
-        <th>${Utils.escapeHtml(I18n.t('personnel'))}</th>
-        <th>${Utils.escapeHtml(I18n.t('vehicle'))}</th>
-        <th>${Utils.escapeHtml(I18n.t('notesLabel'))}</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${
-        allRows.length
-          ? CONFIG.OFFICES.map(office => {
-              const items = officeGroups[office] || [];
-              if (!items.length) return '';
-              const header = `
-                <tr>
-                  <td colspan="9"><strong>${Utils.escapeHtml(office)}</strong></td>
-                </tr>
-              `;
-              const body = items.map(r => `
-            <tr>
-              <td>${Utils.escapeHtml(r.office || '')}</td>
-              <td>${Utils.escapeHtml(r.time || '')}</td>
-              <td>${Utils.escapeHtml(r.jobCode || '')}</td>
-              <td>${Utils.escapeHtml(r.client || '')}</td>
-              <td>${Utils.escapeHtml(r.task || '')}</td>
-              <td>${Utils.escapeHtml(r.address || '')}</td>
-              <td>${Utils.escapeHtml(r.personnel || '')}</td>
-              <td>${Utils.escapeHtml(r.vehicle || '')}</td>
-              <td>${Utils.escapeHtml(r.notes || '')}</td>
-            </tr>
-              `).join('');
-              return header + body;
-            }).join('')
-          : `<tr><td colspan="9">${Utils.escapeHtml((State.lang === 'tr') ? 'Bu gün için kayıt yok.' : 'No items for this day.')}</td></tr>`
-      }
-    </tbody>
-  </table>
+  ${allRows.length ? officeTables : `<div class="no-items">${Utils.escapeHtml((State.lang === 'tr') ? 'Bu gün için kayıt yok.' : 'No items for this day.')}</div>`}
 </body>
 </html>
 `.trim();
 
     const w = window.open('', '_blank');
     if (!w) {
-      alert((State.lang === 'tr') ? 'Açılır pencere engellendi. Lütfen pop-up izin verin.' : 'Popup blocked. Please allow popups.');
+      Modals.alert({ 
+        title: (State.lang === 'tr') ? 'Uyarı' : 'Warning',
+        message: (State.lang === 'tr') ? 'Açılır pencere engellendi. Lütfen pop-up izin verin.' : 'Popup blocked. Please allow popups.' 
+      });
       return;
     }
     w.document.open();
@@ -2257,37 +3716,62 @@ const JobsUI = {
 
   createCard(job) {
     const card = $.el('div', { className: 'job-card' });
-    card.appendChild($.el('h3', { textContent: `${job.jobCode || ''} – ${job.clientName || 'No client name'}` }));
-    card.appendChild($.el('p', { textContent: `${Utils.location(job.originCity, job.originCountry)} → ${Utils.location(job.destinationCity, job.destinationCountry)}` }));
-
-    const oAgent = State.getAgentName(job.originAgentId);
-    const dAgent = State.getAgentName(job.destinationAgentId);
-    if (oAgent || dAgent) {
-      const p = $.el('p', { className: 'job-card-agents' });
-      if (oAgent) {
-        p.appendChild(document.createTextNode(I18n.t('originAgent', { name: oAgent })));
-        if (dAgent) p.appendChild($.el('br'));
-      }
-      if (dAgent) p.appendChild(document.createTextNode(I18n.t('destinationAgent', { name: dAgent })));
-      card.appendChild(p);
+    
+    // Tag badge (top-right, positioned absolute)
+    if (job.tag && job.tag.trim()) {
+      card.classList.add('has-tag');
+      const tagBadge = $.el('span', { 
+        className: 'job-card-tag', 
+        textContent: job.tag.trim() 
+      });
+      card.appendChild(tagBadge);
     }
-
-    const statusP = $.el('p');
-    statusP.appendChild($.el('strong', { className: `status-label status-${job.status}`, textContent: I18n.statusText(job.status) }));
-    const modes = I18n.modesText(job.modes);
-    statusP.appendChild(document.createTextNode(' ' + modes));
-    card.appendChild(statusP);
-
-    const typeLabel = I18n.typeText(job.tradeDirection) || '-';
-    const payLabel = job.paymentReceived ? I18n.t('paidLabel') : I18n.t('unpaidLabel');
-
-    card.appendChild($.el('p', {
-      innerHTML: I18n.t('jobCardTypePayment', { type: typeLabel, pay: payLabel }),
-      style: 'font-size: 12px; color: #6b7280;'
+    
+    // Row 1: Client Name (left) — Job Code (right)
+    const row1 = $.el('div', { className: 'job-card-header' });
+    row1.appendChild($.el('span', { className: 'job-card-client', textContent: job.clientName || 'No client name' }));
+    row1.appendChild($.el('span', { className: 'job-card-code', textContent: job.jobCode || '' }));
+    card.appendChild(row1);
+    
+    // Row 2: Route
+    card.appendChild($.el('p', { 
+      className: 'job-card-route',
+      textContent: `${Utils.location(job.originCity, job.originCountry)} → ${Utils.location(job.destinationCity, job.destinationCountry)}` 
     }));
+    
+    // Row 3: Status (left) — Modes (right)
+    const row3 = $.el('div', { className: 'job-card-row' });
+    row3.appendChild($.el('span', { className: `status-label status-${job.status}`, textContent: I18n.statusText(job.status) }));
+    
+    const modesContainer = $.el('span', { className: 'job-card-modes' });
+    if (job.modes && job.modes.length > 0) {
+      job.modes.forEach(mode => {
+        modesContainer.appendChild($.el('span', { className: 'mode-badge', textContent: mode }));
+      });
+    }
+    row3.appendChild(modesContainer);
+    card.appendChild(row3);
+    
+    // Row 4: Trade Direction (left) — Payment Status (right)
+    const row4 = $.el('div', { className: 'job-card-row' });
+    const typeLabel = I18n.typeText(job.tradeDirection) || '-';
+    row4.appendChild($.el('span', { className: 'job-card-type', textContent: typeLabel }));
+    
+    const payLabel = job.paymentReceived ? I18n.t('paidLabel') : I18n.t('unpaidLabel');
+    const payClass = job.paymentReceived ? 'job-card-paid' : 'job-card-unpaid';
+    row4.appendChild($.el('span', { className: payClass, textContent: payLabel }));
+    card.appendChild(row4);
 
     card.addEventListener('click', () => this.showDetails(job));
     return card;
+  },
+
+  // Helper to add a label/value item to a grid
+  addDetailItem(container, label, value) {
+    const item = $.el('div', { className: 'detail-item' });
+    item.appendChild($.el('span', { className: 'detail-label', textContent: label }));
+    item.appendChild($.el('span', { className: 'detail-value', textContent: value || '-' }));
+    container.appendChild(item);
   },
 
   showDetails(job) {
@@ -2307,34 +3791,183 @@ const JobsUI = {
     const container = $.get('jobDetails');
     $.clear(container);
 
-    container.appendChild($.el('h3', { textContent: `${job.jobCode || ''} – ${job.clientName || 'No client name'}` }));
+    // ===== HEADER: Job Code + Client Name + Tag =====
+    const titleContainer = $.el('div', { className: 'move-details-header' });
+    const titleText = `${job.jobCode || ''} – ${job.clientName || 'No client name'}`;
+    titleContainer.appendChild($.el('h3', { textContent: titleText }));
+    
+    if (job.tag && job.tag.trim()) {
+      titleContainer.appendChild($.el('span', { 
+        className: 'move-details-tag', 
+        textContent: job.tag.trim() 
+      }));
+    }
+    container.appendChild(titleContainer);
 
-    const grid = $.el('div', { className: 'details-grid' });
-    const details = [
-  [I18n.t('statusLabel'), I18n.statusText(job.status)],
-  [I18n.t('modeLabel'), I18n.modesText(job.modes)],
-  [I18n.t('origin'), Utils.location(job.originCity, job.originCountry)],
-  [I18n.t('destination'), Utils.location(job.destinationCity, job.destinationCountry)],
-  [I18n.t('fullOriginAddress'), job.originFullAddress || '-'],
-  [I18n.t('fullDestinationAddress'), job.destinationFullAddress || '-'],
-  [I18n.t('moveId'), job.jobCode || '-'],
-  [I18n.t('typeLabel'), I18n.typeText(job.tradeDirection) || '-'],
-  ['Move Manager', job.moveManager || '-'],
-  [I18n.t('paymentReceived'), job.paymentReceived ? I18n.t('yes') : I18n.t('no')]
-];
+    // ===== STATUS BAR =====
+    const statusBar = $.el('div', { className: 'move-status-bar' });
+    const statusBadge = $.el('span', { 
+      className: `status-badge ${(job.status || '').toLowerCase()}`,
+      textContent: I18n.statusText(job.status)
+    });
+    statusBar.appendChild(statusBadge);
+    
+    const paymentBadge = $.el('span', { 
+      className: `payment-badge ${job.paymentReceived ? 'paid' : 'unpaid'}`,
+      textContent: job.paymentReceived ? I18n.t('paidLabel') : I18n.t('unpaidLabel')
+    });
+    statusBar.appendChild(paymentBadge);
+    
+    if (job.modes && job.modes.length > 0) {
+      const modeBadge = $.el('span', { 
+        className: 'mode-badge',
+        textContent: I18n.modesText(job.modes)
+      });
+      statusBar.appendChild(modeBadge);
+    }
+    container.appendChild(statusBar);
 
-// Add shipment contents info
-const contents = (job.shipmentContents || ['HHE']).join(' + ');
-details.push(['Shipment Contents', contents]);
+    // ===== CLIENT INFORMATION CARD =====
+    const clientCard = $.el('div', { className: 'details-card' });
+    clientCard.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'Müşteri Bilgileri' : 'Client Information' }));
+    const clientGrid = $.el('div', { className: 'details-card-grid' });
+    
+    this.addDetailItem(clientGrid, (State.lang === 'tr') ? 'Müşteri' : 'Client', job.clientName || '-');
+    if (job.organizationName) this.addDetailItem(clientGrid, I18n.t('organization'), job.organizationName);
+    if (job.clientPhone) this.addDetailItem(clientGrid, I18n.t('clientPhoneLabel'), job.clientPhone);
+    if (job.clientEmail) this.addDetailItem(clientGrid, I18n.t('clientEmailLabel'), job.clientEmail);
+    this.addDetailItem(clientGrid, I18n.t('clientTypeLabel'), job.clientType || '-');
+    
+    clientCard.appendChild(clientGrid);
+    container.appendChild(clientCard);
 
-details.forEach(([label, value]) => {
-  const p = $.el('p');
-  p.appendChild($.el('strong', { textContent: label + ': ' }));
-  p.appendChild(document.createTextNode(value));
-  grid.appendChild(p);
-});
+    // ===== MOVE INFORMATION CARD =====
+    const moveCard = $.el('div', { className: 'details-card' });
+    moveCard.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'Taşıma Bilgileri' : 'Move Information' }));
+    const moveGrid = $.el('div', { className: 'details-card-grid' });
+    
+    this.addDetailItem(moveGrid, I18n.t('moveId'), job.jobCode || '-');
+    this.addDetailItem(moveGrid, I18n.t('typeLabel'), I18n.typeText(job.tradeDirection) || '-');
+    this.addDetailItem(moveGrid, I18n.t('bookingTypeLabel'), job.bookingType || '-');
+    this.addDetailItem(moveGrid, I18n.t('moveManager'), job.moveManager || '-');
+    this.addDetailItem(moveGrid, I18n.t('shipmentContents'), (job.shipmentContents || ['HHE']).join(' + '));
+    
+    moveCard.appendChild(moveGrid);
+    container.appendChild(moveCard);
 
-container.appendChild(grid);
+    // ===== ROUTE CARD (Origin / Destination side by side) =====
+    const routeCard = $.el('div', { className: 'details-card' });
+    routeCard.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'Rota' : 'Route' }));
+    
+    const routeRow = $.el('div', { className: 'route-cards-row' });
+    
+    // Origin Card
+    const originCard = $.el('div', { className: 'route-card origin' });
+    originCard.appendChild($.el('div', { className: 'route-card-label', textContent: I18n.t('origin') }));
+    originCard.appendChild($.el('div', { className: 'route-card-city', textContent: Utils.location(job.originCity, job.originCountry) }));
+    if (job.originFullAddress) {
+      originCard.appendChild($.el('div', { className: 'route-card-address', textContent: job.originFullAddress }));
+    }
+    const originDetails = [];
+    if (job.originFloor) originDetails.push(`${I18n.t('floorLabel')}: ${job.originFloor}`);
+    if (job.originElevator) originDetails.push(`${I18n.t('elevatorLabel')}: ${job.originElevator}`);
+    if (job.originAccessConditions) originDetails.push(`${I18n.t('accessConditionsLabel')}: ${job.originAccessConditions}`);
+    if (originDetails.length > 0) {
+      const detailsDiv = $.el('div', { className: 'route-card-details' });
+      originDetails.forEach(d => detailsDiv.appendChild($.el('div', { textContent: d })));
+      originCard.appendChild(detailsDiv);
+    }
+    routeRow.appendChild(originCard);
+    
+    // Arrow
+    routeRow.appendChild($.el('div', { className: 'route-arrow', textContent: '→' }));
+    
+    // Destination Card
+    const destCard = $.el('div', { className: 'route-card destination' });
+    destCard.appendChild($.el('div', { className: 'route-card-label', textContent: I18n.t('destination') }));
+    destCard.appendChild($.el('div', { className: 'route-card-city', textContent: Utils.location(job.destinationCity, job.destinationCountry) }));
+    if (job.destinationFullAddress) {
+      destCard.appendChild($.el('div', { className: 'route-card-address', textContent: job.destinationFullAddress }));
+    }
+    const destDetails = [];
+    if (job.destinationFloor) destDetails.push(`${I18n.t('floorLabel')}: ${job.destinationFloor}`);
+    if (job.destinationElevator) destDetails.push(`${I18n.t('elevatorLabel')}: ${job.destinationElevator}`);
+    if (job.destinationAccessConditions) destDetails.push(`${I18n.t('accessConditionsLabel')}: ${job.destinationAccessConditions}`);
+    if (destDetails.length > 0) {
+      const detailsDiv = $.el('div', { className: 'route-card-details' });
+      destDetails.forEach(d => detailsDiv.appendChild($.el('div', { textContent: d })));
+      destCard.appendChild(detailsDiv);
+    }
+    routeRow.appendChild(destCard);
+    
+    routeCard.appendChild(routeRow);
+    container.appendChild(routeCard);
+
+    // ===== BROKERS CARD (if any) =====
+    const hasBrokers = job.customsBrokerId || job.seaFreightBrokerId || job.airFreightBrokerId;
+    if (hasBrokers) {
+      const brokersCard = $.el('div', { className: 'details-card' });
+      brokersCard.appendChild($.el('h4', { className: 'details-card-title', textContent: I18n.t('brokersSection') }));
+      const brokersGrid = $.el('div', { className: 'details-card-grid' });
+      
+      if (job.customsBrokerId) {
+        const broker = State.getAgent(job.customsBrokerId);
+        if (broker) this.addDetailItem(brokersGrid, I18n.t('customsBrokerLabel'), broker.name);
+      }
+      if (job.seaFreightBrokerId) {
+        const broker = State.getAgent(job.seaFreightBrokerId);
+        if (broker) this.addDetailItem(brokersGrid, I18n.t('seaFreightBrokerLabel'), broker.name);
+      }
+      if (job.airFreightBrokerId) {
+        const broker = State.getAgent(job.airFreightBrokerId);
+        if (broker) this.addDetailItem(brokersGrid, I18n.t('airFreightBrokerLabel'), broker.name);
+      }
+      
+      brokersCard.appendChild(brokersGrid);
+      container.appendChild(brokersCard);
+    }
+
+    // ===== PREVIOUS MOVES (collapsible) =====
+    if (job.clientName && job.clientName.trim()) {
+      const previousMoves = State.jobs.filter(j => 
+        j.id !== job.id && 
+        j.clientName && 
+        j.clientName.toLowerCase().trim() === job.clientName.toLowerCase().trim()
+      );
+      
+      if (previousMoves.length > 0) {
+        const prevCard = $.el('div', { className: 'details-card collapsible' });
+        
+        const prevHeader = $.el('div', { className: 'details-card-header-toggle' });
+        prevHeader.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? `Önceki Taşımalar (${previousMoves.length})` : `Previous Moves (${previousMoves.length})` }));
+        const toggleBtn = $.el('span', { className: 'collapse-toggle', textContent: '▼' });
+        prevHeader.appendChild(toggleBtn);
+        prevCard.appendChild(prevHeader);
+        
+        const prevList = $.el('div', { className: 'previous-moves-list' });
+        previousMoves.slice(0, 10).forEach(prevJob => {
+          const row = $.el('div', { className: 'previous-move-item' });
+          
+          const codeLink = $.el('span', { className: 'previous-move-code', textContent: prevJob.jobCode || '-' });
+          codeLink.addEventListener('click', () => {
+            State.selectedJobId = prevJob.id;
+            this.showDetails(prevJob);
+          });
+          row.appendChild(codeLink);
+          row.appendChild($.el('span', { className: 'previous-move-route', textContent: `${prevJob.originCity || '?'} → ${prevJob.destinationCity || '?'}` }));
+          row.appendChild($.el('span', { className: `previous-move-status status-${(prevJob.status || '').toLowerCase()}`, textContent: I18n.statusText(prevJob.status) }));
+          
+          prevList.appendChild(row);
+        });
+        prevCard.appendChild(prevList);
+        container.appendChild(prevCard);
+        
+        prevHeader.addEventListener('click', () => {
+          prevList.classList.toggle('hidden');
+          toggleBtn.textContent = prevList.classList.contains('hidden') ? '▶' : '▼';
+        });
+      }
+    }
 
 // Mode-specific information boxes
 const modeInfoContainer = $.el('div', { style: 'margin-top: 16px;' });
@@ -2346,6 +3979,10 @@ if (job.modes && job.modes.includes('Sea')) {
     ['Volume', `${job.seaVolume || 0} cbm`],
     ['Container', job.containerDetails || '-']
   ];
+  // Add gross weight if entered
+  if (job.seaGrossWeight) {
+    seaRows.push(['Gross Weight', `${job.seaGrossWeight} kg`]);
+  }
   seaRows.forEach(([label, value]) => {
     const row = $.el('div', { className: 'mode-info-row' });
     row.appendChild($.el('span', { className: 'mode-info-label', textContent: label }));
@@ -2378,6 +4015,10 @@ if (job.modes && job.modes.includes('Land')) {
   const landRows = [
     ['Volume', `${job.landVolume || 0} cbm`]
   ];
+  // Add gross weight if entered
+  if (job.landGrossWeight) {
+    landRows.push(['Gross Weight', `${job.landGrossWeight} kg`]);
+  }
   landRows.forEach(([label, value]) => {
     const row = $.el('div', { className: 'mode-info-row' });
     row.appendChild($.el('span', { className: 'mode-info-label', textContent: label }));
@@ -2408,13 +4049,25 @@ if (job.shipmentContents && job.shipmentContents.includes('Vehicle') && job.vehi
 }
 
 container.appendChild(modeInfoContainer);
-    container.appendChild(this.paymentSection(job));
+
+// Storage section (only shows if hasStorage is true) - moved before Cost Breakdown
+if (job.hasStorage) {
+  container.appendChild(StorageUI.renderJobStorageSection(job));
+}
+
+// Cost Breakdown section
+container.appendChild(this.createCostBreakdownSection(job));
+
+// Payment Status section (moved directly after cost breakdown)
+container.appendChild(this.paymentSection(job));
+
+// Move Steps section
     container.appendChild(this.stepsSection(job));
     this.renderAgents(job);
     ChecklistUI.render(job);
-    NotesUI.render(job);
     DocumentsUI.render(job);
     MediaUI.render(job);
+    NotesUI.render(job);
 
     const checklistSection = $.get('checklistSection');
     if (checklistSection) {
@@ -2431,14 +4084,214 @@ container.appendChild(modeInfoContainer);
     if (addDocumentBtn) addDocumentBtn.textContent = I18n.t('addDocument');
   },
 
+  // Cost Breakdown Section
+  createCostBreakdownSection(job) {
+    const section = $.el('div', { className: 'cost-breakdown-section' });
+    
+    const header = $.el('div', { className: 'cost-breakdown-header' });
+    header.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'Maliyet Dökümü' : 'Cost Breakdown' }));
+    
+    const addBtn = $.el('button', { 
+      type: 'button', 
+      className: 'cost-add-btn',
+      textContent: '+'
+    });
+    header.appendChild(addBtn);
+    section.appendChild(header);
+    
+    // Ensure chargeItems exists
+    if (!Array.isArray(job.chargeItems)) job.chargeItems = [];
+    
+    const chargesList = $.el('div', { className: 'cost-breakdown-list' });
+    
+    let grandTotal = 0;
+    const currency = job.currency || 'USD';
+    
+    // Moving charges (all non-storage charges grouped together)
+    if (job.chargeItems.length > 0) {
+      const movingSection = $.el('div', { className: 'cost-category' });
+      movingSection.appendChild($.el('div', { 
+        className: 'cost-category-header',
+        textContent: (State.lang === 'tr') ? 'Taşıma' : 'Moving'
+      }));
+      
+      let movingTotal = 0;
+      job.chargeItems.forEach((item, idx) => {
+        const row = $.el('div', { className: 'cost-item-row' });
+        
+        const desc = $.el('span', { className: 'cost-item-desc', textContent: item.description || item.category || '-' });
+        row.appendChild(desc);
+        
+        const amount = $.el('span', { 
+          className: 'cost-item-amount', 
+          textContent: Utils.formatCurrency(item.amount || 0, item.currency || currency)
+        });
+        row.appendChild(amount);
+        
+        const actions = $.el('div', { className: 'cost-item-actions' });
+        
+        const editBtn = $.el('button', { type: 'button', className: 'cost-item-btn', textContent: (State.lang === 'tr') ? 'Düzenle' : 'Edit' });
+        editBtn.addEventListener('click', () => this.editChargeItem(job, idx));
+        actions.appendChild(editBtn);
+        
+        const deleteBtn = $.el('button', { type: 'button', className: 'cost-item-btn cost-item-delete', textContent: '×' });
+        deleteBtn.addEventListener('click', async () => {
+          const confirmed = await Modals.confirm({
+            title: (State.lang === 'tr') ? 'Masrafı Sil' : 'Delete Charge',
+            message: (State.lang === 'tr') ? 'Bu masraf kalemi silinsin mi?' : 'Are you sure you want to delete this charge?',
+            confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete',
+            danger: true
+          });
+          if (confirmed) {
+            job.chargeItems.splice(idx, 1);
+            Storage.saveJobs();
+            this.showDetails(job);
+          }
+        });
+        actions.appendChild(deleteBtn);
+        
+        row.appendChild(actions);
+        movingSection.appendChild(row);
+        
+        movingTotal += (item.amount || 0);
+      });
+      
+      // Moving subtotal
+      if (job.chargeItems.length > 1) {
+        const subtotalRow = $.el('div', { className: 'cost-subtotal-row' });
+        subtotalRow.appendChild($.el('span', { textContent: (State.lang === 'tr') ? 'Alt Toplam:' : 'Subtotal:' }));
+        subtotalRow.appendChild($.el('span', { textContent: Utils.formatCurrency(movingTotal, currency) }));
+        movingSection.appendChild(subtotalRow);
+      }
+      
+      chargesList.appendChild(movingSection);
+      grandTotal += movingTotal;
+    }
+    
+    // Storage cost (if linked storage exists)
+    let storageCost = 0;
+    let storageCurrency = 'TRY';
+    if (job.storageId) {
+      const storage = State.storageRecords.find(s => s.id === job.storageId);
+      if (storage) {
+        const costInfo = StorageUI.calculateCost(storage);
+        storageCost = costInfo.total || 0;
+        storageCurrency = costInfo.currency || 'TRY';
+        
+        if (storageCost > 0) {
+          const storageSection = $.el('div', { className: 'cost-category' });
+          storageSection.appendChild($.el('div', { 
+            className: 'cost-category-header',
+            textContent: (State.lang === 'tr') ? 'Depolama' : 'Storage'
+          }));
+          
+          const storageRow = $.el('div', { className: 'cost-item-row' });
+          storageRow.appendChild($.el('span', { 
+            className: 'cost-item-desc', 
+            textContent: `${StorageUI.getDaysInStorage(storage)} ${(State.lang === 'tr') ? 'gün' : 'days'}`
+          }));
+          storageRow.appendChild($.el('span', { 
+            className: 'cost-item-amount', 
+            textContent: Utils.formatCurrency(storageCost, storageCurrency)
+          }));
+          storageRow.appendChild($.el('div', { className: 'cost-item-actions' })); // empty placeholder
+          storageSection.appendChild(storageRow);
+          
+          chargesList.appendChild(storageSection);
+        }
+      }
+    }
+    
+    section.appendChild(chargesList);
+    
+    // Grand total (include storage)
+    const totalRow = $.el('div', { className: 'cost-grand-total' });
+    totalRow.appendChild($.el('span', { textContent: (State.lang === 'tr') ? 'TOPLAM:' : 'TOTAL:' }));
+    
+    // If storage is in different currency, show both
+    if (storageCost > 0 && storageCurrency !== currency) {
+      const totalText = `${Utils.formatCurrency(grandTotal, currency)} + ${Utils.formatCurrency(storageCost, storageCurrency)}`;
+      totalRow.appendChild($.el('span', { textContent: totalText }));
+    } else {
+      totalRow.appendChild($.el('span', { textContent: Utils.formatCurrency(grandTotal + storageCost, currency) }));
+    }
+    section.appendChild(totalRow);
+    
+    // Add charge button handler
+    addBtn.addEventListener('click', () => this.addChargeItem(job));
+    
+    return section;
+  },
+
+  getCategoryNameTR(category) {
+    const map = {
+      'Origin': 'Çıkış',
+      'Freight': 'Navlun',
+      'Destination': 'Varış',
+      'Moving': 'Taşıma',
+      'Additional': 'Ek Ücretler'
+    };
+    return map[category] || category;
+  },
+
+  async addChargeItem(job) {
+    const result = await Modals.prompt({
+      title: (State.lang === 'tr') ? 'Masraf Ekle' : 'Add Charge',
+      message: (State.lang === 'tr') ? 'Yeni masraf kalemi bilgilerini girin.' : 'Enter the charge item details.',
+      fields: [
+        { name: 'description', label: (State.lang === 'tr') ? 'Açıklama' : 'Description', type: 'text', placeholder: (State.lang === 'tr') ? 'Masraf açıklaması' : 'Charge description' },
+        { name: 'amount', label: (State.lang === 'tr') ? 'Tutar' : 'Amount', type: 'number', value: '0', step: '0.01' },
+        { name: 'currency', label: (State.lang === 'tr') ? 'Para Birimi' : 'Currency', type: 'text', value: job.currency || 'USD' }
+      ],
+      confirmText: (State.lang === 'tr') ? 'Ekle' : 'Add'
+    });
+    
+    if (!result) return;
+    
+    if (!Array.isArray(job.chargeItems)) job.chargeItems = [];
+    job.chargeItems.push({
+      category: 'Moving',
+      description: result.description || '',
+      amount: result.amount || 0,
+      currency: result.currency || 'USD'
+    });
+    
+    Storage.saveJobs();
+    this.showDetails(job);
+  },
+
+  async editChargeItem(job, index) {
+    const item = job.chargeItems[index];
+    if (!item) return;
+    
+    const result = await Modals.prompt({
+      title: (State.lang === 'tr') ? 'Masrafı Düzenle' : 'Edit Charge',
+      message: '',
+      fields: [
+        { name: 'description', label: (State.lang === 'tr') ? 'Açıklama' : 'Description', type: 'text', value: item.description || '' },
+        { name: 'amount', label: (State.lang === 'tr') ? 'Tutar' : 'Amount', type: 'number', value: String(item.amount || 0), step: '0.01' },
+        { name: 'currency', label: (State.lang === 'tr') ? 'Para Birimi' : 'Currency', type: 'text', value: item.currency || 'USD' }
+      ],
+      confirmText: (State.lang === 'tr') ? 'Kaydet' : 'Save'
+    });
+    
+    if (!result) return;
+    
+    item.description = result.description;
+    item.amount = result.amount || 0;
+    item.currency = result.currency;
+    
+    Storage.saveJobs();
+    this.showDetails(job);
+  },
+
   paymentSection(job) {
-    const section = $.el('div', { className: 'payment-section' });
-    const p = $.el('p');
-    p.appendChild($.el('strong', { textContent: I18n.t('updatePaymentStatus') }));
-    section.appendChild(p);
+    const section = $.el('div', { className: 'details-card payment-status-card' });
+    section.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'Ödeme Durumu' : 'Payment Status' }));
+    
     const buttons = $.el('div', { className: 'payment-buttons' });
 
-    [[I18n.t('yes'), true], [I18n.t('no'), false]].forEach(([label, isYes]) => {
+    [[I18n.t('paidLabel'), true], [I18n.t('unpaidLabel'), false]].forEach(([label, isYes]) => {
       const btn = $.el('button', {
         type: 'button',
         className: `payment-btn ${job.paymentReceived === isYes ? 'active' : ''}`,
@@ -2450,6 +4303,7 @@ container.appendChild(modeInfoContainer);
         this.showDetails(job);
         this.render();
         ScheduleUI.render();
+        DashboardUI.render();
       });
       buttons.appendChild(btn);
     });
@@ -2464,7 +4318,7 @@ stepsSection(job) {
   const headerRow = $.el('div', {
     style: 'display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px;'
   });
-  headerRow.appendChild($.el('h4', { textContent: I18n.t('moveSteps'), style: 'margin:0;' }));
+  headerRow.appendChild($.el('h4', { className: 'details-section-title', textContent: I18n.t('moveSteps'), style: 'margin:0;' }));
 
   // Add Move Step button with dropdown
   const addBtnContainer = $.el('div', { style: 'position: relative;' });
@@ -2563,15 +4417,19 @@ stepsSection(job) {
 },
 
 // Add a new move step to the job
-addMoveStep(job, stepTypeId) {
+async addMoveStep(job, stepTypeId) {
   const def = CONFIG.STEP_DEFINITIONS[stepTypeId] || {};
   
   // If custom, prompt for label
   let label = def.label || stepTypeId;
   if (stepTypeId === 'custom') {
-    const customLabel = prompt((State.lang === 'tr') ? 'Adım adını girin:' : 'Enter step name:');
-    if (!customLabel || !customLabel.trim()) return;
-    label = customLabel.trim();
+    const result = await Modals.prompt({
+      title: (State.lang === 'tr') ? 'Özel Adım' : 'Custom Step',
+      message: (State.lang === 'tr') ? 'Adım adını girin:' : 'Enter step name:',
+      fields: [{ name: 'stepName', label: (State.lang === 'tr') ? 'Adım Adı' : 'Step Name', type: 'text' }]
+    });
+    if (!result || !result.stepName || !result.stepName.trim()) return;
+    label = result.stepName.trim();
   }
   
   // Create new step
@@ -2676,6 +4534,7 @@ stepCardCollapsible(step, idx, job) {
   ];
 
   if (def.fields.includes('address')) rows.push([I18n.t('address'), addrView]);
+  if (def.fields.includes('estimatedVolume')) rows.push([I18n.t('estimatedVolume'), step.estimatedVolume ? `${step.estimatedVolume} cbm` : '-']);
   if (def.fields.includes('portDetails')) rows.push([I18n.t('portDetails'), step.portDetails || '-']);
   if (def.fields.includes('pickupAirport')) rows.push([I18n.t('pickupAirport'), step.pickupAirport || '-']);
   if (def.fields.includes('deliveryAirport')) rows.push([I18n.t('deliveryAirport'), step.deliveryAirport || '-']);
@@ -2734,6 +4593,12 @@ stepCardCollapsible(step, idx, job) {
     const div = $.el('div', { className: 'full-width' });
     div.appendChild($.el('label', { textContent: I18n.t('address') }));
     div.appendChild($.el('textarea', { rows: '2', className: 'step-address-input', textContent: step.address || '' }));
+    editBox.appendChild(div);
+  }
+  if (def.fields.includes('estimatedVolume')) {
+    const div = $.el('div');
+    div.appendChild($.el('label', { textContent: I18n.t('estimatedVolume') + ' (cbm)' }));
+    div.appendChild($.el('input', { type: 'number', step: '0.1', className: 'step-estimated-volume-input', value: step.estimatedVolume || '' }));
     editBox.appendChild(div);
   }
   if (def.fields.includes('portDetails')) {
@@ -2797,6 +4662,7 @@ stepCardCollapsible(step, idx, job) {
     this.showDetails(job);
     ScheduleUI.render();
     if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    DashboardUI.render();
   });
 
   editBtn.addEventListener('click', () => {
@@ -2819,12 +4685,13 @@ stepCardCollapsible(step, idx, job) {
     step.vehicle = card.querySelector('.step-vehicle-input').value.trim();
     const officeValue = card.querySelector('.step-office-select').value || '';
     if (!officeValue) {
-      alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.' });
       return;
     }
     step.office = officeValue;
 
     if (def.fields.includes('address')) step.address = card.querySelector('.step-address-input').value.trim();
+    if (def.fields.includes('estimatedVolume')) step.estimatedVolume = parseFloat(card.querySelector('.step-estimated-volume-input').value) || 0;
     if (def.fields.includes('portDetails')) step.portDetails = card.querySelector('.step-port-input').value.trim();
     if (def.fields.includes('pickupAirport')) step.pickupAirport = card.querySelector('.step-pickup-airport-input').value.trim();
     if (def.fields.includes('deliveryAirport')) step.deliveryAirport = card.querySelector('.step-delivery-airport-input').value.trim();
@@ -2835,19 +4702,27 @@ stepCardCollapsible(step, idx, job) {
     Storage.saveJobs();
     ScheduleUI.render();
     if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
-    alert(I18n.t('stepSaved'));
+    DashboardUI.render();
+    Modals.alert({ title: (State.lang === 'tr') ? 'Başarılı' : 'Success', message: I18n.t('stepSaved') });
     this.showDetails(job);
   });
 
-  deleteStepBtn.addEventListener('click', (e) => {
+  deleteStepBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
     const confirmMsg = (State.lang === 'tr') ? 'Bu adımı silmek istediğinize emin misiniz?' : 'Are you sure you want to remove this step?';
-    if (!confirm(confirmMsg)) return;
+    const confirmed = await Modals.confirm({ 
+      title: (State.lang === 'tr') ? 'Adımı Sil' : 'Delete Step',
+      message: confirmMsg,
+      danger: true,
+      confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+    });
+    if (!confirmed) return;
     job.steps.splice(idx, 1);
     Storage.saveJobs();
     this.showDetails(job);
     ScheduleUI.render();
     if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    DashboardUI.render();
   });
 
   actions.appendChild(completeBtn);
@@ -3045,9 +4920,15 @@ linkedExtraJobCollapsible(job, item) {
     if (current) this.showDetails(current);
   });
 
-  deleteBtn.addEventListener('click', (e) => {
+  deleteBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
+    const confirmed = await Modals.confirm({
+      title: (State.lang === 'tr') ? 'Ek İşi Sil' : 'Delete Additional Job',
+      message: I18n.t('deleteExtraJobConfirm'),
+      danger: true,
+      confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+    });
+    if (!confirmed) return;
     ScheduleExtraJobs.deleteById(dateStr, ej.id);
     Storage.saveScheduleExtraJobs();
     ScheduleUI.render();
@@ -3221,7 +5102,7 @@ linkedExtraJobCollapsible(job, item) {
       step.vehicle = card.querySelector('.step-vehicle-input').value.trim();
       const officeValue = card.querySelector('.step-office-select').value || '';
       if (!officeValue) {
-        alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+        Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.' });
         return;
       }
       step.office = officeValue;
@@ -3237,7 +5118,7 @@ linkedExtraJobCollapsible(job, item) {
       Storage.saveJobs();
       ScheduleUI.render();
       if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
-      alert(I18n.t('stepSaved'));
+      Modals.alert({ title: (State.lang === 'tr') ? 'Başarılı' : 'Success', message: I18n.t('stepSaved') });
       this.showDetails(job);
     });
 
@@ -3254,6 +5135,7 @@ linkedExtraJobCollapsible(job, item) {
     this.showDetails(job);
     ScheduleUI.render();
     if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    DashboardUI.render();
   });
 
   // Delete step button
@@ -3262,15 +5144,22 @@ linkedExtraJobCollapsible(job, item) {
     className: 'delete-step-btn',
     textContent: (State.lang === 'tr') ? 'Sil' : 'Remove'
   });
-  deleteStepBtn.addEventListener('click', (e) => {
+  deleteStepBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
     const confirmMsg = (State.lang === 'tr') ? 'Bu adımı silmek istediğinize emin misiniz?' : 'Are you sure you want to remove this step?';
-    if (!confirm(confirmMsg)) return;
+    const confirmed = await Modals.confirm({
+      title: (State.lang === 'tr') ? 'Adımı Sil' : 'Delete Step',
+      message: confirmMsg,
+      danger: true,
+      confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+    });
+    if (!confirmed) return;
     job.steps.splice(idx, 1);
     Storage.saveJobs();
     this.showDetails(job);
     ScheduleUI.render();
     if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    DashboardUI.render();
   });
 
   actions.appendChild(completeBtn);
@@ -3401,9 +5290,15 @@ linkedExtraJobCollapsible(job, item) {
       if (current) this.showDetails(current);
     });
 
-    deleteBtn.addEventListener('click', (e) => {
+    deleteBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
+    const confirmed = await Modals.confirm({
+      title: (State.lang === 'tr') ? 'Ek İşi Sil' : 'Delete Additional Job',
+      message: I18n.t('deleteExtraJobConfirm'),
+      danger: true,
+      confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+    });
+    if (!confirmed) return;
     ScheduleExtraJobs.deleteById(dateStr, ej.id);
     Storage.saveScheduleExtraJobs();
     ScheduleUI.render();
@@ -3536,12 +5431,12 @@ linkedExtraJobCollapsible(job, item) {
       const office = officeSelect.value || '';
 
       if (!dateStr) {
-        alert((State.lang === 'tr') ? 'Lütfen tarih seçin.' : 'Please select a date.');
+        Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen tarih seçin.' : 'Please select a date.' });
         return;
       }
 
       if (!taskType && !customTaskName && !time && !personnel && !vehicle && !address && !notes && !office) {
-        alert(I18n.t('fillAtLeastOneField'));
+        Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: I18n.t('fillAtLeastOneField') });
         return;
       }
 
@@ -3838,9 +5733,9 @@ const MediaUI = {
         const img = $.el('img', { src: item.fileData, alt: item.label || 'Image' });
         preview.appendChild(img);
       } else if (item.fileData && item.fileType && item.fileType.startsWith('video/')) {
-        preview.appendChild($.el('span', { className: 'media-icon', textContent: '🎬' }));
+        preview.appendChild($.el('span', { className: 'media-icon', textContent: 'Video' }));
       } else {
-        preview.appendChild($.el('span', { className: 'media-icon', textContent: '📷' }));
+        preview.appendChild($.el('span', { className: 'media-icon', textContent: 'Media' }));
       }
       card.appendChild(preview);
       
@@ -3885,24 +5780,37 @@ const MediaUI = {
 // ============================================================
 
 const DocumentsTabUI = {
-  render() {
-  // Get containers
-  const listEl = $.get('documentsListGlobal');
-  const resourceContainer = $.get('resourceLibraryContainer');
+  currentTab: 'search', // 'search' or 'library'
   
-  if (!listEl || !resourceContainer) return;
-
-  // Show/hide based on active tab
-  if (State.documentsViewTab === 'search') {
-    listEl.style.display = 'block';
-    resourceContainer.style.display = 'none';
+  render() {
+    // Render based on current tab
+    if (this.currentTab === 'search') {
+      this.renderDocumentsSearch();
+    } else {
+      this.renderResourceLibrary();
+    }
+  },
+  
+  renderDocumentsSearch() {
+    // Show/hide panels
+    const searchPanel = $.get('documentsSearchPanel');
+    const libraryPanel = $.get('resourceLibraryPanel');
+    if (searchPanel) $.show(searchPanel);
+    if (libraryPanel) $.hide(libraryPanel);
     
-    // Render search content (existing code)
+    // Update right panel title
+    const rightTitle = $.get('documentsRightTitle');
+    if (rightTitle) rightTitle.textContent = (State.lang === 'tr') ? 'Belge Detayları' : 'Document Details';
+    
+    // Get containers
+    const listEl = $.get('documentsListGlobal');
+    if (!listEl) return;
+
     const jobFilterEl = $.get('documentsJobFilter');
     const searchEl = $.get('documentsSearchInput');
 
-    const searchTerm = (searchEl.value || '').toLowerCase().trim();
-    this.refreshJobFilter(jobFilterEl);
+    const searchTerm = (searchEl?.value || '').toLowerCase().trim();
+    if (jobFilterEl) this.refreshJobFilter(jobFilterEl);
     $.clear(listEl);
 
     const rows = [];
@@ -3913,7 +5821,7 @@ const DocumentsTabUI = {
 
     let filtered = rows;
 
-    const selectedJobCode = jobFilterEl.value;
+    const selectedJobCode = jobFilterEl?.value;
     if (selectedJobCode) {
       filtered = filtered.filter(({ job }) => job.jobCode === selectedJobCode);
     }
@@ -3939,19 +5847,46 @@ const DocumentsTabUI = {
     }
 
     if (!filtered.length) {
-      listEl.appendChild($.el('p', { textContent: I18n.t('noDocumentsFound') }));
-      return;
+      listEl.appendChild($.el('p', { 
+        textContent: I18n.t('noDocumentsFound'),
+        style: 'color: var(--color-text-muted); text-align: center; padding: 20px;'
+      }));
+    } else {
+      filtered.forEach(({ job, doc }) => listEl.appendChild(this.row(job, doc)));
     }
-
-    filtered.forEach(({ job, doc }) => listEl.appendChild(this.row(job, doc)));
+  },
+  
+  renderResourceLibrary() {
+    // Show/hide panels
+    const searchPanel = $.get('documentsSearchPanel');
+    const libraryPanel = $.get('resourceLibraryPanel');
+    if (searchPanel) $.hide(searchPanel);
+    if (libraryPanel) $.show(libraryPanel);
     
-  } else {
-    // Show library
-    listEl.style.display = 'none';
-    resourceContainer.style.display = 'block';
+    // Update right panel title
+    const rightTitle = $.get('documentsRightTitle');
+    if (rightTitle) rightTitle.textContent = (State.lang === 'tr') ? 'Kaynak Detayları' : 'Resource Details';
+    
+    // Render resource library
     ResourceLibraryUI.render();
-  }
-},
+  },
+  
+  switchTab(tabType) {
+    this.currentTab = tabType;
+    
+    // Update tab buttons
+    document.querySelectorAll('.documents-type-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.type === tabType);
+    });
+    
+    // Show/hide Add Resource button based on tab
+    const addBtn = $.get('addResourceBtn');
+    if (addBtn) {
+      addBtn.style.display = tabType === 'library' ? 'block' : 'none';
+    }
+    
+    this.render();
+  },
 
   refreshJobFilter(selectEl) {
     const previous = selectEl.value;
@@ -4038,13 +5973,10 @@ const ResourceLibraryUI = {
     $.clear(container);
 
     // Header with Add button
-    const header = $.el('div', { 
-      style: 'display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;' 
-    });
+    const header = $.el('div', { className: 'resource-library-header' });
     
     const title = $.el('h3', { 
-      textContent: (State.lang === 'tr') ? 'Kaynak Kütüphanesi' : 'Resource Library',
-      style: 'margin:0;'
+      textContent: (State.lang === 'tr') ? 'Kaynak Kütüphanesi' : 'Resource Library'
     });
     
     const addBtn = $.el('button', { 
@@ -4059,9 +5991,13 @@ const ResourceLibraryUI = {
 
     // Render categories
     if (!State.resourceLibrary || !State.resourceLibrary.categories) {
-      container.appendChild($.el('p', { 
+      const emptyState = $.el('div', { className: 'empty-state' });
+      emptyState.appendChild($.el('div', { className: 'empty-state-icon', textContent: '' }));
+      emptyState.appendChild($.el('p', { 
+        className: 'empty-state-text',
         textContent: (State.lang === 'tr') ? 'Henüz kaynak yok.' : 'No resources yet.'
       }));
+      container.appendChild(emptyState);
       return;
     }
 
@@ -4074,37 +6010,37 @@ const ResourceLibraryUI = {
     const categoryDiv = $.el('div', { className: 'resource-category' });
     
     // Category header
-    const header = $.el('div', { 
-      className: 'resource-category-header',
-      style: 'display:flex; align-items:center; gap:8px; padding:12px; background:#f3f4f6; border-radius:6px; margin-bottom:8px; cursor:pointer;'
-    });
+    const header = $.el('div', { className: 'resource-category-header' });
     
-    const icon = $.el('span', { textContent: '📁', style: 'font-size:20px;' });
-    const name = $.el('strong', { 
-      textContent: (State.lang === 'tr' ? category.nametr : category.name) + ` (${category.items.length})`
+    const icon = $.el('span', { className: 'resource-category-icon', textContent: '' });
+    const name = $.el('span', { 
+      className: 'resource-category-name',
+      textContent: (State.lang === 'tr' ? category.nametr : category.name)
+    });
+    const count = $.el('span', {
+      className: 'resource-category-count',
+      textContent: category.items.length
     });
     const arrow = $.el('span', { 
       textContent: '▼', 
-      className: 'category-arrow',
-      style: 'margin-left:auto; transition:transform 0.2s;'
+      className: 'category-arrow'
     });
     
     header.appendChild(icon);
     header.appendChild(name);
+    header.appendChild(count);
     header.appendChild(arrow);
     categoryDiv.appendChild(header);
 
     // Items container (collapsible)
-    const itemsContainer = $.el('div', { 
-      className: 'resource-items',
-      style: 'padding-left:32px;'
-    });
+    const itemsContainer = $.el('div', { className: 'resource-items' });
 
     if (category.items.length === 0) {
-      itemsContainer.appendChild($.el('p', { 
+      const emptyMsg = $.el('p', { 
         textContent: (State.lang === 'tr') ? 'Bu kategoride kaynak yok.' : 'No resources in this category.',
-        style: 'color:#6b7280; font-size:14px; padding:8px 0;'
-      }));
+        style: 'color:#6b7280; font-size:13px; padding:8px 0;'
+      });
+      itemsContainer.appendChild(emptyMsg);
     } else {
       category.items.forEach(item => {
         itemsContainer.appendChild(this.renderItem(item, category.id));
@@ -4125,45 +6061,42 @@ const ResourceLibraryUI = {
   },
 
   renderItem(item, categoryId) {
-    const itemDiv = $.el('div', { 
-      className: 'resource-item',
-      style: 'display:flex; align-items:center; justify-content:space-between; padding:10px; border:1px solid #e5e7eb; border-radius:4px; margin-bottom:6px; background:white;'
-    });
+    const itemDiv = $.el('div', { className: 'resource-item' });
 
     // Left side: icon + name
-    const leftDiv = $.el('div', { style: 'display:flex; align-items:center; gap:8px; flex:1;' });
-    const fileIcon = $.el('span', { textContent: '📄', style: 'font-size:18px;' });
+    const infoDiv = $.el('div', { className: 'resource-item-info' });
+    const fileIcon = $.el('span', { className: 'resource-item-icon', textContent: '' });
     const nameSpan = $.el('span', { 
-      textContent: State.lang === 'tr' ? item.nametr : item.name,
-      style: 'font-weight:500;'
+      className: 'resource-item-name',
+      textContent: State.lang === 'tr' ? item.nametr : item.name
     });
     
-    leftDiv.appendChild(fileIcon);
-    leftDiv.appendChild(nameSpan);
+    infoDiv.appendChild(fileIcon);
+    infoDiv.appendChild(nameSpan);
 
     // Right side: actions
-    const actionsDiv = $.el('div', { style: 'display:flex; gap:8px;' });
+    const actionsDiv = $.el('div', { className: 'resource-item-actions' });
 
     // Download button
     const downloadBtn = $.el('button', { 
       type: 'button',
-      textContent: (State.lang === 'tr') ? 'İndir' : 'Download',
-      style: 'padding:6px 12px; font-size:12px;'
+      className: 'download-btn',
+      textContent: (State.lang === 'tr') ? 'İndir' : 'Download'
     });
     downloadBtn.addEventListener('click', () => this.downloadItem(item));
 
     // Delete button
     const deleteBtn = $.el('button', { 
       type: 'button',
-      textContent: (State.lang === 'tr') ? 'Sil' : 'Delete',
-      style: 'padding:6px 12px; font-size:12px; background:#ef4444; color:white; border:none; border-radius:4px; cursor:pointer;'
+      className: 'delete-btn',
+      textContent: (State.lang === 'tr') ? 'Sil' : 'Delete'
     });
     deleteBtn.addEventListener('click', () => this.deleteItem(item.id, categoryId));
 
     actionsDiv.appendChild(downloadBtn);
     actionsDiv.appendChild(deleteBtn);
 
-    itemDiv.appendChild(leftDiv);
+    itemDiv.appendChild(infoDiv);
     itemDiv.appendChild(actionsDiv);
 
     return itemDiv;
@@ -4288,7 +6221,7 @@ form.addEventListener('submit', (e) => {
   const file = form.file.files[0];
 
   if (!file) {
-    alert((State.lang === 'tr') ? 'Lütfen dosya seçin.' : 'Please select a file.');
+    Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen dosya seçin.' : 'Please select a file.' });
     return;
   }
 
@@ -4315,7 +6248,7 @@ form.addEventListener('submit', (e) => {
     Modals.close('resourceLibraryModal');
     ResourceLibraryUI.render();
 
-    alert((State.lang === 'tr') ? 'Kaynak eklendi!' : 'Resource added!');
+    Modals.alert({ title: (State.lang === 'tr') ? 'Başarılı' : 'Success', message: (State.lang === 'tr') ? 'Kaynak eklendi!' : 'Resource added!' });
   };
 
   reader.readAsDataURL(file);
@@ -4329,7 +6262,7 @@ document.body.appendChild(modal);
     
   downloadItem(item) {
     if (!item.fileData) {
-      alert((State.lang === 'tr') ? 'Dosya bulunamadı.' : 'File not found.');
+      Modals.alert({ title: (State.lang === 'tr') ? 'Hata' : 'Error', message: (State.lang === 'tr') ? 'Dosya bulunamadı.' : 'File not found.' });
       return;
     }
 
@@ -4342,19 +6275,24 @@ document.body.appendChild(modal);
   },
 
   deleteItem(itemId, categoryId) {
-    if (!confirm((State.lang === 'tr') ? 'Bu kaynağı silmek istediğinize emin misiniz?' : 'Are you sure you want to delete this resource?')) {
-      return;
-    }
+    Modals.confirm({
+      title: (State.lang === 'tr') ? 'Kaynağı Sil' : 'Delete Resource',
+      message: (State.lang === 'tr') ? 'Bu kaynağı silmek istediğinize emin misiniz?' : 'Are you sure you want to delete this resource?',
+      danger: true,
+      confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+    }).then(confirmed => {
+      if (!confirmed) return;
 
-    const category = State.resourceLibrary.categories.find(c => c.id === categoryId);
-    if (!category) return;
+      const category = State.resourceLibrary.categories.find(c => c.id === categoryId);
+      if (!category) return;
 
-    const index = category.items.findIndex(item => item.id === itemId);
-    if (index !== -1) {
-      category.items.splice(index, 1);
-      Storage.saveResourceLibrary();
-      this.render();
-    }
+      const index = category.items.findIndex(item => item.id === itemId);
+      if (index !== -1) {
+        category.items.splice(index, 1);
+        Storage.saveResourceLibrary();
+        this.render();
+      }
+    });
   }
 };
 
@@ -4409,27 +6347,52 @@ const QuotesUI = {
   createCard(quote) {
     const card = $.el('div', { className: 'quote-card' });
     
-    card.appendChild($.el('h3', { 
-      textContent: `${quote.quoteCode || ''} - ${quote.clientName || 'No client name'}` 
-    }));
+    // Row 1: Client Name (left) — Quote Code (right) - matching job card layout
+    const row1 = $.el('div', { className: 'quote-card-header' });
+    row1.appendChild($.el('span', { className: 'quote-card-client', textContent: quote.clientName || 'No client name' }));
+    row1.appendChild($.el('span', { className: 'quote-card-code', textContent: quote.quoteCode || '' }));
+    card.appendChild(row1);
     
+    // Row 2: Organization (if exists)
     if (quote.clientOrganization) {
       card.appendChild($.el('p', { 
-        textContent: quote.clientOrganization,
-        style: 'font-size: 12px; color: #6b7280; margin-top: -8px;'
+        className: 'quote-card-org',
+        textContent: quote.clientOrganization
       }));
     }
     
+    // Row 3: Route
     card.appendChild($.el('p', { 
+      className: 'quote-card-route',
       textContent: `${quote.origin || '-'} to ${quote.destination || '-'}` 
     }));
     
-    const modes = (quote.modes || []).join(' + ') || 'No mode';
+    // Row 4: Modes (left) — Type (right)
+    const row4 = $.el('div', { className: 'quote-card-row' });
+    
+    // Mode badges
+    const modesContainer = $.el('span', { className: 'quote-card-modes' });
+    if (quote.modes && quote.modes.length > 0) {
+      quote.modes.forEach(mode => {
+        modesContainer.appendChild($.el('span', { className: 'mode-badge', textContent: mode }));
+      });
+    }
+    row4.appendChild(modesContainer);
+    
+    // Type label
     const typeLabel = quote.type || '-';
-    card.appendChild($.el('p', {
-      textContent: `${modes} | ${typeLabel}`,
-      style: 'font-size: 12px; color: #6b7280;'
-    }));
+    row4.appendChild($.el('span', { className: 'quote-card-type', textContent: typeLabel }));
+    card.appendChild(row4);
+    
+    // Row 5: Linked job indicator (if converted)
+    if (quote.convertedToJobId) {
+      const linkedJob = State.getJob(quote.convertedToJobId);
+      if (linkedJob) {
+        const linkedRow = $.el('div', { className: 'quote-card-linked' });
+        linkedRow.textContent = `Converted to ${linkedJob.jobCode}`;
+        card.appendChild(linkedRow);
+      }
+    }
     
     card.addEventListener('click', () => this.showDetails(quote));
     return card;
@@ -4443,29 +6406,46 @@ const QuotesUI = {
     const container = $.get('quoteDetails');
     $.clear(container);
     
-    container.appendChild($.el('h3', { 
-      textContent: `${quote.quoteCode || ''} - ${quote.clientName || 'No client name'}` 
-    }));
+    // ===== HEADER: Quote Code + Client Name =====
+    const titleContainer = $.el('div', { className: 'move-details-header' });
+    const titleText = `${quote.quoteCode || ''} - ${quote.clientName || 'No client name'}`;
+    titleContainer.appendChild($.el('h3', { textContent: titleText }));
+    container.appendChild(titleContainer);
     
-    const grid = $.el('div', { className: 'details-grid' });
-    const details = [
-      ['Client', quote.clientName || '-'],
-      ['Organization', quote.clientOrganization || '-'],
-      ['Origin', quote.origin || '-'],
-      ['Destination', quote.destination || '-'],
-      ['Type', quote.type || '-'],
-      ['Modes', (quote.modes || []).join(', ') || '-'],
-      ['Insurance', quote.insurance ? 'Yes' : 'No'],
-      ['Valid Until', quote.validUntil ? Utils.formatDate(quote.validUntil) : '-']
-    ];
+    // ===== CLIENT INFORMATION CARD =====
+    const clientCard = $.el('div', { className: 'details-card' });
+    clientCard.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'MÜŞTERİ BİLGİLERİ' : 'CLIENT INFORMATION' }));
+    const clientGrid = $.el('div', { className: 'details-card-grid' });
     
-    details.forEach(([label, value]) => {
-      const p = $.el('p');
-      p.appendChild($.el('strong', { textContent: label + ': ' }));
-      p.appendChild(document.createTextNode(value));
-      grid.appendChild(p);
-    });
-    container.appendChild(grid);
+    this.addDetailItem(clientGrid, (State.lang === 'tr') ? 'MÜŞTERİ' : 'CLIENT', quote.clientName || '-');
+    this.addDetailItem(clientGrid, (State.lang === 'tr') ? 'ORGANİZASYON' : 'ORGANIZATION', quote.clientOrganization || '-');
+    
+    clientCard.appendChild(clientGrid);
+    container.appendChild(clientCard);
+    
+    // ===== QUOTE INFORMATION CARD =====
+    const quoteCard = $.el('div', { className: 'details-card' });
+    quoteCard.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'TEKLİF BİLGİLERİ' : 'QUOTE INFORMATION' }));
+    const quoteGrid = $.el('div', { className: 'details-card-grid' });
+    
+    this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'TİP' : 'TYPE', quote.type || '-');
+    this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'MODLAR' : 'MODES', (quote.modes || []).join(', ') || '-');
+    this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'SİGORTA' : 'INSURANCE', quote.insurance ? 'Yes' : 'No');
+    this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'GEÇERLİLİK' : 'VALID UNTIL', quote.validUntil ? Utils.formatDate(quote.validUntil) : '-');
+    
+    quoteCard.appendChild(quoteGrid);
+    container.appendChild(quoteCard);
+    
+    // ===== ROUTE CARD =====
+    const routeCard = $.el('div', { className: 'details-card' });
+    routeCard.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'ROTA' : 'ROUTE' }));
+    const routeGrid = $.el('div', { className: 'details-card-grid' });
+    
+    this.addDetailItem(routeGrid, (State.lang === 'tr') ? 'ÇIKIŞ' : 'ORIGIN', quote.origin || '-');
+    this.addDetailItem(routeGrid, (State.lang === 'tr') ? 'VARIŞ' : 'DESTINATION', quote.destination || '-');
+    
+    routeCard.appendChild(routeGrid);
+    container.appendChild(routeCard);
     
     const formData = {
       origin: quote.origin,
@@ -4478,6 +6458,7 @@ const QuotesUI = {
       truckType: quote.truckType
     };
     
+    // ===== MODE CHARGES SECTIONS =====
     (quote.modes || []).forEach(mode => {
       const charges = (quote.chargesByMode && quote.chargesByMode[mode]) || [];
       if (charges.length > 0) {
@@ -4485,58 +6466,60 @@ const QuotesUI = {
       }
     });
     
+    // ===== INCLUDES SECTION =====
     const includes = quote.selectedIncludes || [];
     if (includes.length > 0) {
-      const sec = $.el('div', { style: 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;' });
-      sec.appendChild($.el('h4', { textContent: 'Our Quotation Includes' }));
-      const ul = $.el('ul', { style: 'margin: 8px 0; padding-left: 20px;' });
+      const sec = $.el('div', { className: 'details-section' });
+      sec.appendChild($.el('h4', { className: 'details-section-title', textContent: (State.lang === 'tr') ? 'TEKLİFİMİZE DAHİL' : 'OUR QUOTATION INCLUDES' }));
+      const ul = $.el('ul', { className: 'quote-includes-list' });
       includes.forEach(item => {
-        ul.appendChild($.el('li', { textContent: item, style: 'font-size: 13px; margin: 4px 0;' }));
+        ul.appendChild($.el('li', { textContent: item }));
       });
       sec.appendChild(ul);
       container.appendChild(sec);
     }
     
+    // ===== ADDITIONAL CHARGES SECTION =====
     const additional = quote.selectedAdditionalCharges || [];
     if (additional.length > 0) {
-      const sec = $.el('div', { style: 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;' });
-      sec.appendChild($.el('h4', { textContent: 'Additional Charges May Apply' }));
-      const ul = $.el('ul', { style: 'margin: 8px 0; padding-left: 20px;' });
+      const sec = $.el('div', { className: 'details-section' });
+      sec.appendChild($.el('h4', { className: 'details-section-title', textContent: (State.lang === 'tr') ? 'EK MASRAFLAR UYGULANABİLİR' : 'ADDITIONAL CHARGES MAY APPLY' }));
+      const ul = $.el('ul', { className: 'quote-includes-list' });
       additional.forEach(item => {
-        ul.appendChild($.el('li', { textContent: item, style: 'font-size: 13px; margin: 4px 0;' }));
+        ul.appendChild($.el('li', { textContent: item }));
       });
       sec.appendChild(ul);
       container.appendChild(sec);
     }
     
+    // ===== TERMS SECTION =====
     if (quote.termsAndConditions) {
-      const sec = $.el('div', { style: 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;' });
-      sec.appendChild($.el('h4', { textContent: 'Terms & Conditions' }));
+      const sec = $.el('div', { className: 'details-section' });
+      sec.appendChild($.el('h4', { className: 'details-section-title', textContent: (State.lang === 'tr') ? 'ŞARTLAR VE KOŞULLAR' : 'TERMS & CONDITIONS' }));
       sec.appendChild($.el('p', { 
         textContent: quote.termsAndConditions,
-        style: 'white-space: pre-wrap; font-size: 13px;'
+        className: 'quote-terms-text'
       }));
       container.appendChild(sec);
     }
     
+    // ===== VALIDITY BOX =====
     if (quote.validUntil) {
-      const box = $.el('div', { 
-        style: 'margin-top: 16px; padding: 12px; background: #fff3cd; border: 2px solid #f59e0b; border-radius: 6px; text-align: center; font-weight: bold;'
-      });
-      box.textContent = `Rates & Services are Valid Until: ${Utils.formatDate(quote.validUntil)}`;
+      const box = $.el('div', { className: 'quote-validity-box' });
+      box.textContent = `${(State.lang === 'tr') ? 'Geçerlilik Tarihi:' : 'Rates & Services are Valid Until:'} ${Utils.formatDate(quote.validUntil)}`;
       container.appendChild(box);
     }
     
-    const actions = $.el('div', { style: 'margin-top: 24px; display: flex; gap: 8px; flex-wrap: wrap;' });
+    // ===== ACTIONS =====
+    const actions = $.el('div', { className: 'quote-actions' });
     
-    const exportBtn = $.el('button', { type: 'button', textContent: 'Export PDF' });
+    const exportBtn = $.el('button', { type: 'button', textContent: (State.lang === 'tr') ? 'PDF İndir' : 'Export PDF' });
     exportBtn.addEventListener('click', () => QuoteExport.exportToPdf(quote));
     
-    const convertBtn = $.el('button', { type: 'button', textContent: 'Convert to Job' });
+    const convertBtn = $.el('button', { type: 'button', textContent: (State.lang === 'tr') ? 'Taşımaya Dönüştür' : 'Convert to Job' });
     convertBtn.addEventListener('click', () => this.convertToJob(quote));
     
-    const deleteBtn = $.el('button', { type: 'button', textContent: 'Delete Quote' });
-    deleteBtn.style.cssText = 'background: #fee2e2; color: #dc2626; border-color: #fecaca;';
+    const deleteBtn = $.el('button', { type: 'button', className: 'btn-danger', textContent: (State.lang === 'tr') ? 'Teklifi Sil' : 'Delete Quote' });
     deleteBtn.addEventListener('click', () => this.deleteQuote(quote));
     
     actions.appendChild(exportBtn);
@@ -4544,39 +6527,47 @@ const QuotesUI = {
     actions.appendChild(deleteBtn);
     container.appendChild(actions);
   },
+  
+  // Helper to add a detail item to a grid
+  addDetailItem(container, label, value) {
+    const item = $.el('div', { className: 'detail-item' });
+    item.appendChild($.el('span', { className: 'detail-label', textContent: label }));
+    item.appendChild($.el('span', { className: 'detail-value', textContent: value || '-' }));
+    container.appendChild(item);
+  },
 
   buildChargesSection(mode, charges, quote, formData) {
-    const section = $.el('div', { style: 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;' });
+    const section = $.el('div', { className: 'details-section quote-charges-section' });
     
-    const headerColors = { Sea: '#0369a1', Air: '#7c3aed', Land: '#059669' };
+    const modeColors = { Sea: 'sea', Air: 'air', Land: 'land' };
     const header = $.el('h4', { 
-      textContent: `${mode} Freight Charges`,
-      style: `color: ${headerColors[mode] || '#374151'}; margin-bottom: 8px;`
+      className: `details-section-title mode-${modeColors[mode] || 'default'}`,
+      textContent: `${mode.toUpperCase()} FREIGHT CHARGES`
     });
     section.appendChild(header);
     
-    const info = $.el('div', { style: 'font-size: 12px; color: #6b7280; margin-bottom: 8px;' });
+    const info = $.el('div', { className: 'quote-charges-info' });
     if (mode === 'Sea') {
       const vol = quote.seaVolume || quote.estimatedVolume || 0;
       info.textContent = `Container: ${quote.containerDetails || 'N/A'} | Volume: ${vol} cbm | Route: ${quote.departurePort || '-'} to POE ${quote.poe || '-'} | Transit: ${quote.seaTransitTime ? quote.seaTransitTime + ' days' : 'TBD'}`;
     } else if (mode === 'Air') {
-  const vol = quote.airVolume || quote.estimatedVolume || 0;
-  const acw = quote.airACW || 0;
-  info.textContent = `Weight: ${quote.airCargoWeight || 0} kg | Volume: ${vol} cbm | ACW: ${acw.toFixed(1)} kg | Route: ${quote.departureAirportName || '-'} to ${quote.arrivalAirportName || '-'} | Transit: ${quote.airTransitTime ? quote.airTransitTime + ' days' : 'TBD'}`;
-} else if (mode === 'Land') {
+      const vol = quote.airVolume || quote.estimatedVolume || 0;
+      const acw = quote.airACW || 0;
+      info.textContent = `Weight: ${quote.airCargoWeight || 0} kg | Volume: ${vol} cbm | ACW: ${acw.toFixed(1)} kg | Route: ${quote.departureAirportName || '-'} to ${quote.arrivalAirportName || '-'} | Transit: ${quote.airTransitTime ? quote.airTransitTime + ' days' : 'TBD'}`;
+    } else if (mode === 'Land') {
       const vol = quote.landVolume || quote.estimatedVolume || 0;
       info.textContent = `Truck: ${quote.truckType || 'Dedicated'} | Volume: ${vol} cbm | Route: ${quote.origin || '-'} to ${quote.destination || '-'} | Transit: ${quote.landTransitTime ? quote.landTransitTime + ' days' : 'TBD'}`;
     }
     section.appendChild(info);
     
-    const table = $.el('table', { style: 'width: 100%; border-collapse: collapse; font-size: 13px;' });
+    const table = $.el('table', { className: 'quote-charges-table' });
     let totalsByCurrency = {};
     
     charges.forEach(charge => {
       const row = $.el('tr');
       row.innerHTML = `
-        <td style="padding: 6px 8px; border: 1px solid #e5e7eb;">${charge.category}</td>
-        <td style="padding: 6px 8px; border: 1px solid #e5e7eb; text-align: right; white-space: nowrap;">${charge.currency} ${parseFloat(charge.amount).toFixed(2)}</td>
+        <td class="charge-category">${charge.category}</td>
+        <td class="charge-amount">${charge.currency} ${parseFloat(charge.amount).toFixed(2)}</td>
       `;
       table.appendChild(row);
       
@@ -4589,10 +6580,10 @@ const QuotesUI = {
       .join(' + ');
     
     if (totalText) {
-      const totalRow = $.el('tr');
+      const totalRow = $.el('tr', { className: 'total-row' });
       totalRow.innerHTML = `
-        <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: bold; background: #f3f4f6;">TOTAL (${mode})</td>
-        <td style="padding: 6px 8px; border: 1px solid #e5e7eb; text-align: right; white-space: nowrap; font-weight: bold; background: #f3f4f6;">${totalText}</td>
+        <td class="charge-category">TOTAL (${mode})</td>
+        <td class="charge-amount">${totalText}</td>
       `;
       table.appendChild(totalRow);
     }
@@ -4601,8 +6592,14 @@ const QuotesUI = {
     return section;
   },
 
-  deleteQuote(quote) {
-    if (!confirm('Are you sure you want to delete this quote?')) return;
+  async deleteQuote(quote) {
+    const confirmed = await Modals.confirm({
+      title: (State.lang === 'tr') ? 'Teklifi Sil' : 'Delete Quote',
+      message: (State.lang === 'tr') ? 'Bu teklifi silmek istediğinize emin misiniz?' : 'Are you sure you want to delete this quote?',
+      danger: true,
+      confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+    });
+    if (!confirmed) return;
     
     State.quotes = State.quotes.filter(q => q.id !== quote.id);
     Storage.saveQuotes();
@@ -4618,11 +6615,34 @@ const QuotesUI = {
     State.selectedQuoteId = null;
   },
 
-  convertToJob(quote) {
-  if (!confirm('Convert this quote to a job?')) return;
+  async convertToJob(quote) {
+  const confirmed = await Modals.confirm({
+    title: (State.lang === 'tr') ? 'Taşımaya Dönüştür' : 'Convert to Move',
+    message: (State.lang === 'tr') ? 'Bu teklif taşımaya dönüştürülsün mü?' : 'Convert this quote to a move? The quote will be marked as approved.',
+    confirmText: (State.lang === 'tr') ? 'Dönüştür' : 'Convert'
+  });
+  
+  if (!confirmed) return;
+  
+  // Convert quote charges to job chargeItems
+  const chargeItems = [];
+  if (quote.chargesByMode) {
+    Object.keys(quote.chargesByMode).forEach(mode => {
+      const charges = quote.chargesByMode[mode] || [];
+      charges.forEach(charge => {
+        chargeItems.push({
+          category: 'Moving',
+          description: charge.description || charge.category || mode,
+          amount: charge.amount || 0,
+          currency: charge.currency || quote.quoteCurrency || 'USD'
+        });
+      });
+    });
+  }
   
   const job = Validator.normalizeJob({
     clientName: quote.clientName,
+    organizationName: quote.clientOrganization || '',
     originCity: quote.origin.split(',')[0]?.trim() || '',
     originCountry: quote.origin.split(',').slice(1).join(',').trim() || '',
     originFullAddress: quote.origin,
@@ -4634,6 +6654,14 @@ const QuotesUI = {
     status: 'Planned',
     paymentReceived: false,
     shipmentContents: quote.shipmentContents || ['HHE'],
+    
+    // Link to quote
+    linkedQuoteId: quote.id,
+    
+    // Copy charges
+    chargeItems: chargeItems,
+    quotedTotal: quote.grandTotal || 0,
+    currency: quote.quoteCurrency || 'USD',
     
     // Mode-specific fields from quote
     seaVolume: quote.seaVolume || 0,
@@ -4652,10 +6680,13 @@ const QuotesUI = {
     vehicleCondition: quote.vehicleCondition || 'Running'
   });
   
+  // Mark quote as converted
+  quote.convertedToJobId = job.id;
+  quote.status = 'Approved';
+  Storage.saveQuotes();
+  
   State.jobs.push(job);
   Storage.saveJobs();
-  
-  alert('Quote successfully converted to job!');
   
   Views.show('moves');
   JobsUI.render();
@@ -4667,7 +6698,7 @@ const QuotesUI = {
     const form = $.get('quoteForm');
     
     if (!form) {
-      alert('Quote form not found');
+      Modals.alert({ title: 'Error', message: 'Quote form not found' });
       return;
     }
     
@@ -4746,6 +6777,11 @@ const QuotesUI = {
     form.origin.value = quote.origin || '';
     form.destination.value = quote.destination || '';
     form.quoteType.value = quote.type || 'Export';
+    
+    // Recipient type
+    const recipientSelect = $.get('quoteRecipientType');
+    if (recipientSelect) recipientSelect.value = quote.recipientType || 'Client';
+    
     form.termsAndConditions.value = quote.termsAndConditions || '';
     form.validUntil.value = quote.validUntil || '';
     
@@ -4776,6 +6812,9 @@ const QuotesUI = {
       if (selectedModes.length === 0) $.show(noModeMsg);
       else $.hide(noModeMsg);
     }
+    
+    // Apply context-aware field visibility
+    this.updateContextAwareFields(quote.type || 'Export', quote.recipientType || 'Client');
     
     // Sea fields
     if (form.departurePort) form.departurePort.value = quote.departurePort || '';
@@ -4855,6 +6894,18 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
     // Update checklists
     this.updateChecklists();
     
+    // Consignment instructions restoration
+    const includeConsignmentCb = $.get('includeConsignmentInstructions');
+    const clientCategorySel = $.get('quoteClientCategory');
+    if (includeConsignmentCb) {
+      includeConsignmentCb.checked = quote.includeConsignmentInstructions || false;
+      this.toggleConsignmentOptions(includeConsignmentCb.checked);
+    }
+    if (clientCategorySel) {
+      clientCategorySel.value = quote.clientCategory || 'foreign_national';
+      this.updateConsignmentPreview();
+    }
+    
     // Set selected checkboxes after a brief delay to let DOM update
     setTimeout(() => {
       if (quote.selectedIncludes) {
@@ -4873,6 +6924,7 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
   updateModeFields() {
     const selectedModes = this.getSelectedModes();
     const type = this.getSelectedType();
+    const recipientType = this.getRecipientType();
     
     ['Sea', 'Air', 'Land'].forEach(mode => {
       const fieldsSection = $.get(`${mode.toLowerCase()}FieldsSection`);
@@ -4900,8 +6952,116 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
       else $.hide(noModeMsg);
     }
     
+    // Apply context-aware field visibility
+    this.updateContextAwareFields(type, recipientType);
+    
     this.updateChecklists();
   },
+
+  // Get the recipient type (Client or Agent)
+  getRecipientType() {
+    const select = $.get('quoteRecipientType');
+    return select ? select.value : 'Client';
+  },
+
+  // Update field visibility based on quote type (Import/Export)
+  // Both Client and Agent see all fields - differences are in charges and PDF output
+  updateContextAwareFields(type, recipientType) {
+    const isImport = type === 'Import';
+    
+    // All technical fields are always visible for form entry
+    // The difference is only in what appears in the PDF (hide empty fields)
+    
+    // SEA FIELDS - always show for Export, always show for Import too (user may fill them)
+    const seaDepartureField = $.get('seaDeparturePortField');
+    const seaTransitField = $.get('seaTransitTimeField');
+    
+    if (seaDepartureField) $.show(seaDepartureField);
+    if (seaTransitField) $.show(seaTransitField);
+    
+    // AIR FIELDS - always show
+    const airDepartureFields = $.get('airDepartureFields');
+    const airAirlineField = $.get('airAirlineField');
+    const airTransitField = $.get('airTransitTimeField');
+    
+    if (airDepartureFields) $.show(airDepartureFields);
+    if (airAirlineField) $.show(airAirlineField);
+    if (airTransitField) $.show(airTransitField);
+    
+    // Show/hide consignment instructions section based on type
+    // Only show for Import quotes
+    const consignmentSection = $.get('consignmentInstructionsSection');
+    if (consignmentSection) {
+      if (isImport) $.show(consignmentSection);
+      else $.hide(consignmentSection);
+    }
+  },
+
+  // Toggle consignment instructions options visibility
+  toggleConsignmentOptions(show) {
+    const wrapper = $.get('consignmentOptionsWrapper');
+    if (wrapper) {
+      if (show) wrapper.classList.remove('hidden');
+      else wrapper.classList.add('hidden');
+    }
+    
+    if (show) {
+      this.updateConsignmentPreview();
+    }
+  },
+
+  // Update the consignment preview based on selected category
+  updateConsignmentPreview() {
+    const preview = $.get('consignmentPreview');
+    const categorySelect = $.get('quoteClientCategory');
+    if (!preview || !categorySelect) return;
+    
+    const category = categorySelect.value;
+    const data = CONSIGNMENT_INSTRUCTIONS[category];
+    
+    if (!data) {
+      preview.innerHTML = '<p style="color: #6b7280; font-style: italic;">Select a category to preview the requirements.</p>';
+      return;
+    }
+    
+    let html = `<strong>${data.title}</strong><br><br>`;
+    html += `<p style="margin-bottom: 8px;">${data.description}</p>`;
+    
+    if (data.note) {
+      html += `<p style="margin-bottom: 8px; color: #b45309; font-style: italic;">${data.note}</p>`;
+    }
+    
+    html += '<strong>Required documents:</strong><ul style="margin: 8px 0; padding-left: 20px;">';
+    data.documents.forEach(doc => {
+      html += `<li style="margin: 4px 0;">${doc}</li>`;
+    });
+    html += '</ul>';
+    
+    preview.innerHTML = html;
+  },
+
+  // Get consignment instructions text for PDF export
+  getConsignmentInstructionsText(clientName, category) {
+    const data = CONSIGNMENT_INSTRUCTIONS[category];
+    if (!data) return '';
+    
+    let text = CONSIGNMENT_INSTRUCTIONS.consignee_template.replace('[CLIENT_NAME]', clientName || 'Full Name of Client (as in passport)');
+    text += '\n\n\n';
+    text += data.title + '\n\n';
+    text += data.description + '\n\n';
+    
+    if (data.note) {
+      text += data.note + '\n\n';
+    }
+    
+    text += 'Required documents for import clearance:\n\n';
+    data.documents.forEach(doc => {
+      text += '- ' + doc + '\n';
+    });
+    
+    return text;
+  },
+
 
   autoPopulateCharges(mode, type) {
     const listId = `${mode.toLowerCase()}ChargesList`;
@@ -4910,8 +7070,11 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
     
     if (container.children.length > 0) return;
     
+    // Get recipient type
+    const recipientType = this.getRecipientType();
+    
     // Get raw categories from template
-    const tpl = QuoteUtils.getTemplate(mode, type);
+    const tpl = QuoteUtils.getTemplate(mode, type, recipientType);
     if (!tpl) return;
     
     const formData = this.getFormDataForPlaceholders();
@@ -5004,6 +7167,7 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
   updateChecklists() {
     const selectedModes = this.getSelectedModes();
     const type = this.getSelectedType();
+    const recipientType = this.getRecipientType();
     const formData = this.getFormDataForPlaceholders();
     
     const includesContainer = $.get('quotationIncludesChecklist');
@@ -5026,7 +7190,7 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
             }));
           }
           
-          const baseIncludes = QuoteUtils.getBaseIncludes(mode, type, formData);
+          const baseIncludes = QuoteUtils.getBaseIncludes(mode, type, formData, recipientType);
           baseIncludes.forEach(item => {
             if (!addedItems.has(item)) {
               addedItems.add(item);
@@ -5034,7 +7198,7 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
             }
           });
           
-          const tpl = QuoteUtils.getTemplate(mode, type);
+          const tpl = QuoteUtils.getTemplate(mode, type, recipientType);
           if (tpl && tpl.conditionalIncludes && Object.keys(tpl.conditionalIncludes).length > 0) {
             includesContainer.appendChild($.el('div', { 
               textContent: 'Additional items (if corresponding charges included):',
@@ -5102,17 +7266,30 @@ const items = QuoteUtils.getAdditionalChargesMayApply(type, selectedModes, hasIn
     container.appendChild(label);
   },
 
-  addChargeRow(mode, category = '', amount = '') {
+  addChargeRow(mode, category = '', amount = '', currency = 'USD') {
   const listId = `${mode.toLowerCase()}ChargesList`;
   const container = $.get(listId);
   if (!container) return;
   
-  const quoteCurrency = $.get('quoteCurrency')?.value || 'USD';
+  const quoteCurrency = $.get('quoteCurrency')?.value || currency || 'USD';
+  const recipientType = this.getRecipientType();
+  
+  // Check if this is Air Freight charge for Agent - use per ACW format
+  const isAirFreightForAgent = mode === 'Air' && 
+                               recipientType === 'Agent' && 
+                               category.toLowerCase().includes('air freight') &&
+                               !category.toLowerCase().includes('terminal') &&
+                               !category.toLowerCase().includes('clearance');
   
   const row = $.el('div', { 
     className: 'charge-row',
     style: 'display: grid; grid-template-columns: 2fr 1fr 40px; gap: 8px; margin-bottom: 8px; align-items: center;'
   });
+  
+  // Mark row if it's air freight per ACW
+  if (isAirFreightForAgent) {
+    row.dataset.perAcw = 'true';
+  }
   
   const categoryInput = $.el('input', { 
     type: 'text', 
@@ -5121,13 +7298,37 @@ const items = QuoteUtils.getAdditionalChargesMayApply(type, selectedModes, hasIn
     value: category
   });
   
-  const amountInput = $.el('input', { 
-    type: 'number', 
-    step: '0.01',
-    placeholder: `Amount (${quoteCurrency})`,
-    className: 'charge-amount-input',
-    value: amount
-  });
+  // For Air Freight Agent quotes, show rate per kg ACW instead of total amount
+  let amountInput;
+  if (isAirFreightForAgent) {
+    const amountWrapper = $.el('div', { style: 'display: flex; align-items: center; gap: 4px;' });
+    amountInput = $.el('input', { 
+      type: 'number', 
+      step: '0.01',
+      placeholder: 'Rate',
+      className: 'charge-amount-input charge-rate-input',
+      value: amount,
+      style: 'flex: 1;'
+    });
+    const suffix = $.el('span', { 
+      textContent: `${quoteCurrency}/kg`,
+      style: 'font-size: 11px; color: #6b7280; white-space: nowrap;'
+    });
+    amountWrapper.appendChild(amountInput);
+    amountWrapper.appendChild(suffix);
+    row.appendChild(categoryInput);
+    row.appendChild(amountWrapper);
+  } else {
+    amountInput = $.el('input', { 
+      type: 'number', 
+      step: '0.01',
+      placeholder: `Amount (${quoteCurrency})`,
+      className: 'charge-amount-input',
+      value: amount
+    });
+    row.appendChild(categoryInput);
+    row.appendChild(amountInput);
+  }
   
   const deleteBtn = $.el('button', { 
     type: 'button', 
@@ -5136,8 +7337,6 @@ const items = QuoteUtils.getAdditionalChargesMayApply(type, selectedModes, hasIn
   });
   deleteBtn.addEventListener('click', () => row.remove());
   
-  row.appendChild(categoryInput);
-  row.appendChild(amountInput);
   row.appendChild(deleteBtn);
   
   container.appendChild(row);
@@ -5150,13 +7349,13 @@ const items = QuoteUtils.getAdditionalChargesMayApply(type, selectedModes, hasIn
     const modes = this.getSelectedModes();
     
     if (modes.length === 0) {
-      alert('Please select at least one mode (Sea, Air, or Land)');
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'En az bir mod seçin (Deniz, Hava veya Kara)' : 'Please select at least one mode (Sea, Air, or Land)' });
       return;
     }
     
     const type = this.getSelectedType();
     if (!type) {
-      alert('Please select a type (Export, Import, or Local)');
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Tip seçin (İhracat, İthalat veya Yurtiçi)' : 'Please select a type (Export, Import, or Local)' });
       return;
     }
     
@@ -5172,9 +7371,15 @@ modes.forEach(mode => {
   container.querySelectorAll('.charge-row').forEach(row => {
     const category = row.querySelector('.charge-category-input')?.value.trim();
     const amount = parseFloat(row.querySelector('.charge-amount-input')?.value) || 0;
+    const isPerAcw = row.dataset.perAcw === 'true';
     
     if (category) {
-      chargesByMode[mode].push({ category, amount, currency: quoteCurrency });
+      chargesByMode[mode].push({ 
+        category, 
+        amount, 
+        currency: quoteCurrency,
+        isPerAcw: isPerAcw
+      });
     }
   });
 });
@@ -5205,20 +7410,15 @@ modes.forEach(mode => {
       });
     }
     
-    const hasInsurance = form.querySelector('input[name="insurance"]:checked')?.value === 'yes';
-    
     const quote = {
       clientName: form.clientName.value.trim(),
       clientOrganization: form.clientOrganization?.value.trim() || '',
       origin: form.origin.value.trim(),
       destination: form.destination.value.trim(),
       type: type,
+      recipientType: this.getRecipientType(),
       modes: modes,
-      insurance: hasInsurance,
       shipmentContents: Array.from(document.querySelectorAll('input[name="quoteContents"]:checked')).map(cb => cb.value),
-      hhgValue: hasInsurance ? (parseFloat(form.hhgValue?.value) || 0) : 0,
-      hhgCurrency: hasInsurance ? (form.hhgCurrency?.value || 'USD') : 'USD',
-      insurancePercentage: hasInsurance ? (parseFloat(form.insurancePercentage?.value) || 1.5) : 1.5,
       quoteCurrency: quoteCurrency,
       chargesByMode: chargesByMode,
       selectedIncludes: selectedIncludes,
@@ -5239,7 +7439,16 @@ modes.forEach(mode => {
       airTransitTime: parseInt(form.airTransitTime?.value) || 0,
       airVolume: parseFloat(form.airVolume?.value) || 0,
       airACW: parseFloat(form.airACW?.value) || 0,
-      airQuoteType: form.querySelector('input[name="airQuoteType"]:checked')?.value || 'client',
+      // Per-mode insurance
+      seaInsurance: $.get('seaInsuranceCheck')?.checked || false,
+      seaInsuranceValue: parseFloat(form.seaInsuranceValue?.value) || 0,
+      seaInsuranceRate: parseFloat(form.seaInsuranceRate?.value) || 1.5,
+      airInsurance: $.get('airInsuranceCheck')?.checked || false,
+      airInsuranceValue: parseFloat(form.airInsuranceValue?.value) || 0,
+      airInsuranceRate: parseFloat(form.airInsuranceRate?.value) || 1.5,
+      landInsurance: $.get('landInsuranceCheck')?.checked || false,
+      landInsuranceValue: parseFloat(form.landInsuranceValue?.value) || 0,
+      landInsuranceRate: parseFloat(form.landInsuranceRate?.value) || 1.5,
       // Vehicle fields
 vehicleType: form.quoteVehicleType?.value || '',
 vehicleMake: form.quoteVehicleMake?.value.trim() || '',
@@ -5250,33 +7459,44 @@ vehicleCondition: form.querySelector('input[name="quoteVehicleCondition"]:checke
       truckType: form.querySelector('input[name="truckType"]:checked')?.value || 'Dedicated',
       landTransitTime: parseInt(form.landTransitTime?.value) || 0,
       landVolume: parseFloat(form.landVolume?.value) || 0,
-      estimatedVolume: parseFloat(form.seaVolume?.value) || parseFloat(form.airVolume?.value) || parseFloat(form.landVolume?.value) || 0
+      estimatedVolume: parseFloat(form.seaVolume?.value) || parseFloat(form.airVolume?.value) || parseFloat(form.landVolume?.value) || 0,
+      // Consignment instructions
+      includeConsignmentInstructions: $.get('includeConsignmentInstructions')?.checked || false,
+      clientCategory: $.get('quoteClientCategory')?.value || 'foreign_national'
     };
     
-    if (hasInsurance && quote.hhgValue > 0) {
-  const percentage = quote.insurancePercentage || 1.5;
-  const premium = QuoteUtils.calculateInsurancePremium(quote.hhgValue, percentage);
-  const insuranceCurrency = quote.quoteCurrency || 'USD';
-  const insuranceText = `Moving/Transit Insurance coverage (${percentage}% of ${quote.hhgValue.toLocaleString()} ${insuranceCurrency} = ${premium.toFixed(2)} ${insuranceCurrency})`;
-  if (!quote.selectedIncludes.includes(insuranceText)) {
-    quote.selectedIncludes.push(insuranceText);
-  }
-  
-  // Auto-add insurance as a charge to the first mode
-  const firstMode = modes[0];
-  if (firstMode && chargesByMode[firstMode]) {
-    // Remove any existing Transit Insurance charge first
-    chargesByMode[firstMode] = chargesByMode[firstMode].filter(c => 
-      !c.category.toLowerCase().includes('transit insurance')
-    );
-    // Add the insurance charge
-    chargesByMode[firstMode].push({
-      category: 'Transit Insurance',
-      amount: premium,
-      currency: insuranceCurrency
+    // Handle per-mode insurance
+    const quoteCurr = quote.quoteCurrency || 'USD';
+    ['Sea', 'Air', 'Land'].forEach(mode => {
+      const modeLower = mode.toLowerCase();
+      const hasInsurance = quote[`${modeLower}Insurance`];
+      const insValue = quote[`${modeLower}InsuranceValue`];
+      const insRate = quote[`${modeLower}InsuranceRate`] || 1.5;
+      
+      if (hasInsurance && insValue > 0 && chargesByMode[mode]) {
+        const premium = QuoteUtils.calculateInsurancePremium(insValue, insRate);
+        const insuranceText = `Transit Insurance (${insRate}% of ${insValue.toLocaleString()} ${quoteCurr})`;
+        
+        // Add to includes
+        if (!quote.selectedIncludes.includes(insuranceText)) {
+          quote.selectedIncludes.push(insuranceText);
+        }
+        
+        // Remove any existing Transit Insurance charge
+        chargesByMode[mode] = chargesByMode[mode].filter(c => 
+          !c.category.toLowerCase().includes('transit insurance')
+        );
+        // Add the insurance charge
+        chargesByMode[mode].push({
+          category: 'Transit Insurance',
+          amount: premium,
+          currency: quoteCurr
+        });
+      }
     });
-  }
-}
+    
+    // Update chargesByMode in quote
+    quote.chargesByMode = chargesByMode;
     
     if (State.quoteFormMode === 'create') {
       quote.id = Date.now();
@@ -5311,13 +7531,13 @@ vehicleCondition: form.querySelector('input[name="quoteVehicleCondition"]:checke
 
 const QuoteExport = {
   
-  bannerImage: 'data:image/png;base64,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',
+  bannerImage: 'data:image/png;base64,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',
   
    exportToPdf(quote) {
     const html = this.buildPdfHtml(quote);
     const w = window.open('', '_blank');
     if (!w) { 
-      alert('Popup blocked. Please allow popups.'); 
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Açılır pencere engellendi. Lütfen pop-up izin verin.' : 'Popup blocked. Please allow popups.' }); 
       return; 
     }
     w.document.open();
@@ -5418,14 +7638,27 @@ const QuoteExport = {
   
   ${this.buildTermsSection(quote)}
   
+  ${this.buildConsignmentSection(quote)}
+  
   ${validDate ? `<div class="validity-box">Rates & Services are Valid Until: ${validDate}</div>` : ''}
 </body>
 </html>`;
   },
 
   buildModeSection(mode, quote, formData) {
-    const charges = (quote.chargesByMode && quote.chargesByMode[mode]) || [];
+    let charges = (quote.chargesByMode && quote.chargesByMode[mode]) || [];
     if (charges.length === 0) return '';
+
+    // For Agent/Partner Export quotes: remove Destination Terminal Handling and Destination Services
+    const isAgentExport = quote.recipientType === 'agent' && quote.type === 'Export';
+    if (isAgentExport) {
+      charges = charges.filter(c => {
+        const cat = (c.category || '').toLowerCase();
+        return !cat.includes('destination terminal') && !cat.includes('destination services');
+      });
+      // If all charges were filtered out, return empty
+      if (charges.length === 0) return '';
+    }
 
     let headerTitle = '';
     let detailsHtml = '';
@@ -5435,10 +7668,22 @@ const QuoteExport = {
     if (mode === 'Sea') {
       const vol = quote.seaVolume || quote.estimatedVolume || 0;
       headerTitle = `SEA FREIGHT (${Utils.escapeHtml(quote.containerDetails || 'Container details not specified')}) est. total volume: ${vol} cbm`;
-      detailsHtml = `
-        <div>${Utils.escapeHtml(quote.departurePort || quote.origin || '-')} to POE ${Utils.escapeHtml(quote.poe || '-')}</div>
-        <div>Estimated port-to-port transit time: ${quote.seaTransitTime ? quote.seaTransitTime + ' days' : 'TBD'}</div>
-      `;
+      
+      // Build details conditionally - hide empty fields
+      const seaDetailLines = [];
+      const departurePort = quote.departurePort || quote.origin;
+      const poe = quote.poe;
+      if (departurePort && poe) {
+        seaDetailLines.push(`<div>${Utils.escapeHtml(departurePort)} to POE ${Utils.escapeHtml(poe)}</div>`);
+      } else if (departurePort) {
+        seaDetailLines.push(`<div>From ${Utils.escapeHtml(departurePort)}</div>`);
+      } else if (poe) {
+        seaDetailLines.push(`<div>To POE ${Utils.escapeHtml(poe)}</div>`);
+      }
+      if (quote.seaTransitTime) {
+        seaDetailLines.push(`<div>Estimated port-to-port transit time: ${quote.seaTransitTime} days</div>`);
+      }
+      detailsHtml = seaDetailLines.join('');
       
       const totals = QuoteUtils.calculateTotals(charges);
       totalText = QuoteUtils.formatTotals(totals);
@@ -5466,26 +7711,54 @@ const QuoteExport = {
   const vol = quote.airVolume || quote.estimatedVolume || 0;
   const acw = quote.airACW || 0;
   headerTitle = `AIR FREIGHT - ${acw.toFixed(1)} kg (ACW)`;
-      detailsHtml = `
-        <div>${Utils.escapeHtml(quote.departureAirportName || 'Origin Airport')} (${Utils.escapeHtml(quote.departureAirportIATA || 'XXX')}) to ${Utils.escapeHtml(quote.arrivalAirportName || 'Destination Airport')} (${Utils.escapeHtml(quote.arrivalAirportIATA || 'XXX')})</div>
-        <div>via ${Utils.escapeHtml(quote.airlineName || 'TBD')} - Estimated transit time: ${quote.airTransitTime ? quote.airTransitTime + ' days' : 'TBD'}</div>
-      `;
+  
+  // Build details conditionally - hide empty fields
+  const airDetailLines = [];
+  const depAirport = quote.departureAirportName;
+  const depIATA = quote.departureAirportIATA;
+  const arrAirport = quote.arrivalAirportName;
+  const arrIATA = quote.arrivalAirportIATA;
+  
+  // Only show route if we have at least departure OR arrival info
+  if (depAirport || depIATA || arrAirport || arrIATA) {
+    const depPart = depAirport ? `${Utils.escapeHtml(depAirport)}${depIATA ? ` (${Utils.escapeHtml(depIATA)})` : ''}` : (depIATA ? `(${Utils.escapeHtml(depIATA)})` : '');
+    const arrPart = arrAirport ? `${Utils.escapeHtml(arrAirport)}${arrIATA ? ` (${Utils.escapeHtml(arrIATA)})` : ''}` : (arrIATA ? `(${Utils.escapeHtml(arrIATA)})` : '');
+    if (depPart && arrPart) {
+      airDetailLines.push(`<div>${depPart} to ${arrPart}</div>`);
+    } else if (depPart) {
+      airDetailLines.push(`<div>From ${depPart}</div>`);
+    } else if (arrPart) {
+      airDetailLines.push(`<div>To ${arrPart}</div>`);
+    }
+  }
+  
+  // Airline and transit time
+  const airline = quote.airlineName;
+  const transitTime = quote.airTransitTime;
+  if (airline && transitTime) {
+    airDetailLines.push(`<div>via ${Utils.escapeHtml(airline)} - Estimated transit time: ${transitTime} days</div>`);
+  } else if (airline) {
+    airDetailLines.push(`<div>via ${Utils.escapeHtml(airline)}</div>`);
+  } else if (transitTime) {
+    airDetailLines.push(`<div>Estimated transit time: ${transitTime} days</div>`);
+  }
+  detailsHtml = airDetailLines.join('');
       
       // Check if this is agent or client quote type
       const isAgentQuote = quote.airQuoteType === 'agent';
       
       if (isAgentQuote) {
-  // Agent mode: ONLY "Air Freight" charge shows "per ACW", others show normal amounts
+  // Agent mode: charges with isPerAcw flag show "per ACW", others show normal amounts
   chargeRows = charges.map(c => {
     const replacedCategory = QuoteUtils.replacePlaceholders(c.category, formData);
-    const categoryLower = c.category.toLowerCase().trim();
-    const isAirFreightCharge = categoryLower === 'air freight';
+    // Use the isPerAcw flag set during form submission
+    const showPerAcw = c.isPerAcw === true;
     
-    if (isAirFreightCharge) {
+    if (showPerAcw) {
       return `
         <tr>
           <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
-          <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)} per ACW</td>
+          <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)} per kg ACW</td>
         </tr>
       `;
     } else {
@@ -5526,10 +7799,22 @@ const QuoteExport = {
     } else if (mode === 'Land') {
       const vol = quote.landVolume || quote.estimatedVolume || 0;
       headerTitle = `LAND FREIGHT (${Utils.escapeHtml(quote.truckType || 'Dedicated')} Truck) est. total volume: ${vol} cbm`;
-      detailsHtml = `
-        <div>${Utils.escapeHtml(quote.origin || '-')} to ${Utils.escapeHtml(quote.destination || '-')}</div>
-        <div>Estimated transit time: ${quote.landTransitTime ? quote.landTransitTime + ' days' : 'TBD'}</div>
-      `;
+      
+      // Build details conditionally - hide empty fields
+      const landDetailLines = [];
+      const origin = quote.origin;
+      const destination = quote.destination;
+      if (origin && destination) {
+        landDetailLines.push(`<div>${Utils.escapeHtml(origin)} to ${Utils.escapeHtml(destination)}</div>`);
+      } else if (origin) {
+        landDetailLines.push(`<div>From ${Utils.escapeHtml(origin)}</div>`);
+      } else if (destination) {
+        landDetailLines.push(`<div>To ${Utils.escapeHtml(destination)}</div>`);
+      }
+      if (quote.landTransitTime) {
+        landDetailLines.push(`<div>Estimated transit time: ${quote.landTransitTime} days</div>`);
+      }
+      detailsHtml = landDetailLines.join('');
       
       const totals = QuoteUtils.calculateTotals(charges);
       totalText = QuoteUtils.formatTotals(totals);
@@ -5570,6 +7855,15 @@ const QuoteExport = {
   buildIncludesSection(quote, formData) {
     let items = [...(quote.selectedIncludes || [])];
     
+    // For Agent/Partner Export quotes: remove Destination Terminal Handling and Destination Services
+    const isAgentExport = quote.recipientType === 'agent' && quote.type === 'Export';
+    if (isAgentExport) {
+      items = items.filter(i => {
+        const text = i.toLowerCase();
+        return !text.includes('destination terminal') && !text.includes('destination services');
+      });
+    }
+    
     if (quote.insurance && quote.hhgValue) {
   const percentage = quote.insurancePercentage || 1.5;
   const premium = QuoteUtils.calculateInsurancePremium(quote.hhgValue, percentage);
@@ -5592,7 +7886,22 @@ const QuoteExport = {
   },
 
   buildAdditionalSection(quote) {
-    const items = quote.selectedAdditionalCharges || [];
+    let items = quote.selectedAdditionalCharges || [];
+    if (items.length === 0) return '';
+    
+    // Filter out insurance text if:
+    // 1. Insurance checkbox is selected (quote.insurance === true), OR
+    // 2. Insurance has already been added as a charge
+    const hasInsuranceCharge = (quote.charges || []).some(c => 
+      c.description?.toLowerCase().includes('insurance') || 
+      c.category?.toLowerCase().includes('insurance')
+    );
+    
+    if (quote.insurance === true || hasInsuranceCharge) {
+      items = items.filter(i => !i.toLowerCase().includes('insurance'));
+    }
+    
+    // If all items were filtered out, return empty
     if (items.length === 0) return '';
     
     const lis = items.map(i => `<li>${Utils.escapeHtml(i)}</li>`).join('');
@@ -5611,6 +7920,21 @@ const QuoteExport = {
       <div class="terms-section">
         <div class="section-header">TERMS & CONDITIONS:</div>
         <div class="terms-content">${Utils.escapeHtml(quote.termsAndConditions).replace(/\n/g, '<br>')}</div>
+      </div>
+    `;
+  },
+  
+  buildConsignmentSection(quote) {
+    // Only include if the checkbox was checked and we have a category
+    if (!quote.includeConsignmentInstructions || !quote.clientCategory) return '';
+    
+    const text = QuotesUI.getConsignmentInstructionsText(quote.clientName, quote.clientCategory);
+    if (!text) return '';
+    
+    return `
+      <div class="terms-section" style="margin-top: 24px; page-break-inside: avoid;">
+        <div class="section-header">IMPORT REQUIREMENTS & CONSIGNMENT INSTRUCTIONS:</div>
+        <div class="terms-content" style="white-space: pre-wrap; font-size: 9pt; line-height: 1.5;">${Utils.escapeHtml(text)}</div>
       </div>
     `;
   }
@@ -5673,6 +7997,1146 @@ function addAdditionalCharge() {
 }
 
 // ============================================================
+// STORAGE UI - Now manages separate Storage entity
+// ============================================================
+
+const StorageUI = {
+  // Main render function
+  render() {
+    this.populateLocationFilter();
+    this.renderActiveStorage();
+    this.renderCompletedStorage();
+  },
+
+  // Populate location filter dropdown
+  populateLocationFilter() {
+    const select = $.get('storageLocationFilter');
+    if (!select) return;
+    
+    // Preserve current value
+    const currentValue = select.value;
+    
+    // Clear and repopulate
+    while (select.options.length > 1) {
+      select.remove(1);
+    }
+    
+    CONFIG.STORAGE_LOCATIONS.forEach(loc => {
+      const opt = $.el('option', { value: loc.id, textContent: loc.name });
+      select.appendChild(opt);
+    });
+    
+    // Restore selected value
+    select.value = currentValue;
+    
+    select.onchange = () => this.render();
+    
+    // Status filter
+    const statusSelect = $.get('storageStatusFilter');
+    if (statusSelect) {
+      statusSelect.onchange = () => this.render();
+    }
+  },
+
+  // Get filtered storage records
+  getFilteredRecords() {
+    const locationFilter = $.get('storageLocationFilter')?.value || '';
+    const statusFilter = $.get('storageStatusFilter')?.value || '';
+    const searchTerm = $.get('storageSearchInput')?.value?.toLowerCase() || '';
+    
+    return State.storageRecords.filter(storage => {
+      // Location filter
+      if (locationFilter && storage.location !== locationFilter) return false;
+      
+      // Status filter
+      if (statusFilter && storage.status !== statusFilter) return false;
+      
+      // Search filter
+      if (searchTerm) {
+        const searchableText = [
+          storage.storageCode,
+          storage.clientName,
+          storage.organizationName,
+          this.getLocationName(storage.location),
+          storage.notes
+        ].filter(Boolean).join(' ').toLowerCase();
+        
+        if (!searchableText.includes(searchTerm)) return false;
+      }
+      
+      return true;
+    });
+  },
+
+  // Get location display name
+  getLocationName(locationId) {
+    return CONFIG.STORAGE_LOCATIONS.find(l => l.id === locationId)?.name || locationId || '-';
+  },
+
+  // Get storage status based on inventory
+  getInventoryStatus(storage) {
+    if (!storage.inventory || storage.inventory.length === 0) {
+      return storage.status === 'Closed' ? 'Fully Retrieved' : 'In Storage';
+    }
+    
+    const totalItems = storage.inventory.length;
+    const retrievedItems = storage.inventory.filter(item => item.status === 'Retrieved').length;
+    
+    if (retrievedItems === 0) return 'In Storage';
+    if (retrievedItems === totalItems) return 'Fully Retrieved';
+    return 'Partially Retrieved';
+  },
+
+  // Calculate days in storage
+  getDaysInStorage(storage) {
+    if (!storage.dateEntered) return 0;
+    const entered = new Date(storage.dateEntered);
+    const exitOrNow = storage.dateExited ? new Date(storage.dateExited) : new Date();
+    const diffTime = exitOrNow - entered;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  },
+
+  // Calculate storage cost
+  calculateCost(storage) {
+    const days = this.getDaysInStorage(storage);
+    const billableDays = Math.max(0, days - (storage.freeDays || 0));
+    
+    if (storage.billingType === 'Flat Rate') {
+      return {
+        rate: storage.flatRate || 0,
+        currency: storage.flatRateCurrency || 'TRY',
+        total: storage.flatRate || 0,
+        period: 'flat',
+        days: days,
+        billableDays: billableDays,
+        freeDays: storage.freeDays || 0
+      };
+    }
+    
+    // Per CBM billing
+    const rate = storage.ratePerCBM || 0;
+    const cbm = storage.totalCBM || 0;
+    const currency = storage.rateCurrency || 'TRY';
+    const period = storage.ratePeriod || 'Monthly';
+    
+    let total = 0;
+    if (period === 'Daily') {
+      total = rate * cbm * billableDays;
+    } else {
+      // Monthly - calculate months (partial months count as full)
+      const months = Math.ceil(billableDays / 30);
+      total = rate * cbm * months;
+    }
+    
+    return {
+      rate: rate,
+      cbm: cbm,
+      currency: currency,
+      total: total,
+      period: period,
+      days: days,
+      billableDays: billableDays,
+      freeDays: storage.freeDays || 0
+    };
+  },
+
+  // Render active storage list
+  renderActiveStorage() {
+    const container = $.get('activeStorageList');
+    if (!container) return;
+    $.clear(container);
+
+    const records = this.getFilteredRecords().filter(s => s.status === 'Active');
+
+    if (records.length === 0) {
+      container.appendChild($.el('p', { 
+        className: 'storage-empty-message',
+        textContent: I18n.t('noActiveStorage')
+      }));
+      return;
+    }
+
+    records.forEach(storage => {
+      container.appendChild(this.createStorageCard(storage));
+    });
+  },
+
+  // Render completed storage list
+  renderCompletedStorage() {
+    const container = $.get('completedStorageList');
+    if (!container) return;
+    $.clear(container);
+
+    const records = this.getFilteredRecords().filter(s => s.status === 'Closed');
+
+    if (records.length === 0) {
+      container.appendChild($.el('p', { 
+        className: 'storage-empty-message',
+        textContent: I18n.t('noCompletedStorage')
+      }));
+      return;
+    }
+
+    records.forEach(storage => {
+      container.appendChild(this.createStorageCard(storage));
+    });
+  },
+
+  // Create a storage card for the list
+  createStorageCard(storage) {
+    const card = $.el('div', { 
+      className: 'storage-card' + (State.selectedStorageId === storage.id ? ' selected' : '')
+    });
+    
+    // Header with code and status
+    const header = $.el('div', { className: 'storage-card-header' });
+    header.appendChild($.el('span', { 
+      className: 'storage-card-code', 
+      textContent: storage.storageCode 
+    }));
+    const statusClass = storage.status === 'Active' ? 'storage-card-status-active' : 'storage-card-status-closed';
+    header.appendChild($.el('span', { 
+      className: `storage-card-status ${statusClass}`, 
+      textContent: storage.status 
+    }));
+    card.appendChild(header);
+    
+    // Client name
+    if (storage.clientName) {
+      card.appendChild($.el('div', { 
+        className: 'storage-card-client', 
+        textContent: storage.clientName + (storage.organizationName ? ` (${storage.organizationName})` : '')
+      }));
+    }
+    
+    // Meta info
+    const meta = $.el('div', { className: 'storage-card-meta' });
+    
+    // Location
+    const locationSpan = $.el('span');
+    locationSpan.textContent = this.getLocationName(storage.location);
+    meta.appendChild(locationSpan);
+    
+    // Contents
+    if (storage.contents && storage.contents.length > 0) {
+      const contentsSpan = $.el('span');
+      contentsSpan.textContent = storage.contents.join(', ');
+      meta.appendChild(contentsSpan);
+    }
+    
+    // CBM
+    if (storage.totalCBM) {
+      const cbmSpan = $.el('span');
+      cbmSpan.textContent = `${storage.totalCBM} CBM`;
+      meta.appendChild(cbmSpan);
+    }
+    
+    // Days
+    if (storage.dateEntered) {
+      const days = this.getDaysInStorage(storage);
+      const daysSpan = $.el('span');
+      daysSpan.textContent = `${days} days`;
+      meta.appendChild(daysSpan);
+    }
+    
+    card.appendChild(meta);
+    
+    // Linked job indicator
+    if (storage.linkedJobId) {
+      const linkedJob = State.getJob(storage.linkedJobId);
+      if (linkedJob) {
+        const linkedDiv = $.el('div', { className: 'storage-card-linked' });
+        const linkedLabel = $.el('span', { className: 'storage-card-linked-job' });
+        linkedLabel.textContent = `Linked to ${linkedJob.jobCode}`;
+        linkedDiv.appendChild(linkedLabel);
+        card.appendChild(linkedDiv);
+      }
+    }
+    
+    // Click handler
+    card.addEventListener('click', () => {
+      State.selectedStorageId = storage.id;
+      this.render();
+      this.showDetails(storage);
+    });
+    
+    return card;
+  },
+
+  // Show storage details in right panel
+  showDetails(storage) {
+    const panel = $.get('storageDetailsPanel');
+    if (!panel) return;
+    $.clear(panel);
+    
+    // Enable edit button
+    const editBtn = $.get('editStorageBtn');
+    if (editBtn) {
+      editBtn.disabled = false;
+      editBtn.onclick = () => this.openModal('edit', storage);
+    }
+    
+    // ===== HEADER: Storage Code + Status (like Move Details) =====
+    const header = $.el('div', { className: 'move-details-header' });
+    header.appendChild($.el('h3', { textContent: storage.storageCode, style: 'color: var(--color-accent);' }));
+    const statusClass = storage.status === 'Active' ? 'storage-card-status-active' : 'storage-card-status-closed';
+    header.appendChild($.el('span', { className: `storage-card-status ${statusClass}`, textContent: storage.status }));
+    panel.appendChild(header);
+    
+    // ===== CLIENT INFORMATION CARD =====
+    const clientCard = $.el('div', { className: 'details-card' });
+    clientCard.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'MÜŞTERİ BİLGİLERİ' : 'CLIENT INFORMATION' }));
+    const clientGrid = $.el('div', { className: 'details-card-grid' });
+    
+    this.addDetailItem(clientGrid, (State.lang === 'tr') ? 'MÜŞTERİ ADI' : 'CLIENT NAME', storage.clientName || '-');
+    this.addDetailItem(clientGrid, (State.lang === 'tr') ? 'ORGANİZASYON' : 'ORGANIZATION', storage.organizationName || '-');
+    
+    // Linked Job
+    if (storage.linkedJobId) {
+      const linkedJob = State.getJob(storage.linkedJobId);
+      if (linkedJob) {
+        const item = $.el('div', { className: 'detail-item' });
+        item.appendChild($.el('span', { className: 'detail-label', textContent: (State.lang === 'tr') ? 'BAĞLI İŞ' : 'LINKED JOB' }));
+        const link = $.el('a', { 
+          href: '#', 
+          textContent: linkedJob.jobCode,
+          className: 'detail-value-link'
+        });
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          Views.show('moves');
+          JobsUI.render();
+          JobsUI.showDetails(linkedJob);
+        });
+        item.appendChild(link);
+        clientGrid.appendChild(item);
+      }
+    }
+    
+    clientCard.appendChild(clientGrid);
+    panel.appendChild(clientCard);
+    
+    // ===== LOCATION & CONTENTS CARD =====
+    const locationCard = $.el('div', { className: 'details-card' });
+    locationCard.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'KONUM VE İÇERİK' : 'LOCATION & CONTENTS' }));
+    const locationGrid = $.el('div', { className: 'details-card-grid' });
+    
+    this.addDetailItem(locationGrid, (State.lang === 'tr') ? 'KONUM' : 'LOCATION', this.getLocationName(storage.location));
+    this.addDetailItem(locationGrid, (State.lang === 'tr') ? 'İÇERİK' : 'CONTENTS', (storage.contents || []).join(', ') || '-');
+    this.addDetailItem(locationGrid, (State.lang === 'tr') ? 'TOPLAM CBM' : 'TOTAL CBM', storage.totalCBM || '0');
+    this.addDetailItem(locationGrid, (State.lang === 'tr') ? 'BRÜT AĞIRLIK' : 'GROSS WEIGHT', storage.grossWeight ? `${storage.grossWeight} kg` : '-');
+    
+    locationCard.appendChild(locationGrid);
+    panel.appendChild(locationCard);
+    
+    // ===== DATES CARD =====
+    const datesCard = $.el('div', { className: 'details-card' });
+    datesCard.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'TARİHLER' : 'DATES' }));
+    const datesGrid = $.el('div', { className: 'details-card-grid' });
+    
+    this.addDetailItem(datesGrid, (State.lang === 'tr') ? 'GİRİŞ TARİHİ' : 'ENTRY DATE', storage.dateEntered ? Utils.formatDate(storage.dateEntered) : '-');
+    this.addDetailItem(datesGrid, (State.lang === 'tr') ? 'ÇIKIŞ TARİHİ' : 'EXIT DATE', storage.dateExited ? Utils.formatDate(storage.dateExited) : '-');
+    this.addDetailItem(datesGrid, (State.lang === 'tr') ? 'DEPODA GÜN' : 'DAYS IN STORAGE', this.getDaysInStorage(storage));
+    this.addDetailItem(datesGrid, (State.lang === 'tr') ? 'ENVANTER DURUMU' : 'INVENTORY STATUS', this.getInventoryStatus(storage));
+    
+    datesCard.appendChild(datesGrid);
+    panel.appendChild(datesCard);
+    
+    // ===== BILLING SECTION =====
+    const billingSection = $.el('div', { className: 'details-section' });
+    billingSection.appendChild($.el('h4', { className: 'details-section-title', textContent: (State.lang === 'tr') ? 'FATURALANDIRMA BİLGİLERİ' : 'BILLING INFORMATION' }));
+    const billingGrid = $.el('div', { className: 'details-card-grid' });
+    
+    this.addDetailItem(billingGrid, (State.lang === 'tr') ? 'FATURALANDIRMA TİPİ' : 'BILLING TYPE', storage.billingType);
+    
+    if (storage.billingType === 'Flat Rate') {
+      this.addDetailItem(billingGrid, (State.lang === 'tr') ? 'ÜCRET' : 'RATE', `${storage.flatRate || 0} ${storage.flatRateCurrency || 'TRY'}`);
+    } else {
+      const periodLabel = storage.ratePeriod === 'Daily' ? ((State.lang === 'tr') ? 'Gün' : 'Day') : ((State.lang === 'tr') ? 'Ay' : 'Month');
+      this.addDetailItem(billingGrid, (State.lang === 'tr') ? 'ÜCRET' : 'RATE', `${storage.ratePerCBM || 0} ${storage.rateCurrency || 'TRY'} / CBM / ${periodLabel}`);
+    }
+    
+    if (storage.freeDays) {
+      this.addDetailItem(billingGrid, (State.lang === 'tr') ? 'ÜCRETSİZ GÜN' : 'FREE DAYS', storage.freeDays);
+    }
+    
+    billingSection.appendChild(billingGrid);
+    
+    // Cost Calculation Box
+    const cost = this.calculateCost(storage);
+    if (cost.total > 0 || cost.days > 0) {
+      const costBox = $.el('div', { className: 'storage-cost-box' });
+      
+      const costHeader = $.el('div', { className: 'storage-cost-header' });
+      costHeader.appendChild($.el('h5', { textContent: (State.lang === 'tr') ? 'Tahmini Maliyet' : 'Estimated Cost' }));
+      costHeader.appendChild($.el('span', { className: 'storage-cost-days', textContent: `${cost.days} ${(State.lang === 'tr') ? 'gün toplam' : 'days total'}` }));
+      costBox.appendChild(costHeader);
+      
+      if (cost.freeDays > 0) {
+        const freeRow = $.el('div', { className: 'storage-cost-row' });
+        freeRow.appendChild($.el('span', { textContent: I18n.t('freeDays') }));
+        freeRow.appendChild($.el('span', { textContent: `${cost.freeDays} days` }));
+        costBox.appendChild(freeRow);
+      }
+      
+      const billableRow = $.el('div', { className: 'storage-cost-row' });
+      billableRow.appendChild($.el('span', { textContent: I18n.t('billableDays') }));
+      billableRow.appendChild($.el('span', { textContent: `${cost.billableDays} days` }));
+      costBox.appendChild(billableRow);
+      
+      if (cost.period !== 'flat') {
+        const rateRow = $.el('div', { className: 'storage-cost-row' });
+        rateRow.appendChild($.el('span', { textContent: `${cost.rate} ${cost.currency} × ${cost.cbm} CBM` }));
+        if (cost.period === 'Monthly') {
+          const months = Math.ceil(cost.billableDays / 30);
+          rateRow.appendChild($.el('span', { textContent: `× ${months} month${months !== 1 ? 's' : ''}` }));
+        } else {
+          rateRow.appendChild($.el('span', { textContent: `× ${cost.billableDays} days` }));
+        }
+        costBox.appendChild(rateRow);
+      }
+      
+      const totalRow = $.el('div', { className: 'storage-cost-row total' });
+      totalRow.appendChild($.el('span', { textContent: I18n.t('totalCost') }));
+      totalRow.appendChild($.el('span', { textContent: `${cost.total.toLocaleString()} ${cost.currency}` }));
+      costBox.appendChild(totalRow);
+      
+      if (storage.billingNotes) {
+        costBox.appendChild($.el('p', { className: 'storage-cost-note', textContent: storage.billingNotes }));
+      }
+      
+      billingSection.appendChild(costBox);
+    }
+    
+    panel.appendChild(billingSection);
+    
+    // ===== INVENTORY SECTION =====
+    const inventorySection = $.el('div', { className: 'details-section' });
+    inventorySection.appendChild($.el('h4', { className: 'details-section-title', textContent: (State.lang === 'tr') ? 'DEPO ENVANTERİ' : 'STORAGE INVENTORY' }));
+    
+    // Add item form
+    const addForm = this.createInventoryAddForm(storage);
+    inventorySection.appendChild(addForm);
+    
+    // Inventory list
+    if (storage.inventory && storage.inventory.length > 0) {
+      const invList = $.el('div', { className: 'storage-inventory-list' });
+      
+      // Group by type
+      const hheItems = storage.inventory.filter(i => i.type === 'HHE' || !i.type);
+      const autoItems = storage.inventory.filter(i => i.type === 'Auto');
+      
+      // HHE Items
+      if (hheItems.length > 0) {
+        invList.appendChild($.el('div', { 
+          className: 'inventory-type-header',
+          innerHTML: '<span class="inventory-type-badge inventory-type-badge-hhe">HHE</span> Household Effects'
+        }));
+        hheItems.forEach((item) => {
+          const realIdx = storage.inventory.indexOf(item);
+          invList.appendChild(this.createInventoryItemRow(storage, item, realIdx));
+        });
+      }
+      
+      // Auto Items
+      if (autoItems.length > 0) {
+        const autoHeader = $.el('div', { 
+          className: 'inventory-type-header',
+          style: hheItems.length > 0 ? 'margin-top: 16px;' : ''
+        });
+        autoHeader.innerHTML = '<span class="inventory-type-badge inventory-type-badge-auto">Auto</span> Vehicles';
+        invList.appendChild(autoHeader);
+        autoItems.forEach((item) => {
+          const realIdx = storage.inventory.indexOf(item);
+          invList.appendChild(this.createInventoryItemRow(storage, item, realIdx));
+        });
+      }
+      
+      inventorySection.appendChild(invList);
+    } else {
+      inventorySection.appendChild($.el('p', { 
+        className: 'storage-empty-message',
+        textContent: (State.lang === 'tr') ? 'Henüz envanter öğesi yok.' : 'No inventory items added yet.'
+      }));
+    }
+    
+    panel.appendChild(inventorySection);
+    
+    // Notes Section
+    if (storage.notes) {
+      const notesSection = $.el('div', { className: 'details-section' });
+      notesSection.appendChild($.el('h4', { className: 'details-section-title', textContent: (State.lang === 'tr') ? 'NOTLAR' : 'NOTES' }));
+      notesSection.appendChild($.el('p', { textContent: storage.notes, className: 'storage-notes-text' }));
+      panel.appendChild(notesSection);
+    }
+  },
+
+  // Helper to add detail item to a grid (consistent with Move Details)
+  addDetailItem(container, label, value) {
+    const item = $.el('div', { className: 'detail-item' });
+    item.appendChild($.el('span', { className: 'detail-label', textContent: label }));
+    item.appendChild($.el('span', { className: 'detail-value', textContent: value || '-' }));
+    container.appendChild(item);
+  },
+
+  // Create inventory add form - supports bulk adding and quick entry
+  createInventoryAddForm(storage) {
+    const formContainer = $.el('div', { className: 'storage-inventory-add-container' });
+    
+    // Quick Add Row - always visible for fast entry
+    const quickAddRow = $.el('div', { className: 'quick-add-row' });
+    
+    const quickNameInput = $.el('input', { 
+      type: 'text', 
+      placeholder: (State.lang === 'tr') ? 'Öğe adı' : 'Item name', 
+      className: 'quick-add-input quick-add-name'
+    });
+    
+    const quickQtyInput = $.el('input', { 
+      type: 'number', 
+      placeholder: (State.lang === 'tr') ? 'Adet' : 'Qty', 
+      min: '1',
+      value: '1',
+      className: 'quick-add-input quick-add-qty'
+    });
+    
+    const quickCbmInput = $.el('input', { 
+      type: 'number', 
+      placeholder: 'CBM', 
+      step: '0.01',
+      min: '0',
+      className: 'quick-add-input quick-add-cbm'
+    });
+    
+    const quickAddBtn = $.el('button', { 
+      type: 'button', 
+      className: 'quick-add-btn',
+      textContent: '+'
+    });
+    
+    quickAddRow.appendChild(quickNameInput);
+    quickAddRow.appendChild(quickQtyInput);
+    quickAddRow.appendChild(quickCbmInput);
+    quickAddRow.appendChild(quickAddBtn);
+    formContainer.appendChild(quickAddRow);
+    
+    // Quick add handler
+    const doQuickAdd = () => {
+      const name = quickNameInput.value.trim();
+      if (!name) {
+        quickNameInput.focus();
+        return;
+      }
+      
+      if (!storage.inventory) storage.inventory = [];
+      
+      storage.inventory.push({
+        id: Utils.makeId('item'),
+        type: 'HHE',
+        description: name,
+        quantity: parseInt(quickQtyInput.value) || 1,
+        cbm: parseFloat(quickCbmInput.value) || 0,
+        status: 'In Storage',
+        dateRetrieved: ''
+      });
+      
+      quickNameInput.value = '';
+      quickQtyInput.value = '1';
+      quickCbmInput.value = '';
+      quickNameInput.focus();
+      
+      Storage.saveStorageRecords();
+      this.showDetails(storage);
+    };
+    
+    quickAddBtn.addEventListener('click', doQuickAdd);
+    quickNameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') doQuickAdd();
+    });
+    
+    // Bulk Add Section (collapsible)
+    const bulkToggle = $.el('button', { 
+      type: 'button', 
+      className: 'bulk-add-toggle',
+      textContent: (State.lang === 'tr') ? 'Toplu Ekle...' : 'Bulk Add...'
+    });
+    formContainer.appendChild(bulkToggle);
+    
+    const bulkSection = $.el('div', { className: 'bulk-add-section hidden' });
+    
+    // Type selector tabs
+    const typeTabs = $.el('div', { className: 'inventory-type-tabs' });
+    const hheTab = $.el('button', { type: 'button', className: 'inventory-type-tab active', textContent: 'HHE Items' });
+    const autoTab = $.el('button', { type: 'button', className: 'inventory-type-tab', textContent: 'Auto/Vehicle' });
+    typeTabs.appendChild(hheTab);
+    typeTabs.appendChild(autoTab);
+    bulkSection.appendChild(typeTabs);
+    
+    // HHE bulk add form
+    const hheForm = $.el('div', { className: 'hhe-bulk-form' });
+    const hheLabel = $.el('p', { 
+      className: 'inventory-form-hint',
+      textContent: 'Enter items one per line. Format: description (optional: qty x CBM)'
+    });
+    hheForm.appendChild(hheLabel);
+    
+    const hheTextarea = $.el('textarea', {
+      className: 'inventory-bulk-textarea',
+      rows: 4,
+      placeholder: 'Box 1\nBox 2\nSofa\nDining table\nKitchen boxes (5 x 0.5 cbm)'
+    });
+    hheForm.appendChild(hheTextarea);
+    
+    const hheAddBtn = $.el('button', { 
+      type: 'button', 
+      className: 'storage-add-btn',
+      textContent: 'Add HHE Items'
+    });
+    hheForm.appendChild(hheAddBtn);
+    bulkSection.appendChild(hheForm);
+    
+    // Auto add form (single vehicle at a time)
+    const autoForm = $.el('div', { className: 'auto-add-form hidden' });
+    const autoFields = $.el('div', { className: 'auto-fields-row' });
+    
+    const makeInput = $.el('input', { type: 'text', placeholder: 'Make (e.g. Toyota)', className: 'auto-field' });
+    const modelInput = $.el('input', { type: 'text', placeholder: 'Model (e.g. Camry)', className: 'auto-field' });
+    const yearInput = $.el('input', { type: 'number', placeholder: 'Year', className: 'auto-field auto-field-small' });
+    const vinInput = $.el('input', { type: 'text', placeholder: 'VIN (optional)', className: 'auto-field' });
+    
+    autoFields.appendChild(makeInput);
+    autoFields.appendChild(modelInput);
+    autoFields.appendChild(yearInput);
+    autoFields.appendChild(vinInput);
+    autoForm.appendChild(autoFields);
+    
+    const autoAddBtn = $.el('button', { 
+      type: 'button', 
+      className: 'storage-add-btn',
+      textContent: 'Add Vehicle'
+    });
+    autoForm.appendChild(autoAddBtn);
+    bulkSection.appendChild(autoForm);
+    
+    // Add bulk section to container
+    formContainer.appendChild(bulkSection);
+    
+    // Bulk toggle handler
+    bulkToggle.addEventListener('click', () => {
+      bulkSection.classList.toggle('hidden');
+      bulkToggle.textContent = bulkSection.classList.contains('hidden') 
+        ? ((State.lang === 'tr') ? 'Toplu Ekle...' : 'Bulk Add...')
+        : ((State.lang === 'tr') ? 'Toplu Eklemeyi Gizle' : 'Hide Bulk Add');
+    });
+    
+    // Tab switching
+    hheTab.addEventListener('click', () => {
+      hheTab.classList.add('active');
+      autoTab.classList.remove('active');
+      hheForm.classList.remove('hidden');
+      autoForm.classList.add('hidden');
+    });
+    
+    autoTab.addEventListener('click', () => {
+      autoTab.classList.add('active');
+      hheTab.classList.remove('active');
+      autoForm.classList.remove('hidden');
+      hheForm.classList.add('hidden');
+    });
+    
+    // HHE bulk add handler
+    hheAddBtn.addEventListener('click', () => {
+      const lines = hheTextarea.value.split('\n').filter(line => line.trim());
+      if (lines.length === 0) return;
+      
+      if (!storage.inventory) storage.inventory = [];
+      
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        
+        // Parse format: "description" or "description (qty x cbm)"
+        let description = trimmed;
+        let quantity = 1;
+        let cbm = 0;
+        
+        const match = trimmed.match(/^(.+?)\s*\((\d+)\s*x\s*([\d.]+)\s*(?:cbm)?\)$/i);
+        if (match) {
+          description = match[1].trim();
+          quantity = parseInt(match[2]) || 1;
+          cbm = parseFloat(match[3]) || 0;
+        }
+        
+        storage.inventory.push({
+          id: Utils.makeId('item'),
+          type: 'HHE',
+          description: description,
+          quantity: quantity,
+          cbm: cbm,
+          status: 'In Storage',
+          dateRetrieved: ''
+        });
+      });
+      
+      hheTextarea.value = '';
+      Storage.saveStorageRecords();
+      this.showDetails(storage);
+    });
+    
+    // Auto add handler
+    autoAddBtn.addEventListener('click', () => {
+      if (!makeInput.value.trim() || !modelInput.value.trim()) {
+        Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen en az Marka ve Model girin' : 'Please enter at least Make and Model' });
+        return;
+      }
+      
+      if (!storage.inventory) storage.inventory = [];
+      
+      storage.inventory.push({
+        id: Utils.makeId('item'),
+        type: 'Auto',
+        description: `${makeInput.value.trim()} ${modelInput.value.trim()}${yearInput.value ? ' ' + yearInput.value : ''}`,
+        make: makeInput.value.trim(),
+        model: modelInput.value.trim(),
+        year: parseInt(yearInput.value) || 0,
+        vin: vinInput.value.trim(),
+        quantity: 1,
+        cbm: 0,
+        status: 'In Storage',
+        dateRetrieved: ''
+      });
+      
+      makeInput.value = '';
+      modelInput.value = '';
+      yearInput.value = '';
+      vinInput.value = '';
+      
+      Storage.saveStorageRecords();
+      this.showDetails(storage);
+    });
+    
+    return formContainer;
+  },
+
+
+  // Create inventory item row
+  createInventoryItemRow(storage, item, idx) {
+    const row = $.el('div', { className: 'storage-inventory-item' });
+    
+    const itemInfo = $.el('div', { className: 'storage-item-info' });
+    
+    // Type badge + description
+    const nameRow = $.el('div', { className: 'storage-inventory-item-type' });
+    const typeBadge = $.el('span', { 
+      className: `inventory-type-badge inventory-type-badge-${(item.type || 'hhe').toLowerCase()}`,
+      textContent: item.type || 'HHE'
+    });
+    nameRow.appendChild(typeBadge);
+    nameRow.appendChild($.el('span', { className: 'storage-item-desc', textContent: item.description }));
+    itemInfo.appendChild(nameRow);
+    
+    // Meta info
+    const metaText = [];
+    if (item.quantity && item.quantity > 1) metaText.push(`Qty: ${item.quantity}`);
+    if (item.cbm) metaText.push(`${item.cbm} cbm`);
+    
+    // Auto-specific details
+    if (item.type === 'Auto') {
+      if (item.vin) metaText.push(`VIN: ${item.vin}`);
+    }
+    
+    if (metaText.length > 0) {
+      itemInfo.appendChild($.el('span', { className: 'storage-item-meta', textContent: metaText.join(' | ') }));
+    }
+    
+    row.appendChild(itemInfo);
+    
+    // Status badge
+    const statusClass = (item.status || 'In Storage').toLowerCase().replace(/\s+/g, '-');
+    row.appendChild($.el('span', { 
+      className: `storage-item-status storage-item-status-${statusClass}`,
+      textContent: item.status || 'In Storage'
+    }));
+    
+    // Actions
+    const actions = $.el('div', { className: 'storage-item-actions' });
+    
+    if (item.status !== 'Retrieved') {
+      const retrieveBtn = $.el('button', { 
+        type: 'button', 
+        className: 'btn-icon',
+        textContent: I18n.t('retrieve')
+      });
+      retrieveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.retrieveItem(storage, idx);
+      });
+      actions.appendChild(retrieveBtn);
+    }
+    
+    const deleteBtn = $.el('button', { 
+      type: 'button', 
+      className: 'btn-icon btn-icon-danger',
+      textContent: I18n.t('delete')
+    });
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.deleteItem(storage, idx);
+    });
+    actions.appendChild(deleteBtn);
+    
+    row.appendChild(actions);
+    return row;
+  },
+
+  // Retrieve an inventory item
+  retrieveItem(storage, idx) {
+    if (!storage.inventory || !storage.inventory[idx]) return;
+    
+    storage.inventory[idx].status = 'Retrieved';
+    storage.inventory[idx].dateRetrieved = new Date().toISOString().split('T')[0];
+    
+    // Check if all items retrieved - auto-close storage
+    const allRetrieved = storage.inventory.every(item => item.status === 'Retrieved');
+    if (allRetrieved && !storage.dateExited) {
+      storage.dateExited = new Date().toISOString().split('T')[0];
+      storage.status = 'Closed';
+    }
+    
+    Storage.saveStorageRecords();
+    this.render();
+    this.showDetails(storage);
+  },
+
+  // Delete an inventory item
+  async deleteItem(storage, idx) {
+    const confirmed = await Modals.confirm({
+      title: (State.lang === 'tr') ? 'Öğeyi Sil' : 'Delete Item',
+      message: I18n.t('confirmDeleteItem'),
+      danger: true,
+      confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+    });
+    if (!confirmed) return;
+    
+    storage.inventory.splice(idx, 1);
+    Storage.saveStorageRecords();
+    this.showDetails(storage);
+  },
+
+  // Open modal for create/edit
+  openModal(mode, storage = null) {
+    State.storageFormMode = mode;
+    
+    const modal = $.get('storageModal');
+    const form = $.get('storageForm');
+    const title = $.get('storageModalTitle');
+    
+    if (!modal || !form) return;
+    
+    // Set title
+    title.textContent = mode === 'create' ? I18n.t('modalAddStorageTitle') : I18n.t('modalEditStorageTitle');
+    
+    // Populate location dropdown
+    const locSelect = $.get('storageLocationSelect');
+    if (locSelect) {
+      while (locSelect.options.length > 1) locSelect.remove(1);
+      CONFIG.STORAGE_LOCATIONS.forEach(loc => {
+        locSelect.appendChild($.el('option', { value: loc.id, textContent: loc.name }));
+      });
+    }
+    
+    // Populate linked job dropdown
+    const jobSelect = $.get('storageLinkedJobSelect');
+    if (jobSelect) {
+      while (jobSelect.options.length > 1) jobSelect.remove(1);
+      State.jobs.forEach(job => {
+        jobSelect.appendChild($.el('option', { 
+          value: job.id, 
+          textContent: `${job.jobCode} - ${job.clientName || 'No client'}`
+        }));
+      });
+    }
+    
+    // Reset or populate form
+    if (mode === 'create') {
+      form.reset();
+      form.storageCode.value = Utils.storageCode();
+      form.status.value = 'Active';
+      form.billingType.value = 'Per CBM';
+    } else if (storage) {
+      form.storageCode.value = storage.storageCode;
+      form.clientName.value = storage.clientName || '';
+      form.organizationName.value = storage.organizationName || '';
+      form.linkedJobId.value = storage.linkedJobId || '';
+      form.location.value = storage.location || '';
+      form.totalCBM.value = storage.totalCBM || '';
+      form.grossWeight.value = storage.grossWeight || '';
+      form.dateEntered.value = storage.dateEntered || '';
+      form.dateExited.value = storage.dateExited || '';
+      form.billingType.value = storage.billingType || 'Per CBM';
+      form.ratePerCBM.value = storage.ratePerCBM || '';
+      form.rateCurrency.value = storage.rateCurrency || 'TRY';
+      form.ratePeriod.value = storage.ratePeriod || 'Monthly';
+      form.flatRate.value = storage.flatRate || '';
+      form.flatRateCurrency.value = storage.flatRateCurrency || 'TRY';
+      form.freeDays.value = storage.freeDays || '';
+      form.billingNotes.value = storage.billingNotes || '';
+      form.status.value = storage.status || 'Active';
+      form.notes.value = storage.notes || '';
+      
+      // Contents checkboxes
+      form.querySelectorAll('input[name="contents"]').forEach(cb => {
+        cb.checked = (storage.contents || []).includes(cb.value);
+      });
+      
+      modal.dataset.storageId = storage.id;
+    }
+    
+    // Toggle billing fields
+    this.toggleBillingFields();
+    
+    modal.classList.remove('hidden');
+  },
+
+  // Toggle billing type fields visibility
+  toggleBillingFields() {
+    const billingType = $.get('storageBillingTypeSelect');
+    const cbmFields = $.get('storageCbmBillingFields');
+    const flatFields = $.get('storageFlatRateFields');
+    
+    if (!billingType || !cbmFields || !flatFields) return;
+    
+    if (billingType.value === 'Flat Rate') {
+      cbmFields.classList.add('hidden');
+      flatFields.classList.remove('hidden');
+    } else {
+      cbmFields.classList.remove('hidden');
+      flatFields.classList.add('hidden');
+    }
+  },
+
+  // Save storage from form
+  saveFromForm() {
+    const modal = $.get('storageModal');
+    const form = $.get('storageForm');
+    
+    if (!form) return;
+    
+    const isEdit = State.storageFormMode === 'edit';
+    let storage;
+    
+    if (isEdit) {
+      storage = State.getStorage(modal.dataset.storageId);
+      if (!storage) return;
+    } else {
+      storage = Validator.normalizeStorageRecord({});
+    }
+    
+    // Update fields
+    storage.storageCode = form.storageCode.value;
+    storage.clientName = form.clientName.value;
+    storage.organizationName = form.organizationName.value;
+    storage.linkedJobId = form.linkedJobId.value;
+    storage.location = form.location.value;
+    storage.contents = Array.from(form.querySelectorAll('input[name="contents"]:checked')).map(cb => cb.value);
+    storage.totalCBM = parseFloat(form.totalCBM.value) || 0;
+    storage.grossWeight = parseFloat(form.grossWeight.value) || 0;
+    storage.dateEntered = form.dateEntered.value;
+    storage.dateExited = form.dateExited.value;
+    storage.billingType = form.billingType.value;
+    storage.ratePerCBM = parseFloat(form.ratePerCBM.value) || 0;
+    storage.rateCurrency = form.rateCurrency.value;
+    storage.ratePeriod = form.ratePeriod.value;
+    storage.flatRate = parseFloat(form.flatRate.value) || 0;
+    storage.flatRateCurrency = form.flatRateCurrency.value;
+    storage.freeDays = parseInt(form.freeDays.value) || 0;
+    storage.billingNotes = form.billingNotes.value;
+    storage.status = form.status.value;
+    storage.notes = form.notes.value;
+    
+    // If linked to job, update job's storageId
+    if (storage.linkedJobId) {
+      const linkedJob = State.getJob(storage.linkedJobId);
+      if (linkedJob) {
+        linkedJob.storageId = storage.id;
+        linkedJob.hasStorage = true;
+        Storage.saveJobs();
+      }
+    }
+    
+    if (!isEdit) {
+      State.storageRecords.push(storage);
+    }
+    
+    Storage.saveStorageRecords();
+    modal.classList.add('hidden');
+    
+    State.selectedStorageId = storage.id;
+    this.render();
+    this.showDetails(storage);
+  },
+
+  // Delete a storage record
+  async deleteStorage(storageId) {
+    const storage = State.getStorage(storageId);
+    if (!storage) return;
+    
+    const confirmed = await Modals.confirm({
+      title: (State.lang === 'tr') ? 'Depo Kaydını Sil' : 'Delete Storage Record',
+      message: I18n.t('confirmDeleteStorage'),
+      danger: true,
+      confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+    });
+    if (!confirmed) return;
+    
+    // Unlink from job if linked
+    if (storage.linkedJobId) {
+      const job = State.getJob(storage.linkedJobId);
+      if (job) {
+        job.storageId = '';
+        job.hasStorage = false;
+        Storage.saveJobs();
+      }
+    }
+    
+    // Remove storage record
+    const idx = State.storageRecords.findIndex(s => s.id === storageId);
+    if (idx !== -1) {
+      State.storageRecords.splice(idx, 1);
+      Storage.saveStorageRecords();
+    }
+    
+    State.selectedStorageId = null;
+    this.render();
+    
+    const panel = $.get('storageDetailsPanel');
+    if (panel) {
+      $.clear(panel);
+      panel.appendChild($.el('p', { textContent: I18n.t('hintSelectStorage') }));
+    }
+  },
+
+  // Render storage section in job details (legacy support)
+  renderJobStorageSection(job) {
+    const section = $.el('div', { className: 'storage-details-section' });
+    
+    // Check if job has linked storage record
+    if (job.storageId) {
+      const storage = State.getStorage(job.storageId);
+      if (storage) {
+        const header = $.el('div', { className: 'storage-details-header' });
+        header.appendChild($.el('h4', { className: 'details-section-title', textContent: I18n.t('storageDetails') }));
+        
+        const viewBtn = $.el('button', { 
+          type: 'button', 
+          className: 'btn-icon',
+          textContent: I18n.t('viewStorage')
+        });
+        viewBtn.addEventListener('click', () => {
+          Views.show('storage');
+          State.selectedStorageId = storage.id;
+          this.render();
+          this.showDetails(storage);
+        });
+        header.appendChild(viewBtn);
+        section.appendChild(header);
+        
+        // Quick summary
+        const summary = $.el('div', { className: 'storage-info-grid' });
+        
+        const infoRows = [
+          [I18n.t('storageCode'), storage.storageCode],
+          [I18n.t('location'), this.getLocationName(storage.location)],
+          [I18n.t('status'), storage.status],
+          [I18n.t('daysInStorage'), this.getDaysInStorage(storage)]
+        ];
+        
+        infoRows.forEach(([label, value]) => {
+          const row = $.el('div', { className: 'storage-info-row' });
+          row.appendChild($.el('span', { className: 'storage-info-label', textContent: label }));
+          row.appendChild($.el('span', { className: 'storage-info-value', textContent: value }));
+          summary.appendChild(row);
+        });
+        
+        section.appendChild(summary);
+        return section;
+      }
+    }
+    
+    // Legacy embedded storage (for backwards compatibility)
+    if (job.hasStorage) {
+      const header = $.el('div', { className: 'storage-details-header' });
+      header.appendChild($.el('h4', { className: 'details-section-title', textContent: I18n.t('storageDetails') }));
+      
+      // Migration button
+      const migrateBtn = $.el('button', { 
+        type: 'button', 
+        className: 'btn-icon',
+        textContent: 'Migrate to Storage Tab'
+      });
+      migrateBtn.addEventListener('click', () => this.migrateJobStorage(job));
+      header.appendChild(migrateBtn);
+      section.appendChild(header);
+      
+      section.appendChild($.el('p', { 
+        style: 'color: var(--color-warning); font-size: 13px;',
+        textContent: 'This storage uses legacy embedded data. Click "Migrate" to move it to the Storage tab.'
+      }));
+    }
+    
+    return section;
+  },
+
+  // Migrate embedded job storage to separate Storage entity
+  migrateJobStorage(job) {
+    if (!job.hasStorage) return;
+    
+    // Create new storage record from job data
+    const storage = Validator.normalizeStorageRecord({
+      linkedJobId: job.id,
+      clientName: job.clientName || '',
+      organizationName: job.organizationName || '',
+      location: job.storageLocation || '',
+      contents: job.storageContents || [],
+      totalCBM: job.storageCBM || 0,
+      dateEntered: job.storageDateEntered || '',
+      dateExited: job.storageDateExited || '',
+      inventory: (job.storageInventory || []).map(item => ({
+        ...item,
+        type: item.type || 'HHE'
+      })),
+      billingType: job.storageBillingType || 'Per CBM',
+      ratePerCBM: job.storageBillingRate || 0,
+      rateCurrency: job.storageBillingCurrency || 'TRY',
+      ratePeriod: job.storageBillingPeriod || 'Monthly',
+      flatRate: job.storageFlatRate || 0,
+      flatRateCurrency: job.storageFlatCurrency || 'TRY',
+      freeDays: job.storageFreeDays || 0,
+      billingNotes: job.storageBillingNotes || '',
+      status: job.storageDateExited ? 'Closed' : 'Active'
+    });
+    
+    // Add to storage records
+    State.storageRecords.push(storage);
+    
+    // Update job reference
+    job.storageId = storage.id;
+    
+    // Save
+    Storage.saveStorageRecords();
+    Storage.saveJobs();
+    
+    // Refresh view
+    JobsUI.showDetails(job);
+    
+    Modals.alert({ 
+      title: (State.lang === 'tr') ? 'Başarılı' : 'Success', 
+      message: (State.lang === 'tr') ? `Depo ${storage.storageCode} koduna taşındı` : `Storage migrated to ${storage.storageCode}` 
+    });
+  }
+};
+
+// ============================================================
 // PART 3 OF 4: AGENTS & SCHEDULE UI
 // ============================================================
 
@@ -5681,23 +9145,83 @@ const AgentsUI = {
     const container = $.get('agentList');
     const agents = this.filter();
     $.clear(container);
+    
+    // Update tab active state
+    document.querySelectorAll('.agent-type-tab').forEach(tab => {
+      const isAgent = tab.dataset.type === 'Agent';
+      const isCurrentlyAgents = State.agentTypeFilter === 'Agent';
+      tab.classList.toggle('active', isAgent === isCurrentlyAgents);
+    });
+    
+    // Update button text based on current tab
+    const addBtn = $.get('openCreateAgentBtn');
+    if (addBtn) {
+      const isAgentTab = State.agentTypeFilter === 'Agent';
+      addBtn.textContent = isAgentTab ? I18n.t('addAgent') : I18n.t('addBroker');
+    }
+    
     if (agents.length === 0) {
-      container.appendChild($.el('p', { textContent: I18n.t('noAgentsYet') }));
+      const emptyMsg = State.agentTypeFilter === 'Agent' ? I18n.t('noAgentsYet') : I18n.t('noBrokersYet');
+      container.appendChild($.el('p', { textContent: emptyMsg }));
       return;
     }
+    
     agents.forEach(agent => {
       const card = $.el('div', { className: 'agent-list-card' });
-      card.appendChild($.el('h3', { textContent: agent.name }));
+      
+      // Name row with type badge for brokers
+      const nameRow = $.el('div', { className: 'agent-card-name-row' });
+      nameRow.appendChild($.el('h3', { textContent: agent.name }));
+      
+      // Add type badge for brokers
+      if (agent.type && agent.type !== 'Agent') {
+        const badgeClass = agent.type === 'Customs Broker' ? 'agent-type-badge-customs' :
+                          agent.type === 'Sea Freight Broker' ? 'agent-type-badge-sea' : 'agent-type-badge-air';
+        const shortLabel = agent.type === 'Customs Broker' ? 'Customs' :
+                          agent.type === 'Sea Freight Broker' ? 'Sea' : 'Air';
+        nameRow.appendChild($.el('span', { 
+          className: `agent-type-badge ${badgeClass}`,
+          textContent: shortLabel
+        }));
+      }
+      card.appendChild(nameRow);
+      
       card.appendChild($.el('p', { textContent: Utils.location(agent.city, agent.country) }));
-      const moveCount = State.jobs.filter(
-        j => j.originAgentId === agent.id || j.destinationAgentId === agent.id
-      ).length;
-      card.appendChild($.el('p', {
-        className: 'agent-moves-summary',
-        textContent: moveCount === 1
-          ? ((State.lang === 'tr') ? '1 taşıma' : '1 move')
-          : ((State.lang === 'tr') ? `${moveCount} taşıma` : `${moveCount} moves`)
-      }));
+      
+      // For agents, show move count. For brokers, show job usage count
+      if (agent.type === 'Agent' || !agent.type) {
+        const moveCount = State.jobs.filter(
+          j => j.originAgentId === agent.id || j.destinationAgentId === agent.id
+        ).length;
+        card.appendChild($.el('p', {
+          className: 'agent-moves-summary',
+          textContent: moveCount === 1
+            ? ((State.lang === 'tr') ? '1 taşıma' : '1 move')
+            : ((State.lang === 'tr') ? `${moveCount} taşıma` : `${moveCount} moves`)
+        }));
+        
+        // FIDI/IAM badges for agents
+        if (agent.isFIDI || agent.isIAM) {
+          const badgesRow = $.el('div', { className: 'agent-card-badges' });
+          if (agent.isFIDI) badgesRow.appendChild($.el('span', { className: 'membership-badge fidi-badge', textContent: 'FIDI' }));
+          if (agent.isIAM) badgesRow.appendChild($.el('span', { className: 'membership-badge iam-badge', textContent: 'IAM' }));
+          card.appendChild(badgesRow);
+        }
+      } else {
+        // For brokers, show usage in jobs
+        const usageCount = State.jobs.filter(j => 
+          j.customsBrokerId === agent.id || 
+          j.seaFreightBrokerId === agent.id || 
+          j.airFreightBrokerId === agent.id
+        ).length;
+        card.appendChild($.el('p', {
+          className: 'agent-moves-summary',
+          textContent: usageCount === 1
+            ? ((State.lang === 'tr') ? '1 işte kullanıldı' : 'Used in 1 job')
+            : ((State.lang === 'tr') ? `${usageCount} işte kullanıldı` : `Used in ${usageCount} jobs`)
+        }));
+      }
+      
       card.addEventListener('click', () => {
         State.selectedAgentId = agent.id;
         this.showDetails(agent);
@@ -5708,10 +9232,20 @@ const AgentsUI = {
 
   filter() {
     let list = [...State.agents];
+    
+    // Filter by type (Agent tab vs Broker tab)
+    if (State.agentTypeFilter === 'Agent') {
+      list = list.filter(a => !a.type || a.type === 'Agent');
+    } else {
+      // Broker tab - show all broker types
+      list = list.filter(a => a.type && a.type !== 'Agent');
+    }
+    
+    // Filter by search
     if (State.agentSearch) {
       const term = State.agentSearch.toLowerCase();
       list = list.filter(agent => {
-        const text = [agent.name, agent.city, agent.country]
+        const text = [agent.name, agent.city, agent.country, agent.type]
           .filter(Boolean)
           .join(' ')
           .toLowerCase();
@@ -5726,175 +9260,414 @@ const AgentsUI = {
     State.selectedAgentId = agent.id;
     const container = $.get('agentDetailsPanel');
     $.clear(container);
+    
+    const isAgent = !agent.type || agent.type === 'Agent';
+    const isBroker = !isAgent;
 
-    container.appendChild($.el('h3', { textContent: agent.name }));
-    const locP = $.el('p');
-    locP.appendChild($.el('strong', { textContent: I18n.t('location') }));
-    locP.appendChild(document.createTextNode(Utils.location(agent.city, agent.country)));
-    container.appendChild(locP);
-
-    const actions = $.el('div', { className: 'agent-actions' });
-    const editBtn = $.el('button', { type: 'button', textContent: I18n.t('editAgent') });
+    // Header with name and action buttons at top right
+    const headerRow = $.el('div', { className: 'agent-detail-header' });
+    const nameWithType = $.el('div', { className: 'agent-name-with-type' });
+    nameWithType.appendChild($.el('h3', { textContent: agent.name }));
+    
+    // Type badge for brokers
+    if (isBroker) {
+      const badgeClass = agent.type === 'Customs Broker' ? 'agent-type-badge-customs' :
+                        agent.type === 'Sea Freight Broker' ? 'agent-type-badge-sea' : 'agent-type-badge-air';
+      nameWithType.appendChild($.el('span', { 
+        className: `agent-type-badge ${badgeClass}`,
+        textContent: agent.type
+      }));
+    }
+    headerRow.appendChild(nameWithType);
+    
+    const actions = $.el('div', { className: 'agent-header-actions' });
+    const editBtn = $.el('button', { type: 'button', className: 'btn-icon', textContent: I18n.t('edit') });
     editBtn.addEventListener('click', () => {
       State.agentFormMode = 'edit';
       this.showModal(agent);
     });
-    const delBtn = $.el('button', { type: 'button', textContent: I18n.t('deleteAgent') });
-    delBtn.addEventListener('click', () => {
-      if (!confirm(I18n.t('deleteAgentConfirm'))) return;
+    const delBtn = $.el('button', { type: 'button', className: 'btn-icon btn-icon-danger', textContent: I18n.t('delete') });
+    delBtn.addEventListener('click', async () => {
+      const confirmMsg = isAgent ? I18n.t('deleteAgentConfirm') : I18n.t('deleteBrokerConfirm');
+      const confirmed = await Modals.confirm({
+        title: isAgent ? ((State.lang === 'tr') ? 'Acenteyi Sil' : 'Delete Agent') : ((State.lang === 'tr') ? 'Broker\'ı Sil' : 'Delete Broker'),
+        message: confirmMsg,
+        danger: true,
+        confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+      });
+      if (!confirmed) return;
       State.agents = State.agents.filter(a => a.id !== agent.id);
       Storage.saveAgents();
       Forms.refreshAgentSelects();
       this.render();
       $.clear(container);
-      container.appendChild($.el('p', { textContent: I18n.t('noAgentsYet') }));
+      container.appendChild($.el('p', { textContent: isAgent ? I18n.t('noAgentsYet') : I18n.t('noBrokersYet') }));
     });
     actions.appendChild(editBtn);
     actions.appendChild(delBtn);
-    container.appendChild(actions);
+    headerRow.appendChild(actions);
+    container.appendChild(headerRow);
+
+    // Location
+    const locP = $.el('p', { className: 'agent-location' });
+    locP.appendChild($.el('strong', { textContent: I18n.t('location') + ': ' }));
+    locP.appendChild(document.createTextNode(Utils.location(agent.city, agent.country)));
+    container.appendChild(locP);
+
+    // FIDI/IAM badges - only for agents
+    if (isAgent && (agent.isFIDI || agent.isIAM)) {
+      const badgesRow = $.el('div', { className: 'agent-membership-badges' });
+      if (agent.isFIDI) {
+        const fidiBadge = $.el('span', { className: 'membership-badge fidi-badge' });
+        fidiBadge.innerHTML = 'FIDI ✓';
+        badgesRow.appendChild(fidiBadge);
+      }
+      if (agent.isIAM) {
+        const iamBadge = $.el('span', { className: 'membership-badge iam-badge' });
+        iamBadge.innerHTML = 'IAM ✓';
+        badgesRow.appendChild(iamBadge);
+      }
+      container.appendChild(badgesRow);
+    }
+    
+    // Notes (if any)
+    if (agent.notes) {
+      const notesP = $.el('p', { className: 'agent-notes' });
+      notesP.appendChild($.el('strong', { textContent: I18n.t('notes') + ': ' }));
+      notesP.appendChild(document.createTextNode(agent.notes));
+      container.appendChild(notesP);
+    }
 
     this.renderContacts(container, agent);
 
-    container.appendChild($.el('h4', { textContent: I18n.t('recentMoves') }));
-    const moves = State.jobs.filter(j => j.originAgentId === agent.id || j.destinationAgentId === agent.id);
-    if (moves.length === 0) {
-      container.appendChild($.el('p', { textContent: I18n.t('noMovesLinked') }));
+    // Recent moves/jobs section
+    if (isAgent) {
+      // For agents: show moves where they are origin or destination agent
+      container.appendChild($.el('h4', { className: 'details-section-title', textContent: I18n.t('recentMoves') }));
+      const moves = State.jobs.filter(j => j.originAgentId === agent.id || j.destinationAgentId === agent.id);
+      if (moves.length === 0) {
+        container.appendChild($.el('p', { textContent: I18n.t('noMovesLinked') }));
+      } else {
+        const ul = $.el('ul');
+        moves.forEach(job => {
+          const role = job.originAgentId === agent.id ? I18n.t('originAgentRole') : I18n.t('destinationAgentRole');
+          const route = `${job.originCity || '?'} → ${job.destinationCity || '?'}`;
+          const li = $.el('li', {
+            className: 'agent-job-link',
+            textContent: `${job.jobCode || '-'} – ${job.clientName || '-'} (${route}) [${role}]`
+          });
+          li.addEventListener('click', () => {
+            Views.show('moves');
+            JobsUI.render();
+            JobsUI.showDetails(job);
+          });
+          ul.appendChild(li);
+        });
+        container.appendChild(ul);
+      }
     } else {
-      const ul = $.el('ul');
-      moves.forEach(job => {
-        const li = $.el('li', {
-          className: 'agent-job-link',
-          textContent: `${job.jobCode || '-'} – ${job.clientName || 'No client name'}`
+      // For brokers: show jobs where they were used
+      container.appendChild($.el('h4', { className: 'details-section-title', textContent: I18n.t('jobsUsingBroker') }));
+      const jobs = State.jobs.filter(j => 
+        j.customsBrokerId === agent.id || 
+        j.seaFreightBrokerId === agent.id || 
+        j.airFreightBrokerId === agent.id
+      );
+      if (jobs.length === 0) {
+        container.appendChild($.el('p', { textContent: I18n.t('noBrokerJobs') }));
+      } else {
+        const ul = $.el('ul');
+        jobs.forEach(job => {
+          const li = $.el('li', {
+            className: 'agent-job-link',
+            textContent: `${job.jobCode || '-'} – ${job.clientName || '-'}`
+          });
+          li.addEventListener('click', () => {
+            Views.show('moves');
+            JobsUI.render();
+            JobsUI.showDetails(job);
+          });
+          ul.appendChild(li);
         });
-        li.addEventListener('click', () => {
-          Views.show('moves');
-          JobsUI.render();
-          JobsUI.showDetails(job);
-        });
-        ul.appendChild(li);
-      });
-      container.appendChild(ul);
+        container.appendChild(ul);
+      }
     }
   },
 
   renderContacts(container, agent) {
-    const form = $.el('div', { className: 'agent-contact-form' });
-    form.appendChild($.el('h4', { textContent: I18n.t('contacts') }));
-    const list = $.el('div');
-    if (!Array.isArray(agent.contacts)) agent.contacts = [];
-
-    const nameInput = $.el('input', { type: 'text', id: 'contactNameInput' });
-    const emailInput = $.el('input', { type: 'email', id: 'contactEmailInput' });
-    const phoneInput = $.el('input', { type: 'text', id: 'contactPhoneInput' });
-    const notesInput = $.el('textarea', { id: 'contactNotesInput' });
-
-    agent.contacts.forEach((contact, idx) => {
-      const row = $.el('div', { className: 'agent-contact-row' });
-      const info = $.el('p');
-      info.appendChild($.el('strong', { textContent: contact.name || '-' }));
-      info.appendChild(document.createTextNode(
-        ` (${contact.email || '-'}) ${contact.phone ? ' - ' + contact.phone : ''}`
-      ));
-      row.appendChild(info);
-
-      if (contact.notes) {
-        row.appendChild($.el('p', {
-          textContent: contact.notes,
-          style: 'font-size: 12px; color: #6b7280;'
-        }));
-      }
-
-      const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit') });
-      editBtn.addEventListener('click', () => {
-        State.editingContactIndex = idx;
-        nameInput.value = contact.name || '';
-        emailInput.value = contact.email || '';
-        phoneInput.value = contact.phone || '';
-        notesInput.value = contact.notes || '';
-        saveBtn.textContent = I18n.t('updateContact');
-      });
-
-      const delBtn = $.el('button', { type: 'button', textContent: I18n.t('delete') });
-      delBtn.addEventListener('click', () => {
-        if (!confirm(I18n.t('deleteContactConfirm'))) return;
-
-        if (State.editingContactIndex === idx) {
-          State.editingContactIndex = null;
-        } else if (State.editingContactIndex != null && State.editingContactIndex > idx) {
-          State.editingContactIndex--;
-        }
-
-        agent.contacts.splice(idx, 1);
-        Storage.saveAgents();
-        this.showDetails(agent);
-      });
-
-      row.appendChild(editBtn);
-      row.appendChild(delBtn);
-      list.appendChild(row);
+    // Main contacts section container
+    const section = $.el('div', { className: 'agent-contacts-section' });
+    
+    // Header with title and Add Contact button
+    const header = $.el('div', { className: 'agent-contacts-header' });
+    header.appendChild($.el('h4', { textContent: I18n.t('contacts') }));
+    
+    const addContactBtn = $.el('button', { 
+      type: 'button', 
+      className: 'add-contact-btn',
+      textContent: (State.lang === 'tr') ? '+ Kişi Ekle' : '+ Add Contact'
     });
-
-    form.appendChild(list);
-
-    form.appendChild($.el('label', { textContent: I18n.t('contactName') }));
-    form.appendChild(nameInput);
-
-    form.appendChild($.el('label', { textContent: I18n.t('email') }));
-    form.appendChild(emailInput);
-
-    form.appendChild($.el('label', { textContent: I18n.t('phone') }));
-    form.appendChild(phoneInput);
-
-    form.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
-    form.appendChild(notesInput);
-
+    header.appendChild(addContactBtn);
+    section.appendChild(header);
+    
+    // Contacts list
+    if (!Array.isArray(agent.contacts)) agent.contacts = [];
+    
+    const contactsList = $.el('div', { className: 'contacts-list' });
+    
+    if (agent.contacts.length === 0) {
+      contactsList.appendChild($.el('div', { 
+        className: 'no-contacts-message',
+        textContent: (State.lang === 'tr') ? 'Henüz kişi eklenmedi.' : 'No contacts added yet.'
+      }));
+    } else {
+      agent.contacts.forEach((contact, idx) => {
+        const card = $.el('div', { className: 'contact-card' });
+        
+        // Card header with name and actions
+        const cardHeader = $.el('div', { className: 'contact-card-header' });
+        cardHeader.appendChild($.el('h5', { 
+          className: 'contact-card-name', 
+          textContent: contact.name || (State.lang === 'tr' ? 'İsimsiz Kişi' : 'Unnamed Contact')
+        }));
+        
+        const cardActions = $.el('div', { className: 'contact-card-actions' });
+        
+        const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit') });
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Show the form and populate it for editing
+          State.editingContactIndex = idx;
+          formContainer.classList.remove('hidden');
+          formTitle.textContent = (State.lang === 'tr') ? 'Kişiyi Düzenle' : 'Edit Contact';
+          nameInput.value = contact.name || '';
+          emailInput.value = contact.email || '';
+          phoneInput.value = contact.phone || '';
+          notesInput.value = contact.notes || '';
+          saveBtn.textContent = I18n.t('updateContact');
+        });
+        
+        const delBtn = $.el('button', { type: 'button', className: 'btn-danger', textContent: I18n.t('delete') });
+        delBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const confirmed = await Modals.confirm({
+            title: (State.lang === 'tr') ? 'Kişiyi Sil' : 'Delete Contact',
+            message: I18n.t('deleteContactConfirm'),
+            danger: true,
+            confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+          });
+          if (!confirmed) return;
+          
+          if (State.editingContactIndex === idx) {
+            State.editingContactIndex = null;
+          } else if (State.editingContactIndex != null && State.editingContactIndex > idx) {
+            State.editingContactIndex--;
+          }
+          
+          agent.contacts.splice(idx, 1);
+          Storage.saveAgents();
+          this.showDetails(agent);
+        });
+        
+        cardActions.appendChild(editBtn);
+        cardActions.appendChild(delBtn);
+        cardHeader.appendChild(cardActions);
+        card.appendChild(cardHeader);
+        
+        // Card info (email, phone)
+        const cardInfo = $.el('div', { className: 'contact-card-info' });
+        if (contact.email) {
+          cardInfo.appendChild($.el('span', { 
+            className: 'contact-card-info-item email', 
+            textContent: contact.email 
+          }));
+        }
+        if (contact.phone) {
+          cardInfo.appendChild($.el('span', { 
+            className: 'contact-card-info-item phone', 
+            textContent: contact.phone 
+          }));
+        }
+        if (cardInfo.children.length > 0) {
+          card.appendChild(cardInfo);
+        }
+        
+        // Card notes
+        if (contact.notes) {
+          card.appendChild($.el('div', {
+            className: 'contact-card-notes',
+            textContent: contact.notes
+          }));
+        }
+        
+        contactsList.appendChild(card);
+      });
+    }
+    
+    section.appendChild(contactsList);
+    
+    // Hidden form container for adding/editing contacts
+    const formContainer = $.el('div', { className: 'contact-form-container hidden' });
+    
+    const formTitle = $.el('h5', { 
+      className: 'contact-form-title',
+      textContent: (State.lang === 'tr') ? 'Yeni Kişi Ekle' : 'Add New Contact'
+    });
+    formContainer.appendChild(formTitle);
+    
+    const formGrid = $.el('div', { className: 'contact-form-grid' });
+    
+    // Name input
+    const nameDiv = $.el('div');
+    nameDiv.appendChild($.el('label', { textContent: I18n.t('contactName') }));
+    const nameInput = $.el('input', { 
+      type: 'text', 
+      id: 'contactNameInput', 
+      placeholder: (State.lang === 'tr') ? 'İsim girin...' : 'Enter name...' 
+    });
+    nameDiv.appendChild(nameInput);
+    formGrid.appendChild(nameDiv);
+    
+    // Email input
+    const emailDiv = $.el('div');
+    emailDiv.appendChild($.el('label', { textContent: I18n.t('email') }));
+    const emailInput = $.el('input', { 
+      type: 'email', 
+      id: 'contactEmailInput', 
+      placeholder: (State.lang === 'tr') ? 'E-posta girin...' : 'Enter email...' 
+    });
+    emailDiv.appendChild(emailInput);
+    formGrid.appendChild(emailDiv);
+    
+    // Phone input
+    const phoneDiv = $.el('div');
+    phoneDiv.appendChild($.el('label', { textContent: I18n.t('phone') }));
+    const phoneInput = $.el('input', { 
+      type: 'text', 
+      id: 'contactPhoneInput', 
+      placeholder: (State.lang === 'tr') ? 'Telefon girin...' : 'Enter phone...' 
+    });
+    phoneDiv.appendChild(phoneInput);
+    formGrid.appendChild(phoneDiv);
+    
+    // Notes input (full width)
+    const notesDiv = $.el('div', { className: 'full-width' });
+    notesDiv.appendChild($.el('label', { textContent: I18n.t('notesLabel') }));
+    const notesInput = $.el('textarea', { 
+      id: 'contactNotesInput', 
+      rows: '2', 
+      placeholder: (State.lang === 'tr') ? 'Notlar ekleyin...' : 'Add notes...' 
+    });
+    notesDiv.appendChild(notesInput);
+    formGrid.appendChild(notesDiv);
+    
+    formContainer.appendChild(formGrid);
+    
+    // Form actions
+    const formActions = $.el('div', { className: 'contact-form-actions' });
+    
+    const cancelBtn = $.el('button', { 
+      type: 'button', 
+      className: 'cancel-btn',
+      textContent: I18n.t('cancel')
+    });
+    cancelBtn.addEventListener('click', () => {
+      formContainer.classList.add('hidden');
+      State.editingContactIndex = null;
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      notesInput.value = '';
+      formTitle.textContent = (State.lang === 'tr') ? 'Yeni Kişi Ekle' : 'Add New Contact';
+      saveBtn.textContent = I18n.t('addContact');
+    });
+    
     const saveBtn = $.el('button', {
       type: 'button',
-      id: 'saveContactBtn',
-      textContent: I18n.t('addUpdateContact')
+      textContent: I18n.t('addContact')
     });
-
     saveBtn.addEventListener('click', () => {
       const name = (nameInput.value || '').trim();
       const email = (emailInput.value || '').trim();
       const phone = (phoneInput.value || '').trim();
       const notes = (notesInput.value || '').trim();
-
+      
       if (!name && !email && !phone && !notes) {
-        alert(I18n.t('fillAtLeastOneField'));
+        Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: I18n.t('fillAtLeastOneField') });
         return;
       }
-
+      
       const newContact = { name, email, phone, notes };
-
+      
       if (State.editingContactIndex != null) {
         agent.contacts[State.editingContactIndex] = newContact;
         State.editingContactIndex = null;
       } else {
         agent.contacts.push(newContact);
       }
-
+      
       Storage.saveAgents();
       this.showDetails(agent);
     });
-
-    form.appendChild(saveBtn);
-    container.appendChild(form);
+    
+    formActions.appendChild(cancelBtn);
+    formActions.appendChild(saveBtn);
+    formContainer.appendChild(formActions);
+    
+    section.appendChild(formContainer);
+    
+    // Add Contact button click handler
+    addContactBtn.addEventListener('click', () => {
+      State.editingContactIndex = null;
+      formTitle.textContent = (State.lang === 'tr') ? 'Yeni Kişi Ekle' : 'Add New Contact';
+      saveBtn.textContent = I18n.t('addContact');
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      notesInput.value = '';
+      formContainer.classList.remove('hidden');
+      nameInput.focus();
+    });
+    
+    container.appendChild(section);
   },
 
   showModal(agent = null) {
     const form = $.get('agentForm');
     form.reset();
+    
+    const membershipsSection = $.get('agentMembershipsSection');
+    const typeSelect = form.agentType;
+    
+    // Toggle memberships visibility based on type
+    const updateMembershipsVisibility = () => {
+      if (membershipsSection) {
+        membershipsSection.style.display = typeSelect.value === 'Agent' ? 'block' : 'none';
+      }
+    };
+    
+    typeSelect.addEventListener('change', updateMembershipsVisibility);
+    
     if (State.agentFormMode === 'edit' && agent) {
-      $.get('agentModalTitle').textContent = I18n.t('editAgentTitle');
+      const isAgent = !agent.type || agent.type === 'Agent';
+      $.get('agentModalTitle').textContent = isAgent ? I18n.t('editAgentTitle') : I18n.t('editBrokerTitle');
+      form.agentType.value = agent.type || 'Agent';
       form.agentName.value = agent.name || '';
       form.agentCity.value = agent.city || '';
       form.agentCountry.value = agent.country || '';
+      if (form.isFIDI) form.isFIDI.checked = agent.isFIDI || false;
+      if (form.isIAM) form.isIAM.checked = agent.isIAM || false;
+      if (form.agentNotes) form.agentNotes.value = agent.notes || '';
       State.selectedAgentId = agent.id;
     } else {
-      $.get('agentModalTitle').textContent = I18n.t('addAgentTitle');
+      // When creating new, use current tab to set default type
+      const isAgentTab = State.agentTypeFilter === 'Agent';
+      $.get('agentModalTitle').textContent = isAgentTab ? I18n.t('addAgentTitle') : I18n.t('addBrokerTitle');
+      form.agentType.value = isAgentTab ? 'Agent' : 'Customs Broker';
       State.selectedAgentId = null;
     }
+    
+    updateMembershipsVisibility();
     Modals.open('createAgentModal');
   }
 };
@@ -5947,6 +9720,11 @@ const ScheduleUI = {
       month: 'long',
       year: 'numeric'
     });
+    
+    // Update office filter button states
+    document.querySelectorAll('.office-filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.office === State.scheduleOfficeFilter);
+    });
 
     const calendar = $.get('scheduleCalendar');
     $.clear(calendar);
@@ -5956,32 +9734,81 @@ const ScheduleUI = {
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      let stepsCount = 0;
+      
+      // Check if this is today
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      const isToday = dateStr === todayStr;
+      
+      // Count completed and uncompleted items (with office filter)
+      let completedCount = 0;
+      let uncompletedCount = 0;
+      
+      const officeFilter = State.scheduleOfficeFilter;
+      
       State.jobs.forEach(job => {
         if (Array.isArray(job.steps)) {
-          stepsCount += job.steps.filter(s => s.date === dateStr).length;
+          job.steps.filter(s => s.date === dateStr).forEach(step => {
+            // Apply office filter
+            if (officeFilter !== 'All' && step.office !== officeFilter) return;
+            
+            if (step.completed) {
+              completedCount++;
+            } else {
+              uncompletedCount++;
+            }
+          });
         }
       });
+      
+      // Count extra jobs (with office filter)
       const extraJobs = State.scheduleExtraJobs[dateStr] || [];
-      const totalItems = stepsCount + extraJobs.length;
-      const hasItems = totalItems > 0;
+      extraJobs.forEach(ej => {
+        // Apply office filter
+        if (officeFilter !== 'All' && ej.office !== officeFilter) return;
+        
+        if (ej.completed) {
+          completedCount++;
+        } else {
+          uncompletedCount++;
+        }
+      });
+      
+      const hasItems = completedCount > 0 || uncompletedCount > 0;
 
       const dayDiv = $.el('div', {
         className: `calendar-day${
           hasItems ? ' has-moves' : ''
         }${
           State.schedule.selectedDate === dateStr ? ' selected' : ''
+        }${
+          isToday ? ' today' : ''
         }`
       });
       dayDiv.appendChild($.el('div', {
         className: 'day-number',
         textContent: String(day)
       }));
+      
+      // Add badges container if there are items
       if (hasItems) {
-        dayDiv.appendChild($.el('div', {
-          className: 'day-badge',
-          textContent: String(totalItems)
-        }));
+        const badgesContainer = $.el('div', { className: 'day-badges' });
+        
+        if (uncompletedCount > 0) {
+          badgesContainer.appendChild($.el('span', {
+            className: 'day-badge day-badge-pending',
+            textContent: String(uncompletedCount)
+          }));
+        }
+        
+        if (completedCount > 0) {
+          badgesContainer.appendChild($.el('span', {
+            className: 'day-badge day-badge-completed',
+            textContent: String(completedCount)
+          }));
+        }
+        
+        dayDiv.appendChild(badgesContainer);
       }
       dayDiv.addEventListener('click', () => {
         State.schedule.selectedDate = dateStr;
@@ -5996,7 +9823,7 @@ const ScheduleUI = {
   const container = $.get('scheduleDayDetails');
   $.clear(container);
 
-  const topRow = $.el('div', { style: 'display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;' });
+  const topRow = $.el('div', { style: 'display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom: 16px;' });
   topRow.appendChild($.el('h3', { 
     textContent: I18n.t('dayDetails') + ': ' + Utils.formatDate(dateStr), 
     style: 'margin:0;' 
@@ -6050,10 +9877,15 @@ const ScheduleUI = {
   const officeGroups = {};
   CONFIG.OFFICES.forEach(office => { officeGroups[office] = []; });
   
+  const officeFilter = State.scheduleOfficeFilter;
+  
   allItems.forEach(item => {
     const office = item.office && CONFIG.OFFICES.includes(item.office) ? item.office : '';
     if (office) {
-      officeGroups[office].push(item);
+      // Apply office filter
+      if (officeFilter === 'All' || office === officeFilter) {
+        officeGroups[office].push(item);
+      }
     }
   });
   
@@ -6063,12 +9895,19 @@ const ScheduleUI = {
   });
 
   // Render grouped by office
-  const hasAnyItems = allItems.length > 0;
+  const filteredItems = Object.values(officeGroups).flat();
+  const hasAnyItems = filteredItems.length > 0;
   
   if (!hasAnyItems) {
-    container.appendChild($.el('p', { textContent: I18n.t('scheduleDayDetailsHint') }));
+    const noItemsMsg = officeFilter === 'All' 
+      ? I18n.t('scheduleDayDetailsHint')
+      : ((State.lang === 'tr') ? `${officeFilter} ofisi için bugün planlanmış iş yok.` : `No items scheduled for ${officeFilter} office today.`);
+    container.appendChild($.el('p', { textContent: noItemsMsg }));
   } else {
     CONFIG.OFFICES.forEach(office => {
+      // Skip offices not matching filter
+      if (officeFilter !== 'All' && office !== officeFilter) return;
+      
       const items = officeGroups[office];
       if (items.length === 0) return;
       
@@ -6112,20 +9951,21 @@ const ScheduleUI = {
 // Collapsible step card for Schedule view
 scheduleStepCardCollapsible(job, step, dateStr) {
   const def = CONFIG.STEP_DEFINITIONS[step.id] || { fields: [] };
-  const card = $.el('div', { className: 'step-card-collapsible' });
-
-  // Collapse Header
-  const header = $.el('div', { className: 'step-card-collapse-header' });
   
-  const headerLeft = $.el('div', { className: 'step-card-header-left' });
-  
-  // Status indicator
+  // Determine status
   let status = 'pending';
   if (step.completed) {
     status = 'completed';
   } else if (step.date || step.time) {
     status = 'scheduled';
   }
+  
+  const card = $.el('div', { className: `step-card-collapsible status-${status}` });
+
+  // Collapse Header
+  const header = $.el('div', { className: 'step-card-collapse-header' });
+  
+  const headerLeft = $.el('div', { className: 'step-card-header-left' });
   
   const statusIndicator = $.el('div', { className: `step-status-indicator ${status}` });
   statusIndicator.textContent = status === 'completed' ? '✓' : (status === 'scheduled' ? '•' : '○');
@@ -6268,6 +10108,7 @@ scheduleStepCardCollapsible(job, step, dateStr) {
     Storage.saveJobs();
     this.renderDay(dateStr);
     this.render();
+    DashboardUI.render();
   });
 
   editBtn.addEventListener('click', (e) => {
@@ -6285,7 +10126,7 @@ scheduleStepCardCollapsible(job, step, dateStr) {
     e.stopPropagation();
     const officeValue = card.querySelector('.sched-office-input').value || '';
     if (!officeValue) {
-      alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.' });
       return;
     }
     step.office = officeValue;
@@ -6333,19 +10174,19 @@ scheduleStepCardCollapsible(job, step, dateStr) {
 
   // Extra job card in schedule with same style as step cards
 scheduleExtraJobCardCollapsible(dateStr, ej) {
-  const card = $.el('div', { className: 'step-card-collapsible extra-job-card' });
-
-  const taskName = (ej.taskType === 'Custom' && ej.customTaskName)
-    ? ej.customTaskName
-    : I18n.taskTypeText(ej.taskType || '');
-
-  // Determine status
+  // Determine status first
   let status = 'pending';
   if (ej.completed) {
     status = 'completed';
   } else if (ej.date || dateStr) {
     status = 'scheduled';
   }
+
+  const card = $.el('div', { className: `step-card-collapsible extra-job-card status-${status}` });
+
+  const taskName = (ej.taskType === 'Custom' && ej.customTaskName)
+    ? ej.customTaskName
+    : I18n.taskTypeText(ej.taskType || '');
 
   // Get client name - from linked job or standalone clientName field
   const linkedJob = ej.linkedJobId ? State.getJob(ej.linkedJobId) : null;
@@ -6494,6 +10335,7 @@ scheduleExtraJobCardCollapsible(dateStr, ej) {
     Storage.saveScheduleExtraJobs();
     this.renderDay(dateStr);
     this.render();
+    DashboardUI.render();
   });
 
   // Open linked move button
@@ -6530,7 +10372,7 @@ scheduleExtraJobCardCollapsible(dateStr, ej) {
     e.stopPropagation();
     const officeValue = card.querySelector('.ej-edit-office').value || '';
     if (!officeValue) {
-      alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.' });
       return;
     }
     ej.office = officeValue;
@@ -6555,9 +10397,15 @@ scheduleExtraJobCardCollapsible(dateStr, ej) {
     this.renderDay(dateStr);
   });
 
-  deleteBtn.addEventListener('click', (e) => {
+  deleteBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
+    const confirmed = await Modals.confirm({
+      title: (State.lang === 'tr') ? 'Ek İşi Sil' : 'Delete Additional Job',
+      message: I18n.t('deleteExtraJobConfirm'),
+      danger: true,
+      confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+    });
+    if (!confirmed) return;
     ScheduleExtraJobs.deleteById(dateStr, ej.id);
     Storage.saveScheduleExtraJobs();
     this.renderDay(dateStr);
@@ -6665,7 +10513,7 @@ scheduleExtraJobCardCollapsible(dateStr, ej) {
     saveBtn.addEventListener('click', () => {
       const officeValue = card.querySelector('.sched-office-input').value || '';
       if (!officeValue) {
-        alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+        Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.' });
         return;
       }
       step.office = officeValue;
@@ -6838,12 +10686,12 @@ extraJobsAddForm(dateStr) {
 
     // Require office selection
     if (!office) {
-      alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.' });
       return;
     }
 
     if (!taskType && !customTaskName && !time && !address && !personnel && !vehicle && !notes) {
-      alert(I18n.t('fillAtLeastOneField'));
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: I18n.t('fillAtLeastOneField') });
       return;
     }
 
@@ -7107,7 +10955,7 @@ extraJobsAddForm(dateStr) {
       ej.time = card.querySelector('.ej-edit-time').value || '';
       const officeValue = card.querySelector('.ej-edit-office').value || '';
       if (!officeValue) {
-        alert((State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.');
+        Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen ofis seçin.' : 'Please select an office.' });
         return;
       }
       ej.office = officeValue;
@@ -7126,8 +10974,14 @@ extraJobsAddForm(dateStr) {
       }
     });
 
-    delBtn.addEventListener('click', () => {
-      if (!confirm(I18n.t('deleteExtraJobConfirm'))) return;
+    delBtn.addEventListener('click', async () => {
+      const confirmed = await Modals.confirm({
+        title: (State.lang === 'tr') ? 'Ek İşi Sil' : 'Delete Additional Job',
+        message: I18n.t('deleteExtraJobConfirm'),
+        danger: true,
+        confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+      });
+      if (!confirmed) return;
       ScheduleExtraJobs.deleteById(dateStr, ej.id);
       Storage.saveScheduleExtraJobs();
       this.renderDay(dateStr);
@@ -7149,7 +11003,7 @@ extraJobsAddForm(dateStr) {
 
   dayNotesSection(dateStr, note) {
     const section = $.el('div', { className: 'schedule-day-notes' });
-    section.appendChild($.el('h4', { textContent: I18n.t('dayNotes') }));
+    section.appendChild($.el('h4', { className: 'details-section-title', textContent: I18n.t('dayNotes') }));
 
     const display = $.el('div');
     if (note) {
@@ -7194,8 +11048,14 @@ extraJobsAddForm(dateStr) {
     let delBtn;
     if (note) {
       delBtn = $.el('button', { type: 'button', textContent: I18n.t('delete') });
-      delBtn.addEventListener('click', () => {
-        if (!confirm(I18n.t('deleteDayNotesConfirm'))) return;
+      delBtn.addEventListener('click', async () => {
+        const confirmed = await Modals.confirm({
+          title: (State.lang === 'tr') ? 'Notu Sil' : 'Delete Note',
+          message: I18n.t('deleteDayNotesConfirm'),
+          danger: true,
+          confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+        });
+        if (!confirmed) return;
         delete State.scheduleNotes[dateStr];
         Storage.saveScheduleNotes();
         this.renderDay(dateStr);
@@ -7270,13 +11130,36 @@ const Forms = {
   },
 
   refreshAgentSelects() {
+    // Agent dropdowns (only type: Agent)
+    const agents = State.agents.filter(a => !a.type || a.type === 'Agent');
     ['originAgentSelect', 'destinationAgentSelect'].forEach(id => {
       const select = $.get(id);
+      if (!select) return;
       while (select.options.length > 1) select.remove(1);
-      State.agents.forEach(agent => {
+      agents.forEach(agent => {
         select.appendChild($.el('option', {
           value: String(agent.id),
           textContent: `${agent.name} (${agent.city}, ${agent.country})`
+        }));
+      });
+    });
+    
+    // Broker dropdowns by type
+    const brokerSelects = [
+      { id: 'customsBrokerSelect', type: 'Customs Broker' },
+      { id: 'seaFreightBrokerSelect', type: 'Sea Freight Broker' },
+      { id: 'airFreightBrokerSelect', type: 'Air Freight Broker' }
+    ];
+    
+    brokerSelects.forEach(({ id, type }) => {
+      const select = $.get(id);
+      if (!select) return;
+      while (select.options.length > 1) select.remove(1);
+      const brokers = State.agents.filter(a => a.type === type);
+      brokers.forEach(broker => {
+        select.appendChild($.el('option', {
+          value: String(broker.id),
+          textContent: `${broker.name} (${broker.city}, ${broker.country})`
         }));
       });
     });
@@ -7291,16 +11174,34 @@ const Forms = {
   
   const job = {
     clientName: form.clientName.value.trim(),
+    organizationName: form.organizationName?.value.trim() || '',
+    clientPhone: form.clientPhone?.value.trim() || '',
+    clientEmail: form.clientEmail?.value.trim() || '',
+    bookingType: form.bookingType?.value || '',
+    clientType: form.clientType?.value || '',
+    tag: form.tag?.value.trim() || '',
     originCity: form.originCity.value.trim(),
     originCountry: form.originCountry.value,
     originFullAddress: form.originFullAddress.value.trim(),
+    originFloor: form.originFloor?.value.trim() || '',
+    originElevator: form.originElevator?.value || '',
+    originAccessConditions: form.originAccessConditions?.value.trim() || '',
     destinationCity: form.destinationCity.value.trim(),
     destinationCountry: form.destinationCountry.value,
     destinationFullAddress: form.destinationFullAddress.value.trim(),
+    destinationFloor: form.destinationFloor?.value.trim() || '',
+    destinationElevator: form.destinationElevator?.value || '',
+    destinationAccessConditions: form.destinationAccessConditions?.value.trim() || '',
     tradeDirection: form.tradeDirection.value,
     status: form.status.value,
     originAgentId: form.originAgentId.value ? String(form.originAgentId.value) : null,
     destinationAgentId: form.destinationAgentId.value ? String(form.destinationAgentId.value) : null,
+    
+    // Broker references
+    customsBrokerId: form.customsBrokerId?.value || '',
+    seaFreightBrokerId: form.seaFreightBrokerId?.value || '',
+    airFreightBrokerId: form.airFreightBrokerId?.value || '',
+    
     modes: Array.from(form.querySelectorAll('input[name="mode"]:checked')).map(cb => cb.value),
     shipmentContents: shipmentContents.length > 0 ? shipmentContents : ['HHE'],
     moveManager: form.moveManager?.value.trim() || '',
@@ -7308,10 +11209,12 @@ const Forms = {
     // Mode-specific fields
     seaVolume: parseFloat(form.jobSeaVolume?.value) || 0,
     containerDetails: form.jobContainerDetails?.value.trim() || '',
+    seaGrossWeight: parseFloat(form.jobSeaGrossWeight?.value) || 0,
     airVolume: parseFloat(form.jobAirVolume?.value) || 0,
     airCargoWeight: parseFloat(form.jobAirCargoWeight?.value) || 0,
     airACW: parseFloat(form.jobAirACW?.value) || 0,
     landVolume: parseFloat(form.jobLandVolume?.value) || 0,
+    landGrossWeight: parseFloat(form.jobLandGrossWeight?.value) || 0,
     
     // Vehicle fields
     vehicleType: form.jobVehicleType?.value || '',
@@ -7319,15 +11222,18 @@ const Forms = {
     vehicleModel: form.jobVehicleModel?.value.trim() || '',
     vehicleYear: parseInt(form.jobVehicleYear?.value) || 0,
     vehicleVIN: form.jobVehicleVIN?.value.trim() || '',
-    vehicleCondition: form.querySelector('input[name="jobVehicleCondition"]:checked')?.value || 'Running'
+    vehicleCondition: form.querySelector('input[name="jobVehicleCondition"]:checked')?.value || 'Running',
+    
+    // Storage toggle
+    hasStorage: form.hasStorage?.checked || false
   };
 
   if (!job.status) {
-    alert(I18n.t('statusRequired'));
+    Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: I18n.t('statusRequired') });
     return;
   }
   if (!job.originAgentId && !job.destinationAgentId) {
-    alert(I18n.t('selectOneAgent'));
+    Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: I18n.t('selectOneAgent') });
     return;
   }
 
@@ -7368,28 +11274,41 @@ const Forms = {
   handleAgentSubmit(e) {
     e.preventDefault();
     const form = $.get('agentForm');
+    const agentType = form.agentType?.value || 'Agent';
     const name = form.agentName.value.trim();
     const city = form.agentCity.value.trim();
     const country = form.agentCountry.value;
+    const isFIDI = agentType === 'Agent' ? (form.isFIDI?.checked || false) : false;
+    const isIAM = agentType === 'Agent' ? (form.isIAM?.checked || false) : false;
+    const notes = form.agentNotes?.value?.trim() || '';
+    
     if (!name || !city || !country) {
-      alert((State.lang === 'tr') ? 'Lütfen ad, şehir ve ülke girin.' : 'Please fill name, city and country.');
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen ad, şehir ve ülke girin.' : 'Please fill name, city and country.' });
       return;
     }
 
     if (State.agentFormMode === 'create') {
       State.agents.push({
         id: Utils.makeId('agent'),
+        type: agentType,
         name,
         city,
         country,
+        isFIDI,
+        isIAM,
+        notes,
         contacts: []
       });
     } else {
       const agent = State.getAgent(State.selectedAgentId);
       if (agent) {
+        agent.type = agentType;
         agent.name = name;
         agent.city = city;
         agent.country = country;
+        agent.isFIDI = isFIDI;
+        agent.isIAM = isIAM;
+        agent.notes = notes;
       }
     }
 
@@ -7401,9 +11320,11 @@ const Forms = {
 };
 
 function initEventHandlers() {
+  $.get('navDashboard').addEventListener('click', () => Views.show('dashboard'));
   $.get('navMoves').addEventListener('click', () => Views.show('moves'));
   $.get('navAgents').addEventListener('click', () => Views.show('agents'));
   $.get('navSchedule').addEventListener('click', () => Views.show('schedule'));
+  $.get('navStorage').addEventListener('click', () => Views.show('storage'));
   $.get('navDocuments').addEventListener('click', () => Views.show('documents'));
 
   $.get('openCreateJob').addEventListener('click', () => {
@@ -7420,16 +11341,36 @@ function initEventHandlers() {
   $.get('jobModalTitle').textContent = I18n.t('editMove');
   const form = $.get('jobForm');
   form.clientName.value = job.clientName || '';
+  if (form.organizationName) form.organizationName.value = job.organizationName || '';
+  if (form.clientPhone) form.clientPhone.value = job.clientPhone || '';
+  if (form.clientEmail) form.clientEmail.value = job.clientEmail || '';
+  
+  // NEW: Booking Type and Client Type
+  if (form.bookingType) form.bookingType.value = job.bookingType || '';
+  if (form.clientType) form.clientType.value = job.clientType || '';
+  
+  if (form.tag) form.tag.value = job.tag || '';
   form.originCity.value = job.originCity || '';
   form.originCountry.value = job.originCountry || '';
   form.originFullAddress.value = job.originFullAddress || '';
+  if (form.originFloor) form.originFloor.value = job.originFloor || '';
+  if (form.originElevator) form.originElevator.value = job.originElevator || '';
+  if (form.originAccessConditions) form.originAccessConditions.value = job.originAccessConditions || '';
   form.destinationCity.value = job.destinationCity || '';
   form.destinationCountry.value = job.destinationCountry || '';
   form.destinationFullAddress.value = job.destinationFullAddress || '';
+  if (form.destinationFloor) form.destinationFloor.value = job.destinationFloor || '';
+  if (form.destinationElevator) form.destinationElevator.value = job.destinationElevator || '';
+  if (form.destinationAccessConditions) form.destinationAccessConditions.value = job.destinationAccessConditions || '';
   form.tradeDirection.value = job.tradeDirection || '';
   form.status.value = job.status || '';
   form.originAgentId.value = job.originAgentId || '';
   form.destinationAgentId.value = job.destinationAgentId || '';
+  
+  // NEW: Broker fields
+  if (form.customsBrokerId) form.customsBrokerId.value = job.customsBrokerId || '';
+  if (form.seaFreightBrokerId) form.seaFreightBrokerId.value = job.seaFreightBrokerId || '';
+  if (form.airFreightBrokerId) form.airFreightBrokerId.value = job.airFreightBrokerId || '';
   
   // Move Manager
   if (form.moveManager) form.moveManager.value = job.moveManager || '';
@@ -7447,10 +11388,12 @@ function initEventHandlers() {
   // Mode-specific fields
   if (form.jobSeaVolume) form.jobSeaVolume.value = job.seaVolume || '';
   if (form.jobContainerDetails) form.jobContainerDetails.value = job.containerDetails || '';
+  if (form.jobSeaGrossWeight) form.jobSeaGrossWeight.value = job.seaGrossWeight || '';
   if (form.jobAirVolume) form.jobAirVolume.value = job.airVolume || '';
   if (form.jobAirCargoWeight) form.jobAirCargoWeight.value = job.airCargoWeight || '';
   if (form.jobAirACW) form.jobAirACW.value = job.airACW || '';
   if (form.jobLandVolume) form.jobLandVolume.value = job.landVolume || '';
+  if (form.jobLandGrossWeight) form.jobLandGrossWeight.value = job.landGrossWeight || '';
   
   // Vehicle fields
   if (form.jobVehicleType) form.jobVehicleType.value = job.vehicleType || '';
@@ -7460,6 +11403,9 @@ function initEventHandlers() {
   if (form.jobVehicleVIN) form.jobVehicleVIN.value = job.vehicleVIN || '';
   const vehicleConditionRadio = form.querySelector(`input[name="jobVehicleCondition"][value="${job.vehicleCondition || 'Running'}"]`);
   if (vehicleConditionRadio) vehicleConditionRadio.checked = true;
+  
+  // Storage toggle
+  if (form.hasStorage) form.hasStorage.checked = job.hasStorage || false;
   
   // Show/hide mode-specific sections
   toggleJobModeFields();
@@ -7567,7 +11513,7 @@ function initEventHandlers() {
     const url = $.get('docUrlInput').value.trim();
     const file = $.get('docFileInput').files[0];
     if (!name) {
-      alert(I18n.t('documentNameRequired'));
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: I18n.t('documentNameRequired') });
       return;
     }
     if (!job.documents) job.documents = [];
@@ -7620,7 +11566,7 @@ function initEventHandlers() {
       const file = $.get('mediaFileInput').files[0];
       
       if (!file) {
-        alert((State.lang === 'tr') ? 'Lütfen bir dosya seçin.' : 'Please select a file.');
+        Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen bir dosya seçin.' : 'Please select a file.' });
         return;
       }
       
@@ -7648,6 +11594,22 @@ function initEventHandlers() {
     State.agentSearch = e.target.value.trim();
     AgentsUI.render();
   });
+  
+  // Agent/Broker type tab handlers
+  document.querySelectorAll('.agent-type-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const type = tab.dataset.type;
+      State.agentTypeFilter = type;
+      State.selectedAgentId = null;
+      AgentsUI.render();
+      // Clear details panel
+      const detailsPanel = $.get('agentDetailsPanel');
+      $.clear(detailsPanel);
+      const hint = type === 'Agent' ? I18n.t('hintSelectAgent') : I18n.t('hintSelectBroker');
+      detailsPanel.appendChild($.el('p', { textContent: hint }));
+    });
+  });
+  
   $.get('openCreateAgentBtn').addEventListener('click', () => {
     State.agentFormMode = 'create';
     AgentsUI.showModal();
@@ -7676,6 +11638,15 @@ function initEventHandlers() {
     if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
   });
 
+  // Schedule office filter buttons
+  document.querySelectorAll('.office-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      State.scheduleOfficeFilter = btn.dataset.office;
+      ScheduleUI.render();
+      if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
+    });
+  });
+
   $.get('exportDataBtn').addEventListener('click', () => {
     const data = Storage.exportData();
     const json = JSON.stringify(data, null, 2);
@@ -7689,24 +11660,29 @@ function initEventHandlers() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      alert(I18n.t('exportedOk'));
+      Modals.alert({ title: (State.lang === 'tr') ? 'Başarılı' : 'Success', message: I18n.t('exportedOk') });
     } catch (e) {
       console.error('Export failed:', e);
-      alert(I18n.t('exportFailed'));
+      Modals.alert({ title: (State.lang === 'tr') ? 'Hata' : 'Error', message: I18n.t('exportFailed') });
     }
   });
 
   $.get('toggleImportAreaBtn').addEventListener('click', () => $.toggle($.get('importArea')));
 
-  $.get('importDataBtn').addEventListener('click', () => {
+  $.get('importDataBtn').addEventListener('click', async () => {
     const raw = $.get('importDataInput').value.trim();
     if (!raw) {
-      alert(I18n.t('importPromptEmpty'));
+      Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: I18n.t('importPromptEmpty') });
       return;
     }
     try {
       const data = JSON.parse(raw);
-      if (!confirm(I18n.t('importConfirm'))) return;
+      const confirmed = await Modals.confirm({
+        title: (State.lang === 'tr') ? 'Veri İçe Aktar' : 'Import Data',
+        message: I18n.t('importConfirm'),
+        confirmText: (State.lang === 'tr') ? 'İçe Aktar' : 'Import'
+      });
+      if (!confirmed) return;
       Storage.importData(data);
       Forms.refreshAgentSelects();
       JobsUI.render();
@@ -7730,9 +11706,9 @@ function initEventHandlers() {
       if (view && !view.classList.contains('hidden')) {
         DocumentsTabUI.render();
       }
-      alert(I18n.t('importOk'));
+      Modals.alert({ title: (State.lang === 'tr') ? 'Başarılı' : 'Success', message: I18n.t('importOk') });
     } catch (e) {
-      alert(I18n.t('invalidJson') + e.message);
+      Modals.alert({ title: (State.lang === 'tr') ? 'Hata' : 'Error', message: I18n.t('invalidJson') + e.message });
     }
   });
 
@@ -7742,37 +11718,70 @@ function initEventHandlers() {
   const docsJobFilter = $.get('documentsJobFilter');
   if (docsJobFilter) docsJobFilter.addEventListener('change', () => DocumentsTabUI.render());
 
-  // Documents tabs
-const documentsSearchTab = $.get('documentsSearchTab');
-const resourceLibraryTab = $.get('resourceLibraryTab');
-
-if (documentsSearchTab) {
-  documentsSearchTab.addEventListener('click', () => {
-    State.documentsViewTab = 'search';
-    
-    // Update active state
-    documentsSearchTab.classList.add('active');
-    resourceLibraryTab.classList.remove('active');
-    documentsSearchTab.style.borderBottomColor = '#3b82f6';
-    resourceLibraryTab.style.borderBottomColor = 'transparent';
-    
-    DocumentsTabUI.render();
+  // Documents tab switching
+  document.querySelectorAll('.documents-type-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      DocumentsTabUI.switchTab(tab.dataset.type);
+    });
   });
-}
 
-if (resourceLibraryTab) {
-  resourceLibraryTab.addEventListener('click', () => {
-    State.documentsViewTab = 'library';
-    
-    // Update active state
-    resourceLibraryTab.classList.add('active');
-    documentsSearchTab.classList.remove('active');
-    resourceLibraryTab.style.borderBottomColor = '#3b82f6';
-    documentsSearchTab.style.borderBottomColor = 'transparent';
-    
-    DocumentsTabUI.render();
-  });
-}
+  // Add Resource button
+  const addResourceBtn = $.get('addResourceBtn');
+  if (addResourceBtn) {
+    // Initially hide button since we start on search tab
+    addResourceBtn.style.display = 'none';
+    addResourceBtn.addEventListener('click', () => {
+      ResourceLibraryUI.openAddModal();
+    });
+  }
+
+  // Drag-and-drop for upload zones
+  function setupDropZone(dropZoneId, fileInputId) {
+    const dropZone = $.get(dropZoneId);
+    const fileInput = $.get(fileInputId);
+    if (!dropZone || !fileInput) return;
+
+    const textEl = dropZone.querySelector('.drop-zone-text');
+    const originalText = textEl ? textEl.textContent : '';
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('drag-over');
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        dropZone.classList.add('has-file');
+        if (textEl) textEl.textContent = files[0].name;
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        dropZone.classList.add('has-file');
+        if (textEl) textEl.textContent = fileInput.files[0].name;
+      } else {
+        dropZone.classList.remove('has-file');
+        if (textEl) textEl.textContent = originalText;
+      }
+    });
+  }
+
+  setupDropZone('docDropZone', 'docFileInput');
+  setupDropZone('mediaDropZone', 'mediaFileInput');
   
 // Quotes navigation
 $.get('navQuotes').addEventListener('click', () => {
@@ -7836,20 +11845,57 @@ $.get('quoteForm').addEventListener('submit', (e) => QuotesUI.handleFormSubmit(e
   }
 });
 
-// Type change
-const quoteTypeSelect = $.get('quoteForm')?.querySelector('select[name="quoteType"]');
+// Type change - update both checklists and context-aware fields
+const quoteTypeSelect = $.get('quoteTypeSelect');
 if (quoteTypeSelect) {
-  quoteTypeSelect.addEventListener('change', () => QuotesUI.updateChecklists());
+  quoteTypeSelect.addEventListener('change', () => {
+    QuotesUI.updateModeFields(); // This now handles context-aware fields
+    QuotesUI.updateChecklists();
+  });
 }
 
-// Insurance toggle
-const quoteForm = $.get('quoteForm');
-if (quoteForm) {
-  quoteForm.querySelectorAll('input[name="insurance"]').forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      QuotesUI.toggleInsuranceFields(e.target.value === 'yes');
-      QuotesUI.updateChecklists(); // Update to remove/add insurance from additional charges
+// Recipient type change - clear and repopulate charges
+const quoteRecipientType = $.get('quoteRecipientType');
+if (quoteRecipientType) {
+  quoteRecipientType.addEventListener('change', () => {
+    // Clear existing charges when switching between Client/Agent
+    ['Sea', 'Air', 'Land'].forEach(mode => {
+      const container = $.get(`${mode.toLowerCase()}ChargesList`);
+      if (container) $.clear(container);
     });
+    
+    QuotesUI.updateModeFields();
+    QuotesUI.updateChecklists();
+  });
+}
+
+// Per-mode insurance toggles
+['sea', 'air', 'land'].forEach(mode => {
+  const checkbox = $.get(`${mode}InsuranceCheck`);
+  if (checkbox) {
+    checkbox.addEventListener('change', (e) => {
+      const fieldsDiv = $.get(`${mode}InsuranceFields`);
+      if (fieldsDiv) {
+        if (e.target.checked) $.show(fieldsDiv);
+        else $.hide(fieldsDiv);
+      }
+    });
+  }
+});
+
+// Consignment instructions toggle
+const includeConsignmentCheckbox = $.get('includeConsignmentInstructions');
+if (includeConsignmentCheckbox) {
+  includeConsignmentCheckbox.addEventListener('change', (e) => {
+    QuotesUI.toggleConsignmentOptions(e.target.checked);
+  });
+}
+
+// Client category change for consignment preview
+const quoteClientCategory = $.get('quoteClientCategory');
+if (quoteClientCategory) {
+  quoteClientCategory.addEventListener('change', () => {
+    QuotesUI.updateConsignmentPreview();
   });
 }
 
@@ -7917,6 +11963,79 @@ const quoteContentsVehicle = $.get('quoteContentsVehicle');
 if (quoteContentsVehicle) {
   quoteContentsVehicle.addEventListener('change', toggleQuoteVehicleFields);
 }
+
+// ============================================================
+// STORAGE EVENT HANDLERS
+// ============================================================
+
+// Storage search
+const storageSearchInput = $.get('storageSearchInput');
+if (storageSearchInput) {
+  storageSearchInput.addEventListener('input', () => {
+    StorageUI.render();
+  });
+}
+
+// Create Storage button
+const openCreateStorage = $.get('openCreateStorage');
+if (openCreateStorage) {
+  openCreateStorage.addEventListener('click', () => {
+    StorageUI.openModal('create');
+  });
+}
+
+// Edit Storage button
+const editStorageBtn = $.get('editStorageBtn');
+if (editStorageBtn) {
+  editStorageBtn.addEventListener('click', () => {
+    const storage = State.getStorage(State.selectedStorageId);
+    if (storage) {
+      StorageUI.openModal('edit', storage);
+    }
+  });
+}
+
+// Storage Modal controls
+const closeStorageModalBtn = $.get('closeStorageModalBtn');
+if (closeStorageModalBtn) {
+  closeStorageModalBtn.addEventListener('click', () => {
+    $.get('storageModal').classList.add('hidden');
+  });
+}
+
+const cancelStorageFormBtn = $.get('cancelStorageFormBtn');
+if (cancelStorageFormBtn) {
+  cancelStorageFormBtn.addEventListener('click', () => {
+    $.get('storageModal').classList.add('hidden');
+  });
+}
+
+// Storage modal click outside to close
+const storageModal = $.get('storageModal');
+if (storageModal) {
+  storageModal.addEventListener('click', (e) => {
+    if (e.target === storageModal) {
+      storageModal.classList.add('hidden');
+    }
+  });
+}
+
+// Storage form submit
+const storageForm = $.get('storageForm');
+if (storageForm) {
+  storageForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    StorageUI.saveFromForm();
+  });
+}
+
+// Storage billing type toggle
+const storageBillingTypeSelect = $.get('storageBillingTypeSelect');
+if (storageBillingTypeSelect) {
+  storageBillingTypeSelect.addEventListener('change', () => {
+    StorageUI.toggleBillingFields();
+  });
+}
 }
 
 
@@ -7935,6 +12054,9 @@ function init() {
   AgentsUI.render();
   ScheduleUI.render();
   QuotesUI.render();
+
+  // Show dashboard as landing page
+  Views.show('dashboard');
 
   if (State.jobs.length > 0) {
     const sorted = [...State.jobs].sort((a, b) => {
@@ -7973,4 +12095,4 @@ if (document.readyState === 'loading') {
 
 // ============================================================
 // END OF APP.JS
-// =============================================================
+// ============================================================
