@@ -1,12 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Istanbul Ekspres - Move Manager</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-
-  <body>
+ <body>
 <!-- TOP NAVIGATION -->
 <header class="top-header">
   <div class="header-left">
@@ -138,15 +130,15 @@
           </div>
 
           <div class="checklist-add-section">
-            <button type="button" id="openAddChecklistBtn" class="checklist-add-btn">
+            <button type="button" id="openAddChecklistBtn" class="checklist-add-btn" data-i18n="addChecklistItem">
               <span>+</span> Add Checklist Item
             </button>
             
             <div id="checklistAddForm" class="hidden" style="margin-top: 10px;">
-              <input type="text" id="checklistNewItemInput" placeholder="Enter checklist item..." style="margin-bottom: 8px;">
+              <input type="text" id="checklistNewItemInput" data-i18n-placeholder="phEnterChecklist" placeholder="Enter checklist item..." style="margin-bottom: 8px;">
               <div style="display: flex; gap: 8px;">
-                <button type="button" id="confirmAddChecklistBtn">Add</button>
-                <button type="button" id="cancelAddChecklistBtn">Cancel</button>
+                <button type="button" id="confirmAddChecklistBtn" data-i18n="btnAdd">Add</button>
+                <button type="button" id="cancelAddChecklistBtn" data-i18n="btnCancel">Cancel</button>
               </div>
             </div>
           </div>
@@ -164,19 +156,19 @@
 
          <div class="document-form">
           <div>
-            <label>Document Label</label>
-            <input type="text" id="docNameInput" placeholder="Document Label">
+            <label data-i18n="docNameLabel">Document Label</label>
+            <input type="text" id="docNameInput" data-i18n-placeholder="phDocLabel" placeholder="Document Label">
           </div>
 
           <div>
-            <label>Document Date</label>
+            <label data-i18n="docDateLabel">Document Date</label>
             <input type="date" id="docDateInput">
           </div>
 
           <div>
-            <label>Upload</label>
+            <label data-i18n="btnUpload">Upload</label>
             <div id="docDropZone" class="drop-zone">
-              <span class="drop-zone-text">Drag & drop file here or click to browse</span>
+              <span class="drop-zone-text" data-i18n="dragDropText">Drag & drop file here or click to browse</span>
               <input type="file" id="docFileInput" class="drop-zone-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.png,.jpg,.jpeg">
             </div>
           </div>
@@ -186,7 +178,7 @@
           </div>
 
           <div>
-            <button type="button" id="addDocumentBtn">Add Document</button>
+            <button type="button" id="addDocumentBtn" data-i18n="btnAddDocument">Add Document</button>
           </div>
         </div>
       </div>
@@ -194,29 +186,29 @@
       
       <div class="details-section">
         <div class="details-section-header">
-          <h4 class="details-section-title">Photos & Videos</h4>
+          <h4 class="details-section-title" data-i18n="photosVideosTitle">Photos & Videos</h4>
         </div>
         <div id="mediaSection">
           <div id="mediaList">
-            <p>No photos or videos yet.</p>
+            <p data-i18n="noMediaYet">No photos or videos yet.</p>
           </div>
 
           <div class="media-upload-form">
             <div>
-              <label>Label / Description</label>
-              <input type="text" id="mediaLabelInput" placeholder="Label / Description">
+              <label data-i18n="labelDescription">Label / Description</label>
+              <input type="text" id="mediaLabelInput" data-i18n-placeholder="labelDescription" placeholder="Label / Description">
             </div>
             
             <div>
-              <label>Upload</label>
+              <label data-i18n="btnUpload">Upload</label>
               <div id="mediaDropZone" class="drop-zone">
-                <span class="drop-zone-text">Drag & drop file here or click to browse</span>
+                <span class="drop-zone-text" data-i18n="dragDropText">Drag & drop file here or click to browse</span>
                 <input type="file" id="mediaFileInput" class="drop-zone-input" accept="image/*,video/*">
               </div>
             </div>
 
             <div>
-              <button type="button" id="addMediaBtn">Upload</button>
+              <button type="button" id="addMediaBtn" data-i18n="btnUpload">Upload</button>
             </div>
           </div>
         </div>
@@ -338,7 +330,7 @@
   <section class="left-panel">
     <div class="header-row">
       <h2 data-i18n="documentsGlobal">Documents</h2>
-      <button type="button" id="addResourceBtn" class="add-resource-btn">+ Add Resource</button>
+      <button type="button" id="addResourceBtn" class="add-resource-btn" data-i18n="btnAddResource">+ Add Resource</button>
     </div>
 
     <!-- Tab switcher for Documents / Resource Library -->
@@ -376,10 +368,11 @@
   <!-- RIGHT SIDE: Document/Resource Details -->
   <section class="right-panel">
     <div class="header-row">
-      <h2 id="documentsRightTitle">Document Details</h2>
+      <h2 id="documentsRightTitle" data-i18n="resourceDetails">Resource Details</h2>
     </div>
     <div id="documentsDetailsPanel" class="detail-card">
-      <p data-i18n="hintSelectDocument">Select a document or resource from the left to see details here.</p>
+      <p id="documentDetailsHint" data-i18n="hintSelectResource">Select a document or resource from the left to see details here.</p>
+      <div id="documentDetailsContent"></div>
     </div>
   </section>
   
@@ -415,17 +408,14 @@
       >
     </div>
 
-    <!-- ACTIVE STORAGE SECTION -->
+    <!-- STORAGE RECORDS SECTION -->
     <div class="storage-section">
-      <h3 class="storage-section-title" data-i18n="activeStorage">Active Storage</h3>
+      <h3 class="storage-section-title" data-i18n="storageRecords">Storage Records</h3>
       <div id="activeStorageList" class="storage-list"></div>
     </div>
 
-    <!-- COMPLETED STORAGE SECTION -->
-    <div class="storage-section storage-section-completed">
-      <h3 class="storage-section-title" data-i18n="completedStorage">Completed Storage</h3>
-      <div id="completedStorageList" class="storage-list"></div>
-    </div>
+    <!-- Hidden - kept for backwards compatibility -->
+    <div id="completedStorageList" style="display: none;"></div>
   </section>
 
   <!-- RIGHT SIDE (STORAGE DETAILS) -->
@@ -554,7 +544,7 @@
       <div class="form-row-3col">
         <div>
           <label data-i18n="floorLabel">Floor</label>
-          <input name="originFloor" type="text" placeholder="e.g. 3">
+          <input name="originFloor" type="text" data-i18n-placeholder="phFloor" placeholder="e.g. 3">
         </div>
         <div>
           <label data-i18n="elevatorLabel">Elevator</label>
@@ -567,7 +557,7 @@
         </div>
         <div>
           <label data-i18n="accessConditionsLabel">Access Conditions</label>
-          <input name="originAccessConditions" type="text" placeholder="e.g. Narrow stairs">
+          <input name="originAccessConditions" type="text" data-i18n-placeholder="phAccessConditions" placeholder="e.g. Narrow stairs">
         </div>
       </div>
 
@@ -586,7 +576,7 @@
       <div class="form-row-3col">
         <div>
           <label data-i18n="floorLabel">Floor</label>
-          <input name="destinationFloor" type="text" placeholder="e.g. 5">
+          <input name="destinationFloor" type="text" data-i18n-placeholder="phFloor" placeholder="e.g. 5">
         </div>
         <div>
           <label data-i18n="elevatorLabel">Elevator</label>
@@ -599,16 +589,16 @@
         </div>
         <div>
           <label data-i18n="accessConditionsLabel">Access Conditions</label>
-          <input name="destinationAccessConditions" type="text" placeholder="e.g. Loading dock">
+          <input name="destinationAccessConditions" type="text" data-i18n-placeholder="phAccessConditions" placeholder="e.g. Loading dock">
         </div>
       </div>
 
       <label data-i18n="moveTypeLabel">Move Type</label>
       <select name="tradeDirection">
         <option value="" data-i18n="selectType">Select type</option>
-        <option value="Import" data-i18n="typeImport">Import</option>
-        <option value="Export" data-i18n="typeExport">Export</option>
-        <option value="Local" data-i18n="typeLocal">Local</option>
+        <option value="Import" data-i18n="importType">Import</option>
+        <option value="Export" data-i18n="exportType">Export</option>
+        <option value="Local" data-i18n="localType">Local</option>
       </select>
 
       <label data-i18n="statusRequiredLabel">Status (required)</label>
@@ -664,78 +654,78 @@
 </div>
 
 <!-- Shipment Contents -->
-<label style="margin-top: 12px;">Shipment Contents</label>
+<label style="margin-top: 12px;" data-i18n="shipmentContentsLabel">Shipment Contents</label>
 <div class="mode-group">
-  <label><input type="checkbox" name="shipmentContents" value="HHE" id="jobContentsHHE" checked> Household Goods (HHE)</label>
-  <label><input type="checkbox" name="shipmentContents" value="Vehicle" id="jobContentsVehicle"> Vehicle / Auto</label>
+  <label><input type="checkbox" name="shipmentContents" value="HHE" id="jobContentsHHE" checked> <span data-i18n="lblHouseholdGoods">Household Goods (HHE)</span></label>
+  <label><input type="checkbox" name="shipmentContents" value="Vehicle" id="jobContentsVehicle"> <span data-i18n="lblVehicle">Vehicle / Auto</span></label>
 </div>
 
 <!-- Move Manager -->
-<label style="margin-top: 12px;">Move Manager</label>
-<input name="moveManager" type="text" placeholder="Person responsible for this move">
+<label style="margin-top: 12px;" data-i18n="moveManagerLabel">Move Manager</label>
+<input name="moveManager" type="text" data-i18n-placeholder="moveManagerPlaceholder" placeholder="Person responsible for this move">
 
 <!-- SEA MODE FIELDS -->
 <div id="jobSeaFields" class="job-mode-fields hidden">
-  <h4 class="job-mode-fields-title job-mode-fields-title-sea">Sea Freight Details</h4>
-  <label>Container Details</label>
-  <input name="jobContainerDetails" type="text" placeholder="e.g. 1x20ft FCL, 1x40ft HQ">
-  <label>Sea Cargo Volume (cbm)</label>
-  <input name="jobSeaVolume" type="number" step="0.01" placeholder="e.g. 14.5">
+  <h4 class="job-mode-fields-title job-mode-fields-title-sea" data-i18n="seaFreightDetailsTitle">Sea Freight Details</h4>
+  <label data-i18n="containerDetailsLabel">Container Details</label>
+  <input name="jobContainerDetails" type="text" data-i18n-placeholder="phContainerDetails" placeholder="e.g. 1x20ft FCL, 1x40ft HQ">
+  <label data-i18n="seaVolumeLabel">Sea Cargo Volume (cbm)</label>
+  <input name="jobSeaVolume" type="number" step="0.01" data-i18n-placeholder="phVolume" placeholder="e.g. 14.5">
   <label data-i18n="grossWeightOptional">Gross Weight (kg) - optional</label>
-  <input name="jobSeaGrossWeight" type="number" step="0.1" placeholder="e.g. 2500">
+  <input name="jobSeaGrossWeight" type="number" step="0.1" data-i18n-placeholder="phWeight" placeholder="e.g. 2500">
 </div>
 
 <!-- AIR MODE FIELDS -->
 <div id="jobAirFields" class="job-mode-fields hidden">
-  <h4 class="job-mode-fields-title job-mode-fields-title-air">Air Freight Details</h4>
-  <label>Air Cargo Volume (cbm)</label>
-  <input name="jobAirVolume" type="number" step="0.01" placeholder="e.g. 5.0">
-  <label>Air Cargo Weight (kg)</label>
-  <input name="jobAirCargoWeight" type="number" step="0.1" placeholder="e.g. 500">
-  <label>Chargeable Weight / ACW (kg)</label>
-  <input name="jobAirACW" type="number" step="0.1" placeholder="e.g. 835">
+  <h4 class="job-mode-fields-title job-mode-fields-title-air" data-i18n="airFreightDetailsTitle">Air Freight Details</h4>
+  <label data-i18n="airVolumeLabel">Air Cargo Volume (cbm)</label>
+  <input name="jobAirVolume" type="number" step="0.01" data-i18n-placeholder="phVolume" placeholder="e.g. 5.0">
+  <label data-i18n="airWeightLabel">Air Cargo Weight (kg)</label>
+  <input name="jobAirCargoWeight" type="number" step="0.1" data-i18n-placeholder="phWeight" placeholder="e.g. 500">
+  <label data-i18n="acwLabel">Chargeable Weight / ACW (kg)</label>
+  <input name="jobAirACW" type="number" step="0.1" data-i18n-placeholder="phACW" placeholder="e.g. 835">
 </div>
 
 <!-- LAND MODE FIELDS -->
 <div id="jobLandFields" class="job-mode-fields hidden">
-  <h4 class="job-mode-fields-title job-mode-fields-title-land">Land Freight Details</h4>
-  <label>Land Cargo Volume (cbm)</label>
-  <input name="jobLandVolume" type="number" step="0.01" placeholder="e.g. 14.5">
+  <h4 class="job-mode-fields-title job-mode-fields-title-land" data-i18n="landFreightDetailsTitle">Land Freight Details</h4>
+  <label data-i18n="landVolumeLabel">Land Cargo Volume (cbm)</label>
+  <input name="jobLandVolume" type="number" step="0.01" data-i18n-placeholder="phVolume" placeholder="e.g. 14.5">
   <label data-i18n="grossWeightOptional">Gross Weight (kg) - optional</label>
-  <input name="jobLandGrossWeight" type="number" step="0.1" placeholder="e.g. 2500">
+  <input name="jobLandGrossWeight" type="number" step="0.1" data-i18n-placeholder="phWeight" placeholder="e.g. 2500">
 </div>
 
 <!-- VEHICLE FIELDS -->
 <div id="jobVehicleFields" class="job-mode-fields hidden">
-  <h4 class="job-mode-fields-title job-mode-fields-title-vehicle">Vehicle Details</h4>
-  <label>Vehicle Type</label>
+  <h4 class="job-mode-fields-title job-mode-fields-title-vehicle" data-i18n="vehicleDetailsTitle">Vehicle Details</h4>
+  <label data-i18n="vehicleTypeLabel">Vehicle Type</label>
   <select name="jobVehicleType">
-    <option value="">Select type</option>
-    <option value="Car">Car</option>
-    <option value="Motorcycle">Motorcycle</option>
-    <option value="Truck">Truck</option>
-    <option value="Boat">Boat</option>
-    <option value="Other">Other</option>
+    <option value="" data-i18n="selectType">Select type</option>
+    <option value="Car" data-i18n="vehicleCar">Car</option>
+    <option value="Motorcycle" data-i18n="vehicleMotorcycle">Motorcycle</option>
+    <option value="Truck" data-i18n="vehicleTruck">Truck</option>
+    <option value="Boat" data-i18n="vehicleBoat">Boat</option>
+    <option value="Other" data-i18n="vehicleOther">Other</option>
   </select>
-  <label>Vehicle Make</label>
-  <input name="jobVehicleMake" type="text" placeholder="e.g. Toyota">
-  <label>Vehicle Model</label>
-  <input name="jobVehicleModel" type="text" placeholder="e.g. Camry">
-  <label>Vehicle Year</label>
-  <input name="jobVehicleYear" type="number" placeholder="e.g. 2022" min="1900" max="2099">
-  <label>VIN Number (optional)</label>
-  <input name="jobVehicleVIN" type="text" placeholder="Vehicle Identification Number">
-  <label>Condition</label>
+  <label data-i18n="vehicleMakeLabel">Vehicle Make</label>
+  <input name="jobVehicleMake" type="text" data-i18n-placeholder="phMake" placeholder="e.g. Toyota">
+  <label data-i18n="vehicleModelLabel">Vehicle Model</label>
+  <input name="jobVehicleModel" type="text" data-i18n-placeholder="phModel" placeholder="e.g. Camry">
+  <label data-i18n="vehicleYearLabel">Vehicle Year</label>
+  <input name="jobVehicleYear" type="number" data-i18n-placeholder="phYear" placeholder="e.g. 2022" min="1900" max="2099">
+  <label data-i18n="vinLabel">VIN Number (optional)</label>
+  <input name="jobVehicleVIN" type="text" data-i18n-placeholder="phVIN" placeholder="Vehicle Identification Number">
+  <label data-i18n="conditionLabel">Condition</label>
   <div class="mode-group">
-    <label><input type="radio" name="jobVehicleCondition" value="Running" checked> Running</label>
-    <label><input type="radio" name="jobVehicleCondition" value="Non-Running"> Non-Running</label>
+    <label><input type="radio" name="jobVehicleCondition" value="Running" checked> <span data-i18n="lblRunning">Running</span></label>
+    <label><input type="radio" name="jobVehicleCondition" value="Non-Running"> <span data-i18n="lblNonRunning">Non-Running</span></label>
   </div>
 </div>
 
 <!-- STORAGE TOGGLE -->
 <label style="margin-top: 16px;" data-i18n="storageLabel">Storage</label>
 <div class="mode-group">
-  <label><input type="checkbox" name="hasStorage" id="jobHasStorage"> <span data-i18n="storageYes">This move requires storage</span></label>
+  <label><input type="checkbox" name="hasStorage" id="jobHasStorage"> <span data-i18n="storageRequired">This move requires storage</span></label>
 </div>
 
 <p class="modal-hint" data-i18n="stepsHint">
@@ -816,53 +806,53 @@
     <form id="quoteForm">
 
       <!-- Basic Information -->
-      <h3 class="form-section-title">Basic Information</h3>
+      <h3 class="form-section-title" data-i18n="basicInfoSection">Basic Information</h3>
 
-      <label>Client Name</label>
+      <label data-i18n="quoteClientName">Client Name</label>
       <input name="clientName" type="text" required>
 
-      <label>Client Organization (optional)</label>
+      <label data-i18n="quoteClientOrg">Client Organization (optional)</label>
       <input name="clientOrganization" type="text">
 
-      <label>Origin</label>
+      <label data-i18n="quoteOrigin">Origin</label>
       <input name="origin" type="text" required placeholder="Istanbul, Turkey">
 
-      <label>Destination</label>
+      <label data-i18n="quoteDestination">Destination</label>
       <input name="destination" type="text" required placeholder="Dubai, UAE">
 
-      <label>Type</label>
+      <label data-i18n="quoteType">Type</label>
       <select name="quoteType" id="quoteTypeSelect" required>
-        <option value="">Select type</option>
+        <option value="" data-i18n="selectType">Select type</option>
         <option value="Export">Export</option>
         <option value="Import">Import</option>
         <option value="Local">Local</option>
       </select>
 
-      <label>Quote Recipient</label>
+      <label data-i18n="quoteRecipient">Quote Recipient</label>
       <select name="recipientType" id="quoteRecipientType">
-        <option value="Client">Client (Direct)</option>
-        <option value="Agent">Agent / Partner</option>
+        <option value="Client" data-i18n="recipientClient">Client (Direct)</option>
+        <option value="Agent" data-i18n="recipientAgent">Agent / Partner</option>
       </select>
-      <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">Affects which fields and charges are shown</p>
+      <p style="font-size: 11px; color: #6b7280; margin-top: 4px;" data-i18n="recipientHint">Affects which fields and charges are shown</p>
 
-      <label>Mode(s)</label>
+      <label data-i18n="quoteModes">Mode(s)</label>
 <div class="mode-group">
-  <label><input type="checkbox" id="quoteModeSea" name="quoteMode" value="Sea"> Sea</label>
-  <label><input type="checkbox" id="quoteModeAir" name="quoteMode" value="Air"> Air</label>
-  <label><input type="checkbox" id="quoteModeLand" name="quoteMode" value="Land"> Land</label>
+  <label><input type="checkbox" id="quoteModeSea" name="quoteMode" value="Sea"> <span data-i18n="modeSea">Sea</span></label>
+  <label><input type="checkbox" id="quoteModeAir" name="quoteMode" value="Air"> <span data-i18n="modeAir">Air</span></label>
+  <label><input type="checkbox" id="quoteModeLand" name="quoteMode" value="Land"> <span data-i18n="modeLand">Land</span></label>
 </div>
 
 <!-- Shipment Contents -->
-<label style="margin-top: 12px;">Shipment Contents</label>
+<label style="margin-top: 12px;" data-i18n="shipmentContentsLabel">Shipment Contents</label>
 <div class="mode-group">
-  <label><input type="checkbox" id="quoteContentsHHE" name="quoteContents" value="HHE" checked> Household Goods (HHE)</label>
-  <label><input type="checkbox" id="quoteContentsVehicle" name="quoteContents" value="Vehicle"> Vehicle / Auto</label>
+  <label><input type="checkbox" id="quoteContentsHHE" name="quoteContents" value="HHE" checked> <span data-i18n="lblHouseholdGoods">Household Goods (HHE)</span></label>
+  <label><input type="checkbox" id="quoteContentsVehicle" name="quoteContents" value="Vehicle"> <span data-i18n="lblVehicle">Vehicle / Auto</span></label>
 </div>
 
 <!-- VEHICLE FIELDS FOR QUOTE -->
 <div id="quoteVehicleFields" class="job-mode-fields hidden">
   <h4 class="job-mode-fields-title job-mode-fields-title-vehicle">Vehicle Details</h4>
-  <label>Vehicle Type</label>
+  <label data-i18n="vehicleTypeLabel">Vehicle Type</label>
   <select name="quoteVehicleType" id="quoteVehicleType">
     <option value="">Select type</option>
     <option value="Car">Car</option>
@@ -871,15 +861,15 @@
     <option value="Boat">Boat</option>
     <option value="Other">Other</option>
   </select>
-  <label>Vehicle Make</label>
+  <label data-i18n="vehicleMakeLabel">Vehicle Make</label>
   <input name="quoteVehicleMake" id="quoteVehicleMake" type="text" placeholder="e.g. Toyota">
-  <label>Vehicle Model</label>
+  <label data-i18n="vehicleModelLabel">Vehicle Model</label>
   <input name="quoteVehicleModel" id="quoteVehicleModel" type="text" placeholder="e.g. Camry">
-  <label>Vehicle Year</label>
+  <label data-i18n="vehicleYearLabel">Vehicle Year</label>
   <input name="quoteVehicleYear" id="quoteVehicleYear" type="number" placeholder="e.g. 2022" min="1900" max="2099">
-  <label>VIN Number (optional)</label>
+  <label data-i18n="vinLabel">VIN Number (optional)</label>
   <input name="quoteVehicleVIN" id="quoteVehicleVIN" type="text" placeholder="Vehicle Identification Number">
-  <label>Condition</label>
+  <label data-i18n="conditionLabel">Condition</label>
   <div class="mode-group">
     <label><input type="radio" name="quoteVehicleCondition" value="Running" checked> Running</label>
     <label><input type="radio" name="quoteVehicleCondition" value="Non-Running"> Non-Running</label>
@@ -901,98 +891,19 @@
         Please select at least one mode (Sea, Air, or Land) to see mode-specific fields and charges.
       </div>
 
-      <!-- SEA FIELDS SECTION -->
+      <!-- SEA FIELDS SECTION - Now contains variants -->
       <div id="seaFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
-        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #0369a1;">Sea Freight Details</h4>
-        
-        <div id="seaDeparturePortField">
-          <label>Departure Port</label>
-          <input name="departurePort" type="text" placeholder="e.g. Istanbul">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h4 style="margin: 0; font-size: 14px; color: #0369a1;">Sea Freight Options</h4>
+          <button type="button" id="addSeaVariantBtn" class="btn-secondary" style="background: #0369a1; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">+ Add Option</button>
         </div>
+        <div id="seaVariantsContainer"></div>
         
-        <label>Port of Entry (POE)</label>
-        <input name="poe" type="text" placeholder="e.g. Dubai">
-        
-        <label>Container Details</label>
-        <input name="containerDetails" type="text" placeholder="e.g. 1x20ft FCL">
-        
-        <label>Sea Cargo Volume (cbm)</label>
-        <input name="seaVolume" type="number" step="0.01" placeholder="e.g. 14.5">
-        
-        <div id="seaTransitTimeField">
-          <label>Estimated Transit Time (days)</label>
-          <input name="seaTransitTime" type="number" placeholder="e.g. 15">
-        </div>
-      </div>
-
- <!-- AIR FIELDS SECTION -->
-<div id="airFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px;">
-  <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #7c3aed;">Air Freight Details</h4>
-  
-  <div id="airDepartureFields">
-    <label>Departure Airport Name</label>
-    <input name="departureAirportName" type="text" placeholder="e.g. Istanbul Ataturk">
-    
-    <label>Departure Airport IATA Code</label>
-    <input name="departureAirportIATA" type="text" placeholder="e.g. IST" maxlength="3" style="text-transform: uppercase;">
-  </div>
-  
-  <label>Arrival Airport Name</label>
-  <input name="arrivalAirportName" type="text" placeholder="e.g. Dubai International">
-  
-  <label>Arrival Airport IATA Code</label>
-  <input name="arrivalAirportIATA" type="text" placeholder="e.g. DXB" maxlength="3" style="text-transform: uppercase;">
-  
-  <div id="airAirlineField">
-    <label>Airline</label>
-    <input name="airlineName" type="text" placeholder="e.g. Turkish Airlines">
-  </div>
-  
-  <label>Actual Cargo Weight (kg)</label>
-  <input name="airCargoWeight" type="number" step="0.1" placeholder="e.g. 500">
-  
-  <label>Air Cargo Volume (cbm)</label>
-  <input name="airVolume" type="number" step="0.01" placeholder="e.g. 5.0">
-  
-  <label>Chargeable Weight / ACW (kg)</label>
-  <input name="airACW" type="number" step="0.1" placeholder="e.g. 835">
-  <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">Enter the chargeable weight (ACW) manually</p>
-  
-  <div id="airTransitTimeField">
-    <label>Estimated Transit Time (days)</label>
-    <input name="airTransitTime" type="number" placeholder="e.g. 3">
-  </div>
-</div>
-
-      <!-- LAND FIELDS SECTION -->
-      <div id="landFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
-        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #059669;">Land Freight Details</h4>
-        
-        <label>Truck Type</label>
-        <div class="mode-group">
-          <label><input type="radio" name="truckType" value="Dedicated" checked> Dedicated</label>
-          <label><input type="radio" name="truckType" value="Consolidated"> Consolidated</label>
-        </div>
-        
-        <label>Land Cargo Volume (cbm)</label>
-        <input name="landVolume" type="number" step="0.01" placeholder="e.g. 14.5">
-        
-        <label>Estimated Transit Time (days)</label>
-        <input name="landTransitTime" type="number" placeholder="e.g. 7">
-      </div>
-
-      <!-- SEA CHARGES SECTION -->
-      <div id="seaChargesSection" class="mode-charges-section hidden" style="margin-top: 24px; padding: 16px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
-        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #0369a1;">Sea Freight Charges</h4>
-        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on recipient and type. You can edit or add more.</p>
-        <div id="seaChargesList" style="margin-bottom: 12px;"></div>
-        <button type="button" id="addSeaChargeBtn" class="btn-secondary" style="margin-bottom: 16px;">+ Add Charge</button>
-        
-        <!-- Sea Insurance -->
-        <div class="insurance-toggle-section">
+        <!-- Sea Insurance - shared across all variants -->
+        <div class="insurance-toggle-section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #bae6fd;">
           <label class="insurance-toggle-label">
             <input type="checkbox" name="seaInsurance" id="seaInsuranceCheck">
-            <span>Include Transit Insurance</span>
+            <span>Include Transit Insurance (applies to all Sea options)</span>
           </label>
           <div id="seaInsuranceFields" class="insurance-fields hidden">
             <div class="insurance-fields-grid">
@@ -1009,46 +920,48 @@
         </div>
       </div>
 
-      <!-- AIR CHARGES SECTION -->
-      <div id="airChargesSection" class="mode-charges-section hidden" style="margin-top: 16px; padding: 16px; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px;">
-        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #7c3aed;">Air Freight Charges</h4>
-        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on recipient and type. You can edit or add more.</p>
-        <div id="airChargesList" style="margin-bottom: 12px;"></div>
-        <button type="button" id="addAirChargeBtn" class="btn-secondary" style="margin-bottom: 16px;">+ Add Charge</button>
-        
-        <!-- Air Insurance -->
-        <div class="insurance-toggle-section">
-          <label class="insurance-toggle-label">
-            <input type="checkbox" name="airInsurance" id="airInsuranceCheck">
-            <span>Include Transit Insurance</span>
-          </label>
-          <div id="airInsuranceFields" class="insurance-fields hidden">
-            <div class="insurance-fields-grid">
-              <div>
-                <label>Declared Value</label>
-                <input name="airInsuranceValue" type="number" step="0.01" placeholder="e.g. 50000">
-              </div>
-              <div>
-                <label>Rate (%)</label>
-                <input name="airInsuranceRate" type="number" step="0.1" value="1.5" placeholder="1.5">
-              </div>
-            </div>
-          </div>
+ <!-- AIR FIELDS SECTION - Now contains variants -->
+<div id="airFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h4 style="margin: 0; font-size: 14px; color: #7c3aed;">Air Freight Options</h4>
+    <button type="button" id="addAirVariantBtn" class="btn-secondary" style="background: #7c3aed; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">+ Add Option</button>
+  </div>
+  <div id="airVariantsContainer"></div>
+  
+  <!-- Air Insurance - shared across all variants -->
+  <div class="insurance-toggle-section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #c4b5fd;">
+    <label class="insurance-toggle-label">
+      <input type="checkbox" name="airInsurance" id="airInsuranceCheck">
+      <span>Include Transit Insurance (applies to all Air options)</span>
+    </label>
+    <div id="airInsuranceFields" class="insurance-fields hidden">
+      <div class="insurance-fields-grid">
+        <div>
+          <label>Declared Value</label>
+          <input name="airInsuranceValue" type="number" step="0.01" placeholder="e.g. 50000">
+        </div>
+        <div>
+          <label>Rate (%)</label>
+          <input name="airInsuranceRate" type="number" step="0.1" value="1.5" placeholder="1.5">
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <!-- LAND CHARGES SECTION -->
-      <div id="landChargesSection" class="mode-charges-section hidden" style="margin-top: 16px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
-        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #059669;">Land Freight Charges</h4>
-        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on recipient and type. You can edit or add more.</p>
-        <div id="landChargesList" style="margin-bottom: 12px;"></div>
-        <button type="button" id="addLandChargeBtn" class="btn-secondary" style="margin-bottom: 16px;">+ Add Charge</button>
+      <!-- LAND FIELDS SECTION - Now contains variants -->
+      <div id="landFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h4 style="margin: 0; font-size: 14px; color: #059669;">Land Freight Options</h4>
+          <button type="button" id="addLandVariantBtn" class="btn-secondary" style="background: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">+ Add Option</button>
+        </div>
+        <div id="landVariantsContainer"></div>
         
-        <!-- Land Insurance -->
-        <div class="insurance-toggle-section">
+        <!-- Land Insurance - shared across all variants -->
+        <div class="insurance-toggle-section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #a7f3d0;">
           <label class="insurance-toggle-label">
             <input type="checkbox" name="landInsurance" id="landInsuranceCheck">
-            <span>Include Transit Insurance</span>
+            <span>Include Transit Insurance (applies to all Land options)</span>
           </label>
           <div id="landInsuranceFields" class="insurance-fields hidden">
             <div class="insurance-fields-grid">
@@ -1099,24 +1012,46 @@
 
       <!-- CONSIGNMENT / IMPORT REQUIREMENTS SECTION -->
       <div id="consignmentInstructionsSection" style="margin-top: 24px; padding: 16px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px;">
-        <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: bold; color: #92400e;">Import Requirements & Consignment Instructions</h4>
+        <h4 style="margin: 0 0 16px 0; font-size: 14px; font-weight: bold; color: #92400e;" data-i18n="importRequirementsTitle">Import Requirements & Consignment Instructions</h4>
         
-        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-          <input type="checkbox" id="includeConsignmentInstructions" name="includeConsignmentInstructions">
-          <span>Include consignment instructions and import requirements in quote</span>
-        </label>
+        <!-- Office selector for consignment address -->
+        <label style="display: block; margin-bottom: 4px; font-size: 13px; color: #92400e;" data-i18n="consignmentOfficeLabel">Office / Destination City</label>
+        <select name="consignmentOffice" id="quoteConsignmentOffice" style="margin-bottom: 16px; width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+          <option value="Istanbul">Istanbul</option>
+          <option value="Ankara">Ankara</option>
+          <option value="Izmir">Izmir</option>
+          <option value="Adana">Adana</option>
+        </select>
         
+        <!-- Master checkbox to include consignment - styled like other checklists -->
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 4px; padding: 12px; margin-bottom: 12px;">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="includeConsignmentInstructions" name="includeConsignmentInstructions" style="width: 18px; height: 18px;">
+            <span style="font-size: 13px;" data-i18n="includeConsignmentLabel">Include consignment instructions in quote</span>
+          </label>
+        </div>
+        
+        <!-- Checkboxes for each requirement type -->
         <div id="consignmentOptionsWrapper" class="hidden">
-          <label>Client Category</label>
-          <select name="clientCategory" id="quoteClientCategory" style="margin-bottom: 12px;">
-            <option value="foreign_national">Foreign National (relocating to Turkey)</option>
-            <option value="returning_turkish">Returning Turkish Citizen</option>
-            <option value="diplomatic">Foreign National (Diplomatic)</option>
-          </select>
-          <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Select the appropriate category to include relevant import documentation requirements</p>
+          <p style="font-size: 12px; color: #6b7280; margin-bottom: 12px;" data-i18n="selectRequirementsHint">Select which import requirement information to include (optional - can select multiple or none):</p>
           
-          <div id="consignmentPreview" style="background: white; padding: 12px; border-radius: 4px; font-size: 12px; max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb;">
-            <p style="color: #6b7280; font-style: italic;">Select a category to preview the requirements that will be included.</p>
+          <div style="background: white; border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden;">
+            <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer;">
+              <input type="checkbox" name="includeForeignNational" id="includeForeignNational" style="width: 18px; height: 18px;">
+              <span style="font-size: 13px;" data-i18n="foreignNationalLabel">Foreign Nationals (relocating to Turkey for work/residence)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer;">
+              <input type="checkbox" name="includeReturningTurkish" id="includeReturningTurkish" style="width: 18px; height: 18px;">
+              <span style="font-size: 13px;" data-i18n="returningTurkishLabel">Returning Turkish Nationals</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; padding: 12px; cursor: pointer;">
+              <input type="checkbox" name="includeDiplomatic" id="includeDiplomatic" style="width: 18px; height: 18px;">
+              <span style="font-size: 13px;" data-i18n="diplomaticLabel">Foreign Nationals (Diplomatic)</span>
+            </label>
+          </div>
+          
+          <div id="consignmentPreview" style="background: white; padding: 12px; border-radius: 4px; font-size: 12px; max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb; margin-top: 12px;">
+            <p style="color: #6b7280; font-style: italic;">Consignment details will appear here based on selected office.</p>
           </div>
         </div>
       </div>
@@ -1149,35 +1084,35 @@
 
     <form id="storageForm">
       <!-- Basic Info -->
-      <h3 class="form-section-title" data-i18n="basicInfo">Basic Information</h3>
+      <h3 class="form-section-title" data-i18n="basicInfoSection">Basic Information</h3>
       
-      <label data-i18n="labelStorageCode">Storage Code</label>
+      <label data-i18n="storageCodeLabel">Storage Code</label>
       <input name="storageCode" type="text" readonly style="background: #f3f4f6; color: #6b7280;">
       
-      <label data-i18n="labelClientName">Client Name</label>
-      <input name="clientName" type="text" placeholder="Enter client name">
+      <label data-i18n="clientNameLabel">Client Name</label>
+      <input name="clientName" type="text" data-i18n-placeholder="clientNamePlaceholder" placeholder="Enter client name">
       
-      <label data-i18n="labelOrganization">Organization</label>
-      <input name="organizationName" type="text" placeholder="Enter organization name (optional)">
+      <label data-i18n="organizationLabel">Organization</label>
+      <input name="organizationName" type="text" data-i18n-placeholder="orgPlaceholder" placeholder="Enter organization name (optional)">
       
-      <label data-i18n="labelLinkedJob">Linked Job (Optional)</label>
+      <label data-i18n="linkedJobOptional">Linked Job (Optional)</label>
       <select name="linkedJobId" id="storageLinkedJobSelect">
-        <option value="">No linked job (standalone storage)</option>
+        <option value="" data-i18n="noLinkedJob">No linked job (standalone storage)</option>
       </select>
-      <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">Link to an existing job or leave empty for standalone storage</p>
+      <p style="font-size: 11px; color: #6b7280; margin-top: 4px;" data-i18n="linkedJobHint">Link to an existing job or leave empty for standalone storage</p>
       
       <!-- Location & Contents -->
       <h3 class="form-section-title" style="margin-top: 20px;" data-i18n="locationContents">Location & Contents</h3>
       
       <label data-i18n="storageLocation">Storage Location</label>
       <select name="location" id="storageLocationSelect" required>
-        <option value="">Select location...</option>
+        <option value="" data-i18n="selectLocation">Select location...</option>
       </select>
       
-      <label data-i18n="storageContents">Contents Type</label>
+      <label data-i18n="storageContentsLabel">Storage Contents</label>
       <div class="mode-group">
-        <label><input type="checkbox" name="contents" value="HHE"> HHE (Household Effects)</label>
-        <label><input type="checkbox" name="contents" value="Auto"> Auto (Vehicle)</label>
+        <label><input type="checkbox" name="contents" value="HHE"> <span data-i18n="hheLabel">HHE (Household Effects)</span></label>
+        <label><input type="checkbox" name="contents" value="Auto"> <span data-i18n="autoLabel">Auto (Vehicle)</span></label>
       </div>
       
       <div class="two-col-row">
@@ -1208,14 +1143,14 @@
       <!-- Billing -->
       <h3 class="form-section-title" style="margin-top: 20px;" data-i18n="billingInfo">Billing Information</h3>
       
-      <label data-i18n="billingType">Billing Type</label>
+      <label data-i18n="billingTypeLabel">Billing Type</label>
       <select name="billingType" id="storageBillingTypeSelect">
-        <option value="Per CBM">Per CBM</option>
-        <option value="Flat Rate">Flat Rate</option>
+        <option value="Per CBM" data-i18n="perCBM">Per CBM</option>
+        <option value="Flat Rate" data-i18n="flatRateOption">Flat Rate</option>
       </select>
       
       <div id="storageCbmBillingFields">
-        <label data-i18n="ratePerCBM">Rate per CBM</label>
+        <label data-i18n="ratePerCBMLabel">Rate per CBM</label>
         <div class="billing-rate-row">
           <input name="ratePerCBM" type="number" step="0.01" placeholder="0.00">
           <select name="rateCurrency">
@@ -1232,7 +1167,7 @@
       </div>
       
       <div id="storageFlatRateFields" class="hidden">
-        <label data-i18n="flatRate">Flat Rate</label>
+        <label data-i18n="flatRateOption">Flat Rate</label>
         <div class="billing-rate-row">
           <input name="flatRate" type="number" step="0.01" placeholder="0.00">
           <select name="flatRateCurrency">
@@ -1243,11 +1178,11 @@
         </div>
       </div>
       
-      <label data-i18n="freeDays">Free Days</label>
+      <label data-i18n="freeDaysLabel">Free Days</label>
       <input name="freeDays" type="number" placeholder="0" min="0">
       
-      <label data-i18n="billingNotes">Billing Notes</label>
-      <textarea name="billingNotes" rows="2" placeholder="Additional billing notes..."></textarea>
+      <label data-i18n="billingNotesLabel">Billing Notes</label>
+      <textarea name="billingNotes" rows="2" data-i18n-placeholder="billingNotesPlaceholderText" placeholder="Additional billing notes..."></textarea>
       
       <!-- Status & Notes -->
       <h3 class="form-section-title" style="margin-top: 20px;" data-i18n="statusNotes">Status & Notes</h3>
@@ -1259,12 +1194,12 @@
       </select>
       
       <label data-i18n="notesLabel">Notes</label>
-      <textarea name="notes" rows="3" placeholder="Additional notes about this storage..."></textarea>
+      <textarea name="notes" rows="3" data-i18n-placeholder="additionalNotesPlaceholder" placeholder="Additional notes about this storage..."></textarea>
 
       <!-- Modal Actions -->
       <div class="modal-actions">
-        <button type="button" id="cancelStorageFormBtn" data-i18n="cancel">Cancel</button>
-        <button type="submit" data-i18n="save">Save</button>
+        <button type="button" id="cancelStorageFormBtn" data-i18n="btnCancel">Cancel</button>
+        <button type="submit" data-i18n="btnSaveStorage">Save Storage</button>
       </div>
     </form>
   </div>
@@ -1312,7 +1247,3 @@
     </div>
   </div>
 </div>
-
-<script src="app.js"></script>
-</body>
-</html>

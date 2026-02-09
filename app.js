@@ -33,20 +33,224 @@ const CONFIG = {
   // Storage statuses
   STORAGE_STATUSES: ['Active', 'Closed'],
   
+  // All 193 UN Member Countries with translations
   COUNTRIES: [
-    "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia",
-    "Australia","Austria","Azerbaijan","Bangladesh","Belgium","Bosnia and Herzegovina",
-    "Brazil","Bulgaria","Canada","Chile","China","Croatia","Cyprus","Czech Republic",
-    "Denmark","Egypt","Estonia","Finland","France","Georgia","Germany","Greece",
-    "Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
-    "Japan","Jordan","Kazakhstan","Kenya","Kuwait","Latvia","Lebanon","Lithuania",
-    "Luxembourg","Malaysia","Malta","Mexico","Morocco","Netherlands","New Zealand",
-    "Nigeria","Norway","Pakistan","Poland","Portugal","Qatar","Romania",
-    "Russian Federation","Saudi Arabia","Serbia","Singapore","Slovakia","Slovenia",
-    "South Africa","South Korea","Spain","Sri Lanka","Sweden","Switzerland",
-    "Syria","Thailand","Tunisia","Turkey","Ukraine","United Arab Emirates",
-    "United Kingdom","United States","Vietnam"
+    { en: "Afghanistan", tr: "Afganistan" },
+    { en: "Albania", tr: "Arnavutluk" },
+    { en: "Algeria", tr: "Cezayir" },
+    { en: "Andorra", tr: "Andorra" },
+    { en: "Angola", tr: "Angola" },
+    { en: "Antigua and Barbuda", tr: "Antigua ve Barbuda" },
+    { en: "Argentina", tr: "Arjantin" },
+    { en: "Armenia", tr: "Ermenistan" },
+    { en: "Australia", tr: "Avustralya" },
+    { en: "Austria", tr: "Avusturya" },
+    { en: "Azerbaijan", tr: "Azerbaycan" },
+    { en: "Bahamas", tr: "Bahamalar" },
+    { en: "Bahrain", tr: "Bahreyn" },
+    { en: "Bangladesh", tr: "Bangladeş" },
+    { en: "Barbados", tr: "Barbados" },
+    { en: "Belarus", tr: "Belarus" },
+    { en: "Belgium", tr: "Belçika" },
+    { en: "Belize", tr: "Belize" },
+    { en: "Benin", tr: "Benin" },
+    { en: "Bhutan", tr: "Butan" },
+    { en: "Bolivia", tr: "Bolivya" },
+    { en: "Bosnia and Herzegovina", tr: "Bosna Hersek" },
+    { en: "Botswana", tr: "Botsvana" },
+    { en: "Brazil", tr: "Brezilya" },
+    { en: "Brunei", tr: "Brunei" },
+    { en: "Bulgaria", tr: "Bulgaristan" },
+    { en: "Burkina Faso", tr: "Burkina Faso" },
+    { en: "Burundi", tr: "Burundi" },
+    { en: "Cabo Verde", tr: "Cabo Verde" },
+    { en: "Cambodia", tr: "Kamboçya" },
+    { en: "Cameroon", tr: "Kamerun" },
+    { en: "Canada", tr: "Kanada" },
+    { en: "Central African Republic", tr: "Orta Afrika Cumhuriyeti" },
+    { en: "Chad", tr: "Çad" },
+    { en: "Chile", tr: "Şili" },
+    { en: "China", tr: "Çin" },
+    { en: "Colombia", tr: "Kolombiya" },
+    { en: "Comoros", tr: "Komorlar" },
+    { en: "Congo (Democratic Republic)", tr: "Kongo (Demokratik Cumhuriyeti)" },
+    { en: "Congo (Republic)", tr: "Kongo (Cumhuriyeti)" },
+    { en: "Costa Rica", tr: "Kosta Rika" },
+    { en: "Côte d'Ivoire", tr: "Fildişi Sahili" },
+    { en: "Croatia", tr: "Hırvatistan" },
+    { en: "Cuba", tr: "Küba" },
+    { en: "Cyprus", tr: "Kıbrıs" },
+    { en: "Czech Republic", tr: "Çekya" },
+    { en: "Denmark", tr: "Danimarka" },
+    { en: "Djibouti", tr: "Cibuti" },
+    { en: "Dominica", tr: "Dominika" },
+    { en: "Dominican Republic", tr: "Dominik Cumhuriyeti" },
+    { en: "Ecuador", tr: "Ekvador" },
+    { en: "Egypt", tr: "Mısır" },
+    { en: "El Salvador", tr: "El Salvador" },
+    { en: "Equatorial Guinea", tr: "Ekvator Ginesi" },
+    { en: "Eritrea", tr: "Eritre" },
+    { en: "Estonia", tr: "Estonya" },
+    { en: "Eswatini", tr: "Esvatini" },
+    { en: "Ethiopia", tr: "Etiyopya" },
+    { en: "Fiji", tr: "Fiji" },
+    { en: "Finland", tr: "Finlandiya" },
+    { en: "France", tr: "Fransa" },
+    { en: "Gabon", tr: "Gabon" },
+    { en: "Gambia", tr: "Gambiya" },
+    { en: "Georgia", tr: "Gürcistan" },
+    { en: "Germany", tr: "Almanya" },
+    { en: "Ghana", tr: "Gana" },
+    { en: "Greece", tr: "Yunanistan" },
+    { en: "Grenada", tr: "Grenada" },
+    { en: "Guatemala", tr: "Guatemala" },
+    { en: "Guinea", tr: "Gine" },
+    { en: "Guinea-Bissau", tr: "Gine-Bissau" },
+    { en: "Guyana", tr: "Guyana" },
+    { en: "Haiti", tr: "Haiti" },
+    { en: "Honduras", tr: "Honduras" },
+    { en: "Hungary", tr: "Macaristan" },
+    { en: "Iceland", tr: "İzlanda" },
+    { en: "India", tr: "Hindistan" },
+    { en: "Indonesia", tr: "Endonezya" },
+    { en: "Iran", tr: "İran" },
+    { en: "Iraq", tr: "Irak" },
+    { en: "Ireland", tr: "İrlanda" },
+    { en: "Israel", tr: "İsrail" },
+    { en: "Italy", tr: "İtalya" },
+    { en: "Jamaica", tr: "Jamaika" },
+    { en: "Japan", tr: "Japonya" },
+    { en: "Jordan", tr: "Ürdün" },
+    { en: "Kazakhstan", tr: "Kazakistan" },
+    { en: "Kenya", tr: "Kenya" },
+    { en: "Kiribati", tr: "Kiribati" },
+    { en: "Korea (North)", tr: "Kuzey Kore" },
+    { en: "Korea (South)", tr: "Güney Kore" },
+    { en: "Kuwait", tr: "Kuveyt" },
+    { en: "Kyrgyzstan", tr: "Kırgızistan" },
+    { en: "Laos", tr: "Laos" },
+    { en: "Latvia", tr: "Letonya" },
+    { en: "Lebanon", tr: "Lübnan" },
+    { en: "Lesotho", tr: "Lesotho" },
+    { en: "Liberia", tr: "Liberya" },
+    { en: "Libya", tr: "Libya" },
+    { en: "Liechtenstein", tr: "Lihtenştayn" },
+    { en: "Lithuania", tr: "Litvanya" },
+    { en: "Luxembourg", tr: "Lüksemburg" },
+    { en: "Madagascar", tr: "Madagaskar" },
+    { en: "Malawi", tr: "Malavi" },
+    { en: "Malaysia", tr: "Malezya" },
+    { en: "Maldives", tr: "Maldivler" },
+    { en: "Mali", tr: "Mali" },
+    { en: "Malta", tr: "Malta" },
+    { en: "Marshall Islands", tr: "Marshall Adaları" },
+    { en: "Mauritania", tr: "Moritanya" },
+    { en: "Mauritius", tr: "Mauritius" },
+    { en: "Mexico", tr: "Meksika" },
+    { en: "Micronesia", tr: "Mikronezya" },
+    { en: "Moldova", tr: "Moldova" },
+    { en: "Monaco", tr: "Monako" },
+    { en: "Mongolia", tr: "Moğolistan" },
+    { en: "Montenegro", tr: "Karadağ" },
+    { en: "Morocco", tr: "Fas" },
+    { en: "Mozambique", tr: "Mozambik" },
+    { en: "Myanmar", tr: "Myanmar" },
+    { en: "Namibia", tr: "Namibya" },
+    { en: "Nauru", tr: "Nauru" },
+    { en: "Nepal", tr: "Nepal" },
+    { en: "Netherlands", tr: "Hollanda" },
+    { en: "New Zealand", tr: "Yeni Zelanda" },
+    { en: "Nicaragua", tr: "Nikaragua" },
+    { en: "Niger", tr: "Nijer" },
+    { en: "Nigeria", tr: "Nijerya" },
+    { en: "North Macedonia", tr: "Kuzey Makedonya" },
+    { en: "Norway", tr: "Norveç" },
+    { en: "Oman", tr: "Umman" },
+    { en: "Pakistan", tr: "Pakistan" },
+    { en: "Palau", tr: "Palau" },
+    { en: "Panama", tr: "Panama" },
+    { en: "Papua New Guinea", tr: "Papua Yeni Gine" },
+    { en: "Paraguay", tr: "Paraguay" },
+    { en: "Peru", tr: "Peru" },
+    { en: "Philippines", tr: "Filipinler" },
+    { en: "Poland", tr: "Polonya" },
+    { en: "Portugal", tr: "Portekiz" },
+    { en: "Qatar", tr: "Katar" },
+    { en: "Romania", tr: "Romanya" },
+    { en: "Russia", tr: "Rusya" },
+    { en: "Rwanda", tr: "Ruanda" },
+    { en: "Saint Kitts and Nevis", tr: "Saint Kitts ve Nevis" },
+    { en: "Saint Lucia", tr: "Saint Lucia" },
+    { en: "Saint Vincent and the Grenadines", tr: "Saint Vincent ve Grenadinler" },
+    { en: "Samoa", tr: "Samoa" },
+    { en: "San Marino", tr: "San Marino" },
+    { en: "Sao Tome and Principe", tr: "São Tomé ve Príncipe" },
+    { en: "Saudi Arabia", tr: "Suudi Arabistan" },
+    { en: "Senegal", tr: "Senegal" },
+    { en: "Serbia", tr: "Sırbistan" },
+    { en: "Seychelles", tr: "Seyşeller" },
+    { en: "Sierra Leone", tr: "Sierra Leone" },
+    { en: "Singapore", tr: "Singapur" },
+    { en: "Slovakia", tr: "Slovakya" },
+    { en: "Slovenia", tr: "Slovenya" },
+    { en: "Solomon Islands", tr: "Solomon Adaları" },
+    { en: "Somalia", tr: "Somali" },
+    { en: "South Africa", tr: "Güney Afrika" },
+    { en: "South Sudan", tr: "Güney Sudan" },
+    { en: "Spain", tr: "İspanya" },
+    { en: "Sri Lanka", tr: "Sri Lanka" },
+    { en: "Sudan", tr: "Sudan" },
+    { en: "Suriname", tr: "Surinam" },
+    { en: "Sweden", tr: "İsveç" },
+    { en: "Switzerland", tr: "İsviçre" },
+    { en: "Syria", tr: "Suriye" },
+    { en: "Tajikistan", tr: "Tacikistan" },
+    { en: "Tanzania", tr: "Tanzanya" },
+    { en: "Thailand", tr: "Tayland" },
+    { en: "Timor-Leste", tr: "Doğu Timor" },
+    { en: "Togo", tr: "Togo" },
+    { en: "Tonga", tr: "Tonga" },
+    { en: "Trinidad and Tobago", tr: "Trinidad ve Tobago" },
+    { en: "Tunisia", tr: "Tunus" },
+    { en: "Turkey", tr: "Türkiye" },
+    { en: "Turkmenistan", tr: "Türkmenistan" },
+    { en: "Tuvalu", tr: "Tuvalu" },
+    { en: "Uganda", tr: "Uganda" },
+    { en: "Ukraine", tr: "Ukrayna" },
+    { en: "United Arab Emirates", tr: "Birleşik Arap Emirlikleri" },
+    { en: "United Kingdom", tr: "Birleşik Krallık" },
+    { en: "United States", tr: "Amerika Birleşik Devletleri" },
+    { en: "Uruguay", tr: "Uruguay" },
+    { en: "Uzbekistan", tr: "Özbekistan" },
+    { en: "Vanuatu", tr: "Vanuatu" },
+    { en: "Vatican City", tr: "Vatikan" },
+    { en: "Venezuela", tr: "Venezuela" },
+    { en: "Vietnam", tr: "Vietnam" },
+    { en: "Yemen", tr: "Yemen" },
+    { en: "Zambia", tr: "Zambiya" },
+    { en: "Zimbabwe", tr: "Zimbabve" }
   ],
+
+  // Helper to get country name in current language
+  getCountryName(country) {
+    if (typeof country === 'string') {
+      // If it's a string, find the matching country object
+      const found = this.COUNTRIES.find(c => c.en === country || c.tr === country);
+      if (found) return State.lang === 'tr' ? found.tr : found.en;
+      return country; // Return as-is if not found
+    }
+    if (country && typeof country === 'object') {
+      return State.lang === 'tr' ? country.tr : country.en;
+    }
+    return '';
+  },
+
+  // Get sorted country list for dropdowns
+  getCountryList() {
+    return this.COUNTRIES
+      .map(c => ({ value: c.en, label: State.lang === 'tr' ? c.tr : c.en }))
+      .sort((a, b) => a.label.localeCompare(b.label, State.lang === 'tr' ? 'tr' : 'en'));
+  },
 
   CHECKLIST_TEMPLATES: {
     IMPORT: ["Quote sent","Passport copy with entry stamp","Copy of resident permit","Signed personal application (Dilekçe)","Power of Attorney (Vekaletname)","Company application (Şirket yazısı)","Signed packing list","Inventory list received","Turkish tax ID or foreign citizen number","Lease contract","List of all entry/exit in Turkey during the last 2 years","Insurance documents","Customs forms completed","In transit to Turkey","Arrived at port/terminal","Delivered to warehouse","Delivered to residence","Proof of Delivery (POD) signed","Payment received"],
@@ -133,38 +337,7 @@ const CONFIG = {
 };
 
 const DEFAULT_RESOURCE_LIBRARY = {
-  categories: [
-    {
-      id: 'quotes',
-      name: 'Quote Templates',
-      nametr: 'Teklif Şablonları',
-      items: []
-    },
-    {
-      id: 'forms',
-      name: 'Forms',
-      nametr: 'Formlar',
-      items: []
-    },
-    {
-      id: 'checklists',
-      name: 'Checklists & Inventory',
-      nametr: 'Kontrol Listeleri ve Envanter',
-      items: []
-    },
-    {
-      id: 'shipping',
-      name: 'Shipping Documents',
-      nametr: 'Taşıma Belgeleri',
-      items: []
-    },
-    {
-      id: 'required',
-      name: 'Required Documents',
-      nametr: 'Gerekli Belgeler',
-      items: []
-    }
-  ]
+  categories: []
 };
 
 //==============================================// QUOTE TEMPLATES // =========================
@@ -505,20 +678,61 @@ const ADDITIONAL_CHARGES_CONFIG = {
 
 // Consignment Instructions for Import Requirements
 const CONSIGNMENT_INSTRUCTIONS = {
-  consignee_template: `CONSIGNMENT INSTRUCTION (for express release Bill of Lading):
-Consignee:
-[CLIENT_NAME]
-C/O ISTANBUL EKSPRES A.S.
+  // Office-specific consignee details
+  offices: {
+    Istanbul: {
+      address: `C/O ISTANBUL EKSPRES A.S.
 Izzetpasa Mahallesi, Yeniyol Caddesi
 Nurol Tower, No:3, Daire:1403
 Sisli, Istanbul, Turkiye
-Tax ID: OSTIM 4810032912
+Tax ID: OSTIM 4810032912`,
+      notify: `ISTANBUL EKSPRES A.S.
+T. +90 212 217 49 68 - 69
+movers@istanbulekspres.com.tr`
+    },
+    Adana: {
+      address: `C/O ISTANBUL EKSPRES A.S.
+Guzel Cumhuriyet Mahallesi
+Incirlik Bulvari, No: 324 / 1
+Yuregir, Adana, Turkiye
+Tax ID: OSTIM 4810032912`,
+      notify: `ISTANBUL EKSPRES A.S.
+T. +90 322 346 08 11
+movers@istanbulekspres.com.tr`
+    },
+    Izmir: {
+      address: `C/O ISTANBUL EKSPRES A.S.
+Sair Esref Bulvari
+No:48, Kat:7
+35210 Alsancak, Konak, Izmir, Turkiye
+Tax ID: OSTIM 4810032912`,
+      notify: `ISTANBUL EKSPRES A.S.
+T. +90 232 489 65 04 - 05
+movers@istanbulekspres.com.tr`
+    },
+    Ankara: {
+      address: `C/O ISTANBUL EKSPRES A.S.
+Inonu Mahallesi, Bati Bulvari No:83
+06370 Yenimahalle, Ankara, Turkiye
+Tax ID: OSTIM 4810032912`,
+      notify: `ISTANBUL EKSPRES A.S.
+T. +90 312 278 29 97
+movers@istanbulekspres.com.tr`
+    }
+  },
+  
+  // Get consignee template for specific office
+  getConsigneeTemplate(office = 'Istanbul') {
+    const officeData = this.offices[office] || this.offices.Istanbul;
+    return `CONSIGNMENT INSTRUCTION (for express release Bill of Lading):
+
+Consignee:
+Full Name of Client (as in passport)
+${officeData.address}
 
 Notify:
-ISTANBUL EKSPRES A.S.
-T. +90 212 217 49 68
-F. +90 212 217 49 67
-movers@istanbulekspres.com.tr`,
+${officeData.notify}`;
+  },
 
   foreign_national: {
     title: 'IMPORT REQUIREMENTS - FOREIGN NATIONALS',
@@ -591,7 +805,7 @@ const TR_SYSTEM = {
   // MOVE STEPS
   // ===============================
   step_packing: "Paketleme",
-  step_survey: "Ekspertiz",
+  step_survey: "Survey",
   step_delivery_to_residence: "Adrese Teslimat",
   step_container_pickup: "Konteyner Alımı",
   step_container_delivery: "Konteyner Teslimi",
@@ -606,7 +820,7 @@ const TR_SYSTEM = {
   // ===============================
   job_Custom: "Özel",
   job_Packing: "Paketleme",
-  job_Survey: "Ekspertiz",
+  job_Survey: "Survey",
   job_DeliveryToResidence: "Adrese Teslimat",
   job_ContainerDelivery: "Konteyner Teslimi",
   job_ContainerPickup: "Konteyner Alımı",
@@ -629,8 +843,8 @@ const TR_SYSTEM = {
   // ===============================
   chk_QuoteSent: "Teklif gönderildi",
   chk_MoveReserved: "Taşıma rezerve edildi",
-  chk_SurveyDone: "Ekspertiz tamamlandı",
-  chk_SurveyDoneNA: "Ekspertiz - Gerekli değil",
+  chk_SurveyDone: "Survey tamamlandı",
+  chk_SurveyDoneNA: "Survey - Gerekli değil",
   chk_DocumentsComplete: "Dokümanlar tamamlandı",
   chk_PackingDone: "Paketleme tamamlandı",
   chk_PackingDoneNA: "Paketleme - Gerekli değil",
@@ -781,6 +995,7 @@ const I18n = {
       langShort: 'EN',
       dashboard: 'Dashboard',
       moves: 'Moves',
+      movesTitle: 'Moves',
       agents: 'Agents',
       schedule: 'Schedule',
       storage: 'Storage',
@@ -793,6 +1008,8 @@ const I18n = {
       completedStorage: 'Completed Storage',
       completedStorageDesc: 'Fully retrieved items',
       noActiveStorage: 'No items currently in storage.',
+      noStorageRecords: 'No storage records match this filter.',
+      storageRecords: 'Storage Records',
       noCompletedStorage: 'No completed storage records.',
       allLocations: 'All Locations',
       allStatuses: 'All Statuses',
@@ -808,6 +1025,9 @@ const I18n = {
       modalEditStorageTitle: 'Edit Storage',
       storageLocation: 'Storage Location',
       selectLocation: 'Select location',
+      noLinkedJob: 'No linked job (standalone storage)',
+      clientNamePlaceholder: 'Enter client name',
+      additionalNotesPlaceholder: 'Additional notes about this storage...',
       storageContents: 'Storage Contents',
       storageCode: 'Storage Code',
       entryDate: 'Entry Date',
@@ -836,7 +1056,32 @@ const I18n = {
       clientName: 'Client Name',
       organization: 'Organization',
       organizationLabel: 'Organization (optional)',
+      clientNameLabel: 'Client Name',
       linkedJob: 'Linked Job',
+      linkedJobOptional: 'Linked Job (Optional)',
+      linkedJobHint: 'Link to an existing job or leave empty for standalone storage',
+      moveTypeLabel: 'Move Type',
+      statusRequiredLabel: 'Status (required)',
+      originAgentLabel: 'Origin Agent (at least one of Origin/Destination required)',
+      destinationAgentLabel: 'Destination Agent (at least one of Origin/Destination required)',
+      agentNameLabel: 'Name',
+      cityLabel: 'City',
+      countryLabel: 'Country',
+      membershipsLabel: 'Memberships',
+      storageCodeLabel: 'Storage Code',
+      storageContentsLabel: 'Storage Contents',
+      hheLabel: 'HHE (Household Effects)',
+      autoLabel: 'Auto (Vehicle)',
+      billingTypeLabel: 'Billing Type',
+      perCBM: 'Per CBM',
+      flatRateOption: 'Flat Rate',
+      ratePerCBMLabel: 'Rate per CBM',
+      freeDaysLabel: 'Free Days',
+      billingNotesLabel: 'Billing Notes',
+      billingNotesPlaceholderText: 'Additional billing notes...',
+      orgPlaceholder: 'Enter organization name (optional)',
+      btnSaveAgent: 'Save Agent',
+      btnSaveStorage: 'Save Storage',
       locationContents: 'Location & Contents',
       location: 'Location',
       grossWeight: 'Gross Weight',
@@ -873,10 +1118,10 @@ const I18n = {
       movesThisMonth: 'Moves This Month',
       activeMovesLabel: 'Active Moves',
       scheduledThisMonth: 'With Activity',
-      upcomingJobs: 'Upcoming Jobs (3 days)',
-      upcomingSchedule: 'Upcoming Schedule (14 days)',
-      overdueItems: 'Overdue Items',
-      unpaidMoves: 'Unpaid Moves',
+      upcomingJobs: 'UPCOMING JOBS (3 DAYS)',
+      upcomingSchedule: 'UPCOMING SCHEDULE (14 DAYS)',
+      overdueItems: 'OVERDUE ITEMS',
+      unpaidMoves: 'UNPAID MOVES',
       noUpcomingJobs: 'No jobs scheduled in the next 3 days.',
       noUpcomingItems: 'No upcoming scheduled items.',
       noOverdueItems: 'No overdue items.',
@@ -924,6 +1169,7 @@ const I18n = {
       noChecklistYet: 'No checklist yet.',
       noNotesYet: 'No notes yet.',
       noDocumentsYet: 'No documents yet.',
+      noMediaYet: 'No photos or videos yet.',
       noAgentsYet: 'No agents yet.',
       noBrokersYet: 'No brokers yet.',
       createNewMove: 'Create New Move',
@@ -1113,12 +1359,456 @@ const I18n = {
       
       // Additional labels
       moveManager: 'Move Manager',
-      shipmentContents: 'Shipment Contents'
+      shipmentContents: 'Shipment Contents',
+      
+      // ========== QUOTES SECTION ==========
+      quotesTitle: 'Quotes',
+      btnAddNewQuote: 'Add New Quote',
+      quoteDetailsTitle: 'Quote Details',
+      btnEditQuote: 'Edit Quote',
+      hintSelectQuote: 'Select a quote from the left to see details here.',
+      hintSelectDocument: 'Select a document or resource from the left to see details here.',
+      searchQuotesPlaceholder: 'Search by quote ID, client, origin, destination...',
+      noQuotesYet: 'No quotes yet.',
+      createQuoteTitle: 'Create New Quote',
+      editQuoteTitle: 'Edit Quote',
+      quoteRecipient: 'Quote Recipient',
+      basicInfoSection: 'Basic Information',
+      recipientClient: 'Client',
+      recipientAgent: 'Agent / Partner',
+      recipientHint: 'Affects which fields and charges are shown',
+      quoteType: 'Quote Type',
+      selectQuoteType: 'Select type',
+      quoteModes: 'Transport Modes',
+      quoteContents: 'Shipment Contents',
+      householdGoods: 'Household Goods (HHE)',
+      vehicleAuto: 'Vehicle / Auto',
+      quoteCurrency: 'Quote Currency',
+      quoteCurrencyHint: 'This currency will be used for all charges in this quote',
+      quoteClientName: 'Client Name',
+      quoteClientOrg: 'Organization',
+      quoteOrigin: 'Origin',
+      quoteDestination: 'Destination',
+      estimatedVolume: 'Estimated Volume',
+      quoteValidUntil: 'Valid Until',
+      transitInsurance: 'Transit Insurance',
+      includeInsurance: 'Include transit insurance',
+      insuranceNote: 'Insurance premium calculated as percentage of declared value',
+      declaredValue: 'Declared Value',
+      insuranceRate: 'Insurance Rate',
+      
+      // Sea Freight Fields
+      seaFreightDetails: 'Sea Freight Details',
+      seaVolume: 'Volume (CBM)',
+      departurePort: 'Departure Port',
+      poePort: 'Port of Entry (POE)',
+      containerType: 'Container Type',
+      seaTransitTime: 'Transit Time (days)',
+      containerLCL: 'LCL (Less than Container)',
+      containerFCL20: '20\' FCL',
+      containerFCL40: '40\' FCL',
+      containerFCL40HC: '40\' HC FCL',
+      
+      // Air Freight Fields
+      airFreightDetails: 'Air Freight Details',
+      airCargoWeight: 'Cargo Weight (kg)',
+      airVolume: 'Volume (CBM)',
+      calculatedACW: 'Calculated ACW',
+      acwNote: 'ACW = max(gross weight, volume × 167)',
+      departureAirport: 'Departure Airport',
+      arrivalAirport: 'Arrival Airport',
+      airlineCarrier: 'Airline Carrier',
+      airTransitTime: 'Transit Time (days)',
+      
+      // Land Freight Fields
+      landFreightDetails: 'Land Freight Details',
+      landVolume: 'Volume (CBM)',
+      truckType: 'Truck Type',
+      truckDedicated: 'Dedicated Truck',
+      truckGroupage: 'Groupage',
+      landTransitTime: 'Transit Time (days)',
+      
+      // Vehicle Fields
+      vehicleDetails: 'Vehicle Details',
+      vehicleType: 'Vehicle Type',
+      vehicleCar: 'Car',
+      vehicleMotorcycle: 'Motorcycle',
+      vehicleBoat: 'Boat',
+      vehicleOther: 'Other',
+      vehicleMake: 'Make',
+      vehicleModel: 'Model',
+      vehicleYear: 'Year',
+      vehicleVIN: 'VIN',
+      vehicleCondition: 'Vehicle Condition',
+      vehicleRunning: 'Running',
+      vehicleNonRunning: 'Non-Running',
+      
+      // Charges Section
+      chargesSection: 'Charges',
+      seaFreightCharges: 'Sea Freight Charges',
+      airFreightCharges: 'Air Freight Charges',
+      landFreightCharges: 'Land Freight Charges',
+      chargesHint: 'Default charges auto-populated based on recipient and type. You can edit or add more.',
+      addCharge: '+ Add Charge',
+      chargeDescription: 'Charge description',
+      chargeTypeFixed: 'Fixed',
+      chargeTypeRange: 'Range',
+      
+      // Quote Includes
+      quotationIncludes: 'Quotation Includes',
+      quotationIncludesHint: 'Select items to include in the quote (items auto-populate based on mode and type):',
+      addCustomInclude: 'Add Custom Item',
+      
+      // Additional Charges
+      additionalCharges: 'Additional Charges May Apply',
+      additionalChargesHint: 'These charges are not included in the quoted price and will be invoiced separately if applicable:',
+      addCustomCharge: 'Add Custom Charge',
+      
+      // Consignment Instructions
+      consignmentInstructions: 'Consignment Instructions',
+      importRequirementsTitle: 'Import Requirements & Consignment Instructions',
+      consignmentOfficeLabel: 'Office / Destination City',
+      includeConsignmentLabel: 'Include consignment instructions in quote',
+      selectRequirementsHint: 'Select which import requirement information to include (optional - can select multiple or none):',
+      foreignNationalLabel: 'Foreign Nationals (relocating to Turkey for work/residence)',
+      returningTurkishLabel: 'Returning Turkish Nationals',
+      diplomaticLabel: 'Foreign Nationals (Diplomatic)',
+      includeConsignment: 'Include consignment instructions and import requirements in quote',
+      clientCategory: 'Client Category',
+      categoryForeignNational: 'Foreign National',
+      categoryReturningTurkish: 'Returning Turkish National',
+      categoryDiplomatic: 'Diplomatic',
+      
+      // Quote Actions
+      saveQuote: 'Save Quote',
+      exportPdf: 'Export PDF',
+      convertToMove: 'Convert to Move',
+      deleteQuote: 'Delete Quote',
+      quoteInfo: 'Quote Information',
+      routeInfo: 'Route Information',
+      validityDate: 'Validity Date',
+      
+      // Common / Shared
+      yes: 'Yes',
+      no: 'No',
+      none: 'None',
+      select: 'Select',
+      optional: 'optional',
+      required: 'required',
+      example: 'e.g.',
+      loading: 'Loading...',
+      noResults: 'No results found',
+      confirm: 'Confirm',
+      warning: 'Warning',
+      error: 'Error',
+      success: 'Success',
+      info: 'Info',
+      noClientName: 'No client name',
+      
+      // Placeholders
+      phSearchMoves: 'Search by move ID, client, origin, destination, agent...',
+      phSearchAgents: 'Search agents by name, city, country...',
+      phSearchDocs: 'Search by job ID, client, document name, agent...',
+      phSearchStorage: 'Search by code, client, location...',
+      phSearchQuotes: 'Search by quote ID, client, origin, destination...',
+      phEnterChecklist: 'Enter checklist item...',
+      phDocLabel: 'Document Label',
+      docNameLabel: 'Document Label',
+      docDateLabel: 'Document Date',
+      docUploadLabel: 'Upload (optional)',
+      phMediaLabel: 'Label / Description',
+      phWriteNote: 'Write a note about this move...',
+      phPhone: '+90 555 123 4567',
+      phEmail: 'client@example.com',
+      phTag: 'e.g. Diplomatic, VIP, Military...',
+      phFloor: 'e.g. 3',
+      phAccessConditions: 'e.g. Narrow stairs',
+      phMoveManager: 'Person responsible for this move',
+      phContainerDetails: 'e.g. 1x20ft FCL, 1x40ft HQ',
+      phVolume: 'e.g. 14.5',
+      phWeight: 'e.g. 2500',
+      phACW: 'e.g. 835',
+      phMake: 'e.g. Toyota',
+      phModel: 'e.g. Camry',
+      phYear: 'e.g. 2022',
+      phVIN: 'Vehicle Identification Number',
+      phOrigin: 'Istanbul, Turkey',
+      phDestination: 'Dubai, UAE',
+      
+      // Form Labels
+      lblClientInfo: 'Client Information',
+      lblMoveInfo: 'Move Information',
+      lblRoute: 'Route',
+      lblOriginDetails: 'Origin Details',
+      lblDestinationDetails: 'Destination Details',
+      lblModeDetails: 'Mode Details',
+      lblShipmentContents: 'Shipment Contents',
+      lblVehicleDetails: 'Vehicle Details',
+      lblBrokers: 'Brokers',
+      lblPhone: 'Phone',
+      lblEmail: 'Email',
+      lblFloor: 'Floor',
+      lblElevator: 'Elevator',
+      lblFreightElevator: 'Freight Elevator',
+      lblAccessConditions: 'Access Conditions',
+      lblTag: 'Tag/Label',
+      lblNotes: 'Notes',
+      lblContainerDetails: 'Container Details',
+      lblVolumeCBM: 'Volume (CBM)',
+      lblGrossWeight: 'Gross Weight (kg)',
+      lblCargoWeight: 'Cargo Weight (kg)',
+      lblCalculatedACW: 'Calculated ACW (kg)',
+      lblHouseholdGoods: 'Household Goods (HHE)',
+      lblVehicle: 'Vehicle / Auto',
+      lblVehicleType: 'Vehicle Type',
+      lblVehicleMake: 'Make',
+      lblVehicleModel: 'Model',
+      lblVehicleYear: 'Year',
+      lblVehicleVIN: 'VIN',
+      lblVehicleCondition: 'Condition',
+      lblRunning: 'Running',
+      lblNonRunning: 'Non-Running',
+      lblCustomsBroker: 'Customs Broker',
+      lblSeaFreightBroker: 'Sea Freight Broker',
+      lblAirFreightBroker: 'Air Freight Broker',
+      lblSelectBroker: 'Select broker',
+      
+      // Move Form Labels
+      tagLabel: 'Tag (optional)',
+      originCityLabel: 'Origin City',
+      originCountryLabel: 'Origin Country',
+      originAddressLabel: 'Full Origin Address',
+      originFloorLabel: 'Floor',
+      originElevatorLabel: 'Elevator',
+      originAccessLabel: 'Access Conditions',
+      destinationCityLabel: 'Destination City',
+      destinationCountryLabel: 'Destination Country',
+      destinationAddressLabel: 'Full Destination Address',
+      destinationFloorLabel: 'Floor',
+      destinationElevatorLabel: 'Elevator',
+      destinationAccessLabel: 'Access Conditions',
+      tradeDirectionLabel: 'Trade Direction',
+      modeLabel: 'Mode',
+      moveManagerLabel: 'Move Manager',
+      moveManagerPlaceholder: 'Person responsible for this move',
+      seaFreightDetailsTitle: 'Sea Freight Details',
+      airFreightDetailsTitle: 'Air Freight Details',
+      landFreightDetailsTitle: 'Land Freight Details',
+      vehicleDetailsTitle: 'Vehicle Details',
+      storageRequired: 'This move requires storage',
+      stepsHint: 'After creating the move, you can add steps (Survey, Packing, Container, Delivery, etc.) manually in Move Details using the "Add Move Step" button.',
+      vehicleCar: 'Car',
+      vehicleMotorcycle: 'Motorcycle',
+      vehicleTruck: 'Truck',
+      vehicleBoat: 'Boat',
+      vehicleOther: 'Other',
+      grossWeightOptional: 'Gross Weight (kg) - optional',
+      containerDetailsLabel: 'Container Details',
+      volumeCbmLabel: 'Volume (CBM)',
+      grossWeightLabel: 'Gross Weight (kg)',
+      cargoWeightLabel: 'Cargo Weight (kg)',
+      calculatedAcwLabel: 'Calculated ACW (kg)',
+      shipmentContentsLabel: 'Shipment Contents',
+      seaVolumeLabel: 'Sea Cargo Volume (cbm)',
+      airVolumeLabel: 'Air Cargo Volume (cbm)',
+      airWeightLabel: 'Air Cargo Weight (kg)',
+      acwLabel: 'Chargeable Weight / ACW (kg)',
+      landVolumeLabel: 'Land Cargo Volume (cbm)',
+      vehicleTypeLabel: 'Vehicle Type',
+      vehicleMakeLabel: 'Vehicle Make',
+      vehicleModelLabel: 'Vehicle Model',
+      vehicleYearLabel: 'Vehicle Year',
+      vinLabel: 'VIN Number (optional)',
+      conditionLabel: 'Condition',
+      
+      // Variant translations
+      variantOption: 'Option',
+      addVariant: 'Add Option',
+      deleteVariant: 'Delete Option',
+      duplicateVariant: 'Duplicate',
+      variantLabel: 'Option Label',
+      noVariants: 'No options added yet. Click "Add Option" to create one.',
+      confirmDeleteVariant: 'Are you sure you want to delete this option?',
+      variantDetails: 'Route Details',
+      variantCharges: 'Charges',
+      collapseVariant: 'Collapse',
+      expandVariant: 'Expand',
+      
+      // Buttons
+      btnAdd: 'Add',
+      btnSave: 'Save',
+      btnCancel: 'Cancel',
+      btnDelete: 'Delete',
+      btnEdit: 'Edit',
+      btnClose: 'Close',
+      btnExport: 'Export',
+      btnImport: 'Import',
+      btnDownload: 'Download',
+      btnUpload: 'Upload',
+      btnOpenLink: 'Open Link',
+      btnAddNote: 'Add Note',
+      btnAddDocument: 'Add Document',
+      btnAddMedia: 'Add Media',
+      btnAddChecklistItem: 'Add Checklist Item',
+      btnSaveMove: 'Save Move',
+      btnAddBroker: 'Add Broker',
+      btnAddResource: 'Add Resource',
+      addChecklistItem: 'Add Checklist Item',
+      selectCountry: 'Select country',
+      selectType: 'Select type',
+      selectStatus: 'Select status',
+      selectOriginAgent: 'Select origin agent',
+      selectDestinationAgent: 'Select destination agent',
+      resourceDetails: 'Resource Details',
+      hintSelectResource: 'Select a document or resource from the left to see details here.',
+      usedInMoves: 'moves',
+      usedInMove: 'move',
+      addCategory: 'Add Category',
+      editCategory: 'Edit Category',
+      deleteCategory: 'Delete Category',
+      categoryName: 'Category Name',
+      categoryNameEn: 'Category Name (English)',
+      categoryNameTr: 'Category Name (Turkish)',
+      noCategories: 'No categories yet. Add a category to get started.',
+      confirmDeleteCategory: 'Delete this category? All resources in it will also be deleted.',
+      categoryAdded: 'Category added!',
+      categoryUpdated: 'Category updated!',
+      categoryDeleted: 'Category deleted.',
+      cannotDeleteNonEmpty: 'Cannot delete category with resources. Delete resources first.',
+      
+      // Job Modal
+      createMoveTitle: 'Create New Move',
+      editMoveTitle: 'Edit Move',
+      
+      // Section Headers
+      sectionChecklist: 'Checklist',
+      sectionDocuments: 'Documents',
+      sectionPhotosVideos: 'Photos & Videos',
+      sectionNotes: 'Notes',
+      sectionMoveAgents: 'Move Agents',
+      sectionSeaFreightDetails: 'Sea Freight Details',
+      sectionAirFreightDetails: 'Air Freight Details',
+      sectionLandFreightDetails: 'Land Freight Details',
+      moveAgentsTitle: 'Move Agents',
+      checklistTitle: 'Checklist',
+      documentsTitle: 'Documents',
+      photosVideosTitle: 'Photos & Videos',
+      notesTitle: 'Notes',
+      
+      // Move Details Labels
+      lblVolume: 'Volume',
+      lblContainer: 'Container',
+      lblCargoWeight: 'Cargo Weight',
+      lblChargeableWeight: 'Chargeable Weight (ACW)',
+      lblTruckType: 'Truck Type',
+      
+      // Agent Section
+      agentsTitle: 'Agents',
+      agentDetailsTitle: 'Agent Details',
+      
+      // Storage Statuses
+      statusActive: 'Active',
+      statusClosed: 'Closed',
+      statusInStorage: 'In Storage',
+      statusFullyRetrieved: 'Fully Retrieved',
+      statusPartiallyRetrieved: 'Partially Retrieved',
+      
+      // Booking Types
+      bookingDoorToDoor: 'Door to Door',
+      bookingDoorToPort: 'Door to Port',
+      bookingPortToDoor: 'Port to Door',
+      
+      // Client Types
+      clientTypePrivate: 'Private',
+      clientTypeCorporate: 'Corporate',
+      clientTypeDiplomatic: 'Diplomatic',
+      
+      // Contents Types
+      contentsHHE: 'Household Goods',
+      contentsVehicle: 'Vehicle',
+      
+      // Units
+      unitDays: 'days',
+      unitDay: 'day',
+      unitMonth: 'month',
+      unitMonths: 'months',
+      unitKg: 'kg',
+      unitCbm: 'cbm',
+      
+      // Storage Billing
+      perCBM: 'Per CBM',
+      flatRate: 'Flat Rate',
+      
+      // File Upload
+      dragDropText: 'Drag & drop file here or click to browse',
+      labelDescription: 'Label / Description',
+      
+      // Extra Job Types (for schedule dropdown)
+      jobCustom: 'Custom',
+      jobPacking: 'Packing',
+      jobSurvey: 'Survey',
+      jobDeliveryToResidence: 'Delivery to Residence',
+      jobContainerDelivery: 'Container Delivery',
+      jobContainerPickup: 'Container Pickup',
+      jobContainerUnloading: 'Container Unloading',
+      jobContainerLoading: 'Container Loading',
+      jobAirCargoPacking: 'Air Cargo Packing',
+      jobAirCargoDeliveryToAddress: 'Air Cargo Delivery to Address',
+      jobAirCargoDeliveryToAirport: 'Air Cargo Delivery to Airport',
+      jobDeliveryToPort: 'Delivery to Port',
+      jobPickupFromPort: 'Pickup from Port',
+      jobAirCargoPickup: 'Air Cargo Pickup',
+      jobAirCargoDelivery: 'Air Cargo Delivery',
+      jobWarehouseCleaning: 'Warehouse Cleaning',
+      jobTruckPreparation: 'Truck Preparation',
+      jobVehicleDelivery: 'Vehicle Delivery',
+      jobVehiclePickup: 'Vehicle Pickup',
+      
+      // Misc
+      additionalJob: 'Additional Job',
+      video: 'Video',
+      media: 'Media',
+      nameEnglish: 'Name (English)',
+      nameTurkish: 'Name (Turkish)',
+      fileLabel: 'File',
+      selectQuoteToSee: 'Select a quote to see details.',
+      selectModeAndType: 'Select mode and type to see available items',
+      selectTypeToSee: 'Select type to see available items',
+      freightItems: 'Freight Items',
+      additionalItemsIf: 'Additional items (if corresponding charges included)',
+      to: 'to',
+      previousMoves: 'Previous Moves',
+      costBreakdown: 'Cost Breakdown',
+      moving: 'Moving',
+      subtotal: 'Subtotal',
+      total: 'Total',
+      addCharge: 'Add Charge',
+      editCharge: 'Edit Charge',
+      deleteCharge: 'Delete Charge',
+      retrieveItem: 'Retrieve',
+      selectOffice: 'Select Office',
+      clientNameOptional: 'Client Name (optional)',
+      enterClientName: 'Enter client name...',
+      dateLabel: 'Date',
+      timeLabel: 'Time',
+      personnelLabel: 'Personnel',
+      vehicleLabel: 'Vehicle',
+      addressLabel: 'Address',
+      officeLabel: 'Office',
+      freeDaysLabel: 'Free Days',
+      billableDaysLabel: 'Billable Days',
+      totalDays: 'total',
+      estimatedCostLabel: 'Estimated Cost',
+      totalCostLabel: 'Total Cost',
+      billingInfoLabel: 'Billing Information',
+      billingTypeLabel: 'Billing Type',
+      rateLabel: 'Rate'
     },
     tr: {
       langShort: 'TR',
-      dashboard: 'Gösterge Paneli',
+      dashboard: 'Özet',
       moves: 'Taşımalar',
+      movesTitle: 'Taşımalar',
       agents: 'Acenteler',
       schedule: 'Takvim',
       storage: 'Depolama',
@@ -1131,11 +1821,13 @@ const I18n = {
       completedStorage: 'Tamamlanan Depolama',
       completedStorageDesc: 'Tamamen alınmış öğeler',
       noActiveStorage: 'Şu anda depoda öğe yok.',
+      noStorageRecords: 'Bu filtreye uyan depolama kaydı yok.',
+      storageRecords: 'Depolama Kayıtları',
       noCompletedStorage: 'Tamamlanan depolama kaydı yok.',
       allLocations: 'Tüm Lokasyonlar',
       allStatuses: 'Tüm Durumlar',
       statusActive: 'Aktif',
-      statusClosed: 'Kapalı',
+      statusClosed: 'Çıktı',
       storageDetails: 'Depolama Detayları',
       storageDetailsTitle: 'Depolama Detayları',
       hintSelectStorage: 'Detayları görmek için soldan bir depolama kaydı seçin.',
@@ -1146,6 +1838,9 @@ const I18n = {
       modalEditStorageTitle: 'Depolamayı Düzenle',
       storageLocation: 'Depo Lokasyonu',
       selectLocation: 'Lokasyon seçin',
+      noLinkedJob: 'Bağlı iş yok (bağımsız depolama)',
+      clientNamePlaceholder: 'Müşteri adı girin',
+      additionalNotesPlaceholder: 'Bu depolama hakkında ek notlar...',
       storageContents: 'Depo İçeriği',
       storageCode: 'Depolama Kodu',
       entryDate: 'Giriş Tarihi',
@@ -1174,7 +1869,32 @@ const I18n = {
       clientName: 'Müşteri Adı',
       organization: 'Organizasyon',
       organizationLabel: 'Organizasyon (isteğe bağlı)',
+      clientNameLabel: 'Müşteri Adı',
       linkedJob: 'Bağlantılı Taşıma',
+      linkedJobOptional: 'Bağlı İş (İsteğe Bağlı)',
+      linkedJobHint: 'Mevcut bir işe bağlayın veya bağımsız depolama için boş bırakın',
+      moveTypeLabel: 'Taşıma Türü',
+      statusRequiredLabel: 'Durum (zorunlu)',
+      originAgentLabel: 'Çıkış Acentesi (en az bir Çıkış/Varış gerekli)',
+      destinationAgentLabel: 'Varış Acentesi (en az bir Çıkış/Varış gerekli)',
+      agentNameLabel: 'Ad',
+      cityLabel: 'Şehir',
+      countryLabel: 'Ülke',
+      membershipsLabel: 'Üyelikler',
+      storageCodeLabel: 'Depolama Kodu',
+      storageContentsLabel: 'Depo İçeriği',
+      hheLabel: 'Ev Eşyası',
+      autoLabel: 'Araç',
+      billingTypeLabel: 'Fatura Tipi',
+      perCBM: 'CBM Başına',
+      flatRateOption: 'Sabit Ücret',
+      ratePerCBMLabel: 'CBM Başına Ücret',
+      freeDaysLabel: 'Ücretsiz Günler',
+      billingNotesLabel: 'Fatura Notları',
+      billingNotesPlaceholderText: 'Ek fatura notları...',
+      orgPlaceholder: 'Organizasyon adı girin (isteğe bağlı)',
+      btnSaveAgent: 'Acenteyi Kaydet',
+      btnSaveStorage: 'Depolamayı Kaydet',
       locationContents: 'Lokasyon ve İçerik',
       location: 'Lokasyon',
       grossWeight: 'Brüt Ağırlık',
@@ -1211,13 +1931,13 @@ const I18n = {
       movesThisMonth: 'Bu Ay Taşımalar',
       activeMovesLabel: 'Aktif Taşımalar',
       scheduledThisMonth: 'Aktiviteli',
-      upcomingJobs: 'Yaklaşan İşler (3 gün)',
-      upcomingSchedule: 'Yaklaşan Takvim (14 gün)',
-      overdueItems: 'Gecikmiş Öğeler',
-      unpaidMoves: 'Ödenmemiş Taşımalar',
+      upcomingJobs: 'YAKLAŞAN İŞLER (3 GÜN)',
+      upcomingSchedule: 'YAKLAŞAN TAKVİM (14 GÜN)',
+      overdueItems: 'GECİKMİŞ İŞLER',
+      unpaidMoves: 'ÖDENMEMİŞ TAŞIMALAR',
       noUpcomingJobs: 'Önümüzdeki 3 günde planlanmış iş yok.',
-      noUpcomingItems: 'Yaklaşan planlanmış öğe yok.',
-      noOverdueItems: 'Gecikmiş öğe yok.',
+      noUpcomingItems: 'Yaklaşan planlı iş yok.',
+      noOverdueItems: 'Gecikmiş iş yok.',
       noUnpaidMoves: 'Tüm taşımalar ödendi.',
       task: 'görev',
       tasks: 'görev',
@@ -1245,7 +1965,7 @@ const I18n = {
       searchDocsPh: 'Taşıma no, müşteri, belge adı, acente ile ara...',
       allMoves: 'Tüm taşımalar',
       all: 'Hepsi',
-      planned: 'Planlandı',
+      planned: 'Planlı',
       ongoing: 'Devam Ediyor',
       completed: 'Tamamlandı',
       cancelled: 'İptal',
@@ -1262,6 +1982,7 @@ const I18n = {
       noChecklistYet: 'Henüz kontrol listesi yok.',
       noNotesYet: 'Henüz not yok.',
       noDocumentsYet: 'Henüz belge yok.',
+      noMediaYet: 'Henüz fotoğraf veya video yok.',
       noAgentsYet: 'Henüz acente yok.',
       noBrokersYet: 'Henüz broker yok.',
       createNewMove: 'Yeni Taşıma Oluştur',
@@ -1271,7 +1992,7 @@ const I18n = {
       selectOneAgent: 'Lütfen en az bir acente seçin.',
       documentNameRequired: 'Belge adı zorunludur.',
       docNameLabel: 'Belge Adı',
-      docDateLabel: 'Belge Tarihi (gg/aa/yyyy)',
+      docDateLabel: 'Belge Tarihi',
       docUploadLabel: 'Dosya Yükle (opsiyonel)',
       exportedOk: 'Dışa aktarma başarılı.',
       exportFailed: 'Dışa aktarma başarısız.',
@@ -1339,21 +2060,21 @@ const I18n = {
       fillAtLeastOneField: 'Lütfen en az bir alan doldurun.',
       // Agent/Broker types
       agentTypeAgent: 'Acenteler',
-      agentTypeBroker: 'Brokerlar',
+      agentTypeBroker: 'Aracılar',
       addAgent: 'Acente Ekle',
-      addBroker: 'Broker Ekle',
+      addBroker: 'Aracı Ekle',
       addAgentTitle: 'Acente Ekle',
-      addBrokerTitle: 'Broker Ekle',
+      addBrokerTitle: 'Aracı Ekle',
       editAgentTitle: 'Acente Düzenle',
-      editBrokerTitle: 'Broker Düzenle',
+      editBrokerTitle: 'Aracıyı Düzenle',
       typeAgent: 'Acente',
-      typeCustomsBroker: 'Gümrük Broker',
-      typeSeaFreightBroker: 'Deniz Navlun Broker',
-      typeAirFreightBroker: 'Hava Navlun Broker',
+      typeCustomsBroker: 'Gümrük Müşaviri',
+      typeSeaFreightBroker: 'Denizyolu Aracısı',
+      typeAirFreightBroker: 'Havayolu Aracısı',
       agentTypeLabel: 'Tip',
       hintSelectAgent: 'Detayları görmek için soldan bir acente seçin.',
       hintSelectBroker: 'Detayları görmek için soldan bir broker seçin.',
-      jobsUsingBroker: 'Bu Broker Kullanan İşler',
+      jobsUsingBroker: 'Bu Aracıyı Kullanan İşler',
       noBrokerJobs: 'Henüz hiçbir işte kullanılmadı.',
       originAgent: 'Çıkış Acentesi',
       destinationAgent: 'Varış Acentesi',
@@ -1416,17 +2137,17 @@ const I18n = {
       selectStepType: 'Adım Türü Seçin',
 
       // translated enums
-      statusPlanned: 'Planlandı',
+      statusPlanned: 'Planlı',
       statusOngoing: 'Devam Ediyor',
       statusCompleted: 'Tamamlandı',
       statusCancelled: 'İptal',
-      modeSea: 'Denizyolu',
-      modeLand: 'Karayolu',
-      modeAir: 'Havayolu',
+      modeSea: 'Deniz',
+      modeLand: 'Kara',
+      modeAir: 'Hava',
 
       // step labels
       step_packing: 'Paketleme',
-      step_survey: 'Ekspertiz',
+      step_survey: 'Survey',
       step_delivery_to_residence: 'Eve Teslimat',
       step_container_delivery: 'Konteyner Teslimatı',
       step_container_pickup: 'Konteyner Alımı',
@@ -1449,15 +2170,455 @@ const I18n = {
       clientDiplomatic: 'Diplomatik',
       
       // Brokers
-      brokersSection: 'Brokerlar',
-      customsBrokerLabel: 'Gümrük Broker',
-      seaFreightBrokerLabel: 'Deniz Navlun Broker',
-      airFreightBrokerLabel: 'Hava Navlun Broker',
-      selectBroker: 'Broker seçin',
+      brokersSection: 'Aracılar',
+      customsBrokerLabel: 'Gümrük Müşaviri',
+      seaFreightBrokerLabel: 'Deniz Aracısı',
+      airFreightBrokerLabel: 'Hava Aracısı',
+      selectBroker: 'Aracı seçin',
       
       // Additional labels
       moveManager: 'Taşıma Yöneticisi',
-      shipmentContents: 'Gönderi İçeriği'
+      shipmentContents: 'Gönderi İçeriği',
+      
+      // ========== QUOTES SECTION ==========
+      quotesTitle: 'Teklifler',
+      btnAddNewQuote: 'Yeni Teklif',
+      quoteDetailsTitle: 'Teklif Detayları',
+      btnEditQuote: 'Teklifi Düzenle',
+      hintSelectQuote: 'Detayları görmek için soldan bir teklif seçin.',
+      hintSelectDocument: 'Detayları görmek için soldan bir belge veya kaynak seçin.',
+      searchQuotesPlaceholder: 'Teklif no, müşteri, çıkış, varış ile ara...',
+      noQuotesYet: 'Henüz teklif yok.',
+      createQuoteTitle: 'Yeni Teklif Oluştur',
+      editQuoteTitle: 'Teklifi Düzenle',
+      quoteRecipient: 'Teklif Alıcısı',
+      basicInfoSection: 'Temel Bilgiler',
+      recipientClient: 'Müşteri',
+      recipientAgent: 'Acente / Partner',
+      recipientHint: 'Hangi alanların ve ücretlerin gösterileceğini etkiler',
+      quoteType: 'Teklif Tipi',
+      selectQuoteType: 'Tip seçin',
+      quoteModes: 'Taşıma Modları',
+      quoteContents: 'Gönderi İçeriği',
+      householdGoods: 'Ev Eşyaları (HHE)',
+      vehicleAuto: 'Araç / Otomobil',
+      quoteCurrency: 'Teklif Para Birimi',
+      quoteCurrencyHint: 'Bu para birimi bu teklifteki tüm masraflar için kullanılacak',
+      quoteClientName: 'Müşteri Adı',
+      quoteClientOrg: 'Organizasyon',
+      quoteOrigin: 'Çıkış Yeri',
+      quoteDestination: 'Varış Yeri',
+      estimatedVolume: 'Tahmini Hacim',
+      quoteValidUntil: 'Geçerlilik Tarihi',
+      transitInsurance: 'Nakliye Sigortası',
+      includeInsurance: 'Nakliye sigortası dahil',
+      insuranceNote: 'Sigorta primi beyan edilen değerin yüzdesi olarak hesaplanır',
+      declaredValue: 'Beyan Edilen Değer',
+      insuranceRate: 'Sigorta Oranı',
+      
+      // Sea Freight Fields
+      seaFreightDetails: 'Denizyolu Detayları',
+      seaVolume: 'Hacim (CBM)',
+      departurePort: 'Çıkış Limanı',
+      poePort: 'Varış Limanı (POE)',
+      containerType: 'Konteyner Tipi',
+      seaTransitTime: 'Transit Süresi (gün)',
+      containerLCL: 'LCL (Parsiyel)',
+      containerFCL20: '20\' FCL',
+      containerFCL40: '40\' FCL',
+      containerFCL40HC: '40\' HC FCL',
+      
+      // Air Freight Fields
+      airFreightDetails: 'Havayolu Detayları',
+      airCargoWeight: 'Kargo Ağırlığı (kg)',
+      airVolume: 'Hacim (CBM)',
+      calculatedACW: 'Hesaplanan ACW',
+      acwNote: 'ACW = maks(brüt ağırlık, hacim × 167)',
+      departureAirport: 'Çıkış Havalimanı',
+      arrivalAirport: 'Varış Havalimanı',
+      airlineCarrier: 'Havayolu',
+      airTransitTime: 'Transit Süresi (gün)',
+      
+      // Land Freight Fields
+      landFreightDetails: 'Karayolu Detayları',
+      landVolume: 'Hacim (CBM)',
+      truckType: 'Tır Tipi',
+      truckDedicated: 'Tam Tır',
+      truckGroupage: 'Parsiyel',
+      landTransitTime: 'Transit Süresi (gün)',
+      
+      // Vehicle Fields
+      vehicleDetails: 'Araç Detayları',
+      vehicleType: 'Araç Tipi',
+      vehicleCar: 'Otomobil',
+      vehicleMotorcycle: 'Motosiklet',
+      vehicleBoat: 'Tekne',
+      vehicleOther: 'Diğer',
+      vehicleMake: 'Marka',
+      vehicleModel: 'Model',
+      vehicleYear: 'Yıl',
+      vehicleVIN: 'Şasi No',
+      vehicleCondition: 'Araç Durumu',
+      vehicleRunning: 'Çalışıyor',
+      vehicleNonRunning: 'Çalışmıyor',
+      
+      // Charges Section
+      chargesSection: 'Masraflar',
+      seaFreightCharges: 'Denizyolu Masrafları',
+      airFreightCharges: 'Havayolu Masrafları',
+      landFreightCharges: 'Karayolu Masrafları',
+      chargesHint: 'Varsayılan masraflar alıcı ve tipe göre otomatik oluşturulur. Düzenleyebilir veya yeni ekleyebilirsiniz.',
+      addCharge: '+ Masraf Ekle',
+      chargeDescription: 'Masraf açıklaması',
+      chargeTypeFixed: 'Sabit',
+      chargeTypeRange: 'Aralık',
+      
+      // Quote Includes
+      quotationIncludes: 'Teklif Kapsamı',
+      quotationIncludesHint: 'Teklife dahil edilecek öğeleri seçin (öğeler mod ve tipe göre otomatik doldurulur):',
+      addCustomInclude: 'Özel Öğe Ekle',
+      
+      // Additional Charges
+      additionalCharges: 'Ek Masraflar',
+      additionalChargesHint: 'Bu masraflar teklif fiyatına dahil değildir ve geçerli olması halinde ayrıca faturalandırılacaktır:',
+      addCustomCharge: 'Özel Masraf Ekle',
+      
+      // Consignment Instructions
+      consignmentInstructions: 'Konşimento Talimatları',
+      importRequirementsTitle: 'İthalat Gereklilikleri ve Konşimento Talimatları',
+      consignmentOfficeLabel: 'Ofis / Varış Şehri',
+      includeConsignmentLabel: 'Teklife konşimento talimatları ekle',
+      selectRequirementsHint: 'Dahil edilecek ithalat gerekliliklerini seçin (isteğe bağlı - birden fazla veya hiçbiri seçilebilir):',
+      foreignNationalLabel: 'Yabancı Uyruklu (çalışma/ikamet için Türkiye\'ye taşınan)',
+      returningTurkishLabel: 'Yurda Dönen Türk Vatandaşları',
+      diplomaticLabel: 'Yabancı Uyruklu (Diplomatik)',
+      includeConsignment: 'Konşimento talimatları ve ithalat gereksinimlerini teklife dahil et',
+      clientCategory: 'Müşteri Kategorisi',
+      categoryForeignNational: 'Yabancı Uyruklu',
+      categoryReturningTurkish: 'Dönen Türk Vatandaşı',
+      categoryDiplomatic: 'Diplomatik',
+      
+      // Quote Actions
+      saveQuote: 'Teklifi Kaydet',
+      exportPdf: 'PDF İndir',
+      convertToMove: 'Taşımaya Dönüştür',
+      deleteQuote: 'Teklifi Sil',
+      quoteInfo: 'Teklif Bilgileri',
+      routeInfo: 'Rota Bilgileri',
+      validityDate: 'Geçerlilik Tarihi',
+      
+      // Common / Shared
+      yes: 'Evet',
+      no: 'Hayır',
+      none: 'Yok',
+      select: 'Seçin',
+      optional: 'opsiyonel',
+      required: 'zorunlu',
+      example: 'örn.',
+      loading: 'Yükleniyor...',
+      noResults: 'Sonuç bulunamadı',
+      confirm: 'Onayla',
+      warning: 'Uyarı',
+      error: 'Hata',
+      success: 'Başarılı',
+      info: 'Bilgi',
+      noClientName: 'Müşteri adı yok',
+      
+      // Placeholders
+      phSearchMoves: 'Taşıma no, müşteri, çıkış, varış, acente ile ara...',
+      phSearchAgents: 'Acente adı, şehir, ülke ile ara...',
+      phSearchDocs: 'Taşıma no, müşteri, belge adı, acente ile ara...',
+      phSearchStorage: 'Kod, müşteri, lokasyon ile ara...',
+      phSearchQuotes: 'Teklif no, müşteri, çıkış, varış ile ara...',
+      phEnterChecklist: 'Kontrol maddesi girin...',
+      phDocLabel: 'Belge Adı',
+      phMediaLabel: 'Etiket / Açıklama',
+      phWriteNote: 'Bu taşıma hakkında not yazın...',
+      phPhone: '+90 555 123 4567',
+      phEmail: 'musteri@ornek.com',
+      phTag: 'örn. Diplomatik, VIP, Askeri...',
+      phFloor: 'örn. 3',
+      phAccessConditions: 'örn. Dar merdiven',
+      phMoveManager: 'Bu taşımadan sorumlu kişi',
+      phContainerDetails: 'örn. 1x20ft FCL, 1x40ft HQ',
+      phVolume: 'örn. 14.5',
+      phWeight: 'örn. 2500',
+      phACW: 'örn. 835',
+      phMake: 'örn. Toyota',
+      phModel: 'örn. Camry',
+      phYear: 'örn. 2022',
+      phVIN: 'Araç Şasi Numarası',
+      phOrigin: 'İstanbul, Türkiye',
+      phDestination: 'Dubai, BAE',
+      
+      // Form Labels
+      lblClientInfo: 'Müşteri Bilgileri',
+      lblMoveInfo: 'Taşıma Bilgileri',
+      lblRoute: 'Rota',
+      lblOriginDetails: 'Çıkış Detayları',
+      lblDestinationDetails: 'Varış Detayları',
+      lblModeDetails: 'Mod Detayları',
+      lblShipmentContents: 'Gönderi İçeriği',
+      lblVehicleDetails: 'Araç Detayları',
+      lblBrokers: 'Aracılar',
+      lblPhone: 'Telefon',
+      lblEmail: 'E-posta',
+      lblFloor: 'Kat',
+      lblElevator: 'Asansör',
+      lblFreightElevator: 'Yük Asansörü',
+      lblAccessConditions: 'Erişim Koşulları',
+      lblTag: 'Etiket',
+      lblNotes: 'Notlar',
+      lblContainerDetails: 'Konteyner Detayları',
+      lblVolumeCBM: 'Hacim (CBM)',
+      lblGrossWeight: 'Brüt Ağırlık (kg)',
+      lblCargoWeight: 'Kargo Ağırlığı (kg)',
+      lblCalculatedACW: 'Hesaplanan ACW (kg)',
+      lblHouseholdGoods: 'Ev Eşyaları (HHE)',
+      lblVehicle: 'Araç / Otomobil',
+      lblVehicleType: 'Araç Tipi',
+      lblVehicleMake: 'Marka',
+      lblVehicleModel: 'Model',
+      lblVehicleYear: 'Yıl',
+      lblVehicleVIN: 'Şasi No',
+      lblVehicleCondition: 'Durum',
+      lblRunning: 'Çalışıyor',
+      lblNonRunning: 'Çalışmıyor',
+      lblCustomsBroker: 'Gümrük Müşaviri',
+      lblSeaFreightBroker: 'Denizyolu Aracısı',
+      lblAirFreightBroker: 'Havayolu Aracısı',
+      lblSelectBroker: 'Aracı seçin',
+      
+      // Move Form Labels
+      tagLabel: 'Etiket (isteğe bağlı)',
+      originCityLabel: 'Çıkış Şehri',
+      originCountryLabel: 'Çıkış Ülkesi',
+      originAddressLabel: 'Tam Çıkış Adresi',
+      originFloorLabel: 'Kat',
+      originElevatorLabel: 'Asansör',
+      originAccessLabel: 'Erişim Koşulları',
+      destinationCityLabel: 'Varış Şehri',
+      destinationCountryLabel: 'Varış Ülkesi',
+      destinationAddressLabel: 'Tam Varış Adresi',
+      destinationFloorLabel: 'Kat',
+      destinationElevatorLabel: 'Asansör',
+      destinationAccessLabel: 'Erişim Koşulları',
+      tradeDirectionLabel: 'Ticaret Yönü',
+      modeLabel: 'Mod',
+      moveManagerLabel: 'Taşıma Yöneticisi',
+      moveManagerPlaceholder: 'Bu taşımadan sorumlu kişi',
+      seaFreightDetailsTitle: 'Denizyolu Detayları',
+      airFreightDetailsTitle: 'Havayolu Detayları',
+      landFreightDetailsTitle: 'Karayolu Detayları',
+      vehicleDetailsTitle: 'Araç Detayları',
+      storageRequired: 'Bu taşıma depolama gerektirir',
+      stepsHint: 'Taşıma oluşturduktan sonra, Taşıma Detayları bölümünde "Adım Ekle" butonu ile adımları (Survey, Paketleme, Konteyner, Teslimat vb.) manuel olarak ekleyebilirsiniz.',
+      vehicleCar: 'Otomobil',
+      vehicleMotorcycle: 'Motosiklet',
+      vehicleTruck: 'Kamyon',
+      vehicleBoat: 'Tekne',
+      vehicleOther: 'Diğer',
+      grossWeightOptional: 'Brüt Ağırlık (kg) - isteğe bağlı',
+      containerDetailsLabel: 'Konteyner Detayları',
+      volumeCbmLabel: 'Hacim (CBM)',
+      grossWeightLabel: 'Brüt Ağırlık (kg)',
+      cargoWeightLabel: 'Kargo Ağırlığı (kg)',
+      calculatedAcwLabel: 'Hesaplanan ACW (kg)',
+      shipmentContentsLabel: 'Gönderi İçeriği',
+      seaVolumeLabel: 'Deniz Kargo Hacmi (cbm)',
+      airVolumeLabel: 'Hava Kargo Hacmi (cbm)',
+      airWeightLabel: 'Hava Kargo Ağırlığı (kg)',
+      acwLabel: 'Ücretlendirilebilir Ağırlık / ACW (kg)',
+      landVolumeLabel: 'Kara Kargo Hacmi (cbm)',
+      vehicleTypeLabel: 'Araç Tipi',
+      vehicleMakeLabel: 'Araç Markası',
+      vehicleModelLabel: 'Araç Modeli',
+      vehicleYearLabel: 'Araç Yılı',
+      vinLabel: 'Şasi Numarası (isteğe bağlı)',
+      conditionLabel: 'Durum',
+      
+      // Variant translations
+      variantOption: 'Seçenek',
+      addVariant: 'Seçenek Ekle',
+      deleteVariant: 'Seçeneği Sil',
+      duplicateVariant: 'Kopyala',
+      variantLabel: 'Seçenek Adı',
+      noVariants: 'Henüz seçenek eklenmedi. Bir tane oluşturmak için "Seçenek Ekle"ye tıklayın.',
+      confirmDeleteVariant: 'Bu seçeneği silmek istediğinizden emin misiniz?',
+      variantDetails: 'Rota Detayları',
+      variantCharges: 'Masraflar',
+      collapseVariant: 'Daralt',
+      expandVariant: 'Genişlet',
+      
+      // Buttons
+      btnAdd: 'Ekle',
+      btnSave: 'Kaydet',
+      btnCancel: 'İptal',
+      btnDelete: 'Sil',
+      btnEdit: 'Düzenle',
+      btnClose: 'Kapat',
+      btnExport: 'Dışa Aktar',
+      btnImport: 'İçe Aktar',
+      btnDownload: 'İndir',
+      btnUpload: 'Yükle',
+      btnOpenLink: 'Bağlantıyı Aç',
+      btnAddNote: 'Not Ekle',
+      btnAddDocument: 'Belge Ekle',
+      btnAddMedia: 'Medya Ekle',
+      btnAddChecklistItem: 'Madde Ekle',
+      btnSaveMove: 'Taşımayı Kaydet',
+      btnAddBroker: 'Aracı Ekle',
+      btnAddResource: 'Kaynak Ekle',
+      addChecklistItem: 'Madde Ekle',
+      selectCountry: 'Ülke seçin',
+      selectType: 'Tip seçin',
+      selectStatus: 'Durum seçin',
+      selectOriginAgent: 'Çıkış acentesi seçin',
+      selectDestinationAgent: 'Varış acentesi seçin',
+      resourceDetails: 'Kaynak Detayları',
+      hintSelectResource: 'Detayları görmek için soldan bir kaynak seçin.',
+      usedInMoves: 'taşıma',
+      usedInMove: 'taşıma',
+      addCategory: 'Kategori Ekle',
+      editCategory: 'Kategoriyi Düzenle',
+      deleteCategory: 'Kategoriyi Sil',
+      categoryName: 'Kategori Adı',
+      categoryNameEn: 'Kategori Adı (İngilizce)',
+      categoryNameTr: 'Kategori Adı (Türkçe)',
+      noCategories: 'Henüz kategori yok. Başlamak için bir kategori ekleyin.',
+      confirmDeleteCategory: 'Bu kategori silinsin mi? İçindeki tüm kaynaklar da silinecek.',
+      categoryAdded: 'Kategori eklendi!',
+      categoryUpdated: 'Kategori güncellendi!',
+      categoryDeleted: 'Kategori silindi.',
+      cannotDeleteNonEmpty: 'İçinde kaynak olan kategori silinemez. Önce kaynakları silin.',
+      
+      // Job Modal
+      createMoveTitle: 'Yeni Taşıma Oluştur',
+      editMoveTitle: 'Taşımayı Düzenle',
+      
+      // Section Headers
+      sectionChecklist: 'Kontrol Listesi',
+      sectionDocuments: 'Belgeler',
+      sectionPhotosVideos: 'Fotoğraflar ve Videolar',
+      sectionNotes: 'Notlar',
+      sectionMoveAgents: 'Taşıma Acenteleri',
+      sectionSeaFreightDetails: 'Denizyolu Detayları',
+      sectionAirFreightDetails: 'Havayolu Detayları',
+      sectionLandFreightDetails: 'Karayolu Detayları',
+      moveAgentsTitle: 'Taşıma Acenteleri',
+      checklistTitle: 'Kontrol Listesi',
+      documentsTitle: 'Belgeler',
+      photosVideosTitle: 'Fotoğraflar ve Videolar',
+      notesTitle: 'Notlar',
+      
+      // Move Details Labels
+      lblVolume: 'Hacim',
+      lblContainer: 'Konteyner',
+      lblCargoWeightShort: 'Kargo Ağırlığı',
+      lblChargeableWeight: 'Ücretlendirilebilir Ağırlık (ACW)',
+      lblTruckType: 'Tır Tipi',
+      
+      // Agent Section
+      agentsTitle: 'Acenteler',
+      agentDetailsTitle: 'Acente Detayları',
+      
+      // Storage Statuses
+      statusActive: 'Aktif',
+      statusClosed: 'Çıktı',
+      statusInStorage: 'Depoda',
+      statusFullyRetrieved: 'Tamamen Alındı',
+      statusPartiallyRetrieved: 'Kısmen Alındı',
+      
+      // Booking Types
+      bookingDoorToDoor: 'Kapıdan Kapıya',
+      bookingDoorToPort: 'Kapıdan Limana',
+      bookingPortToDoor: 'Limandan Kapıya',
+      
+      // Client Types
+      clientTypePrivate: 'Bireysel',
+      clientTypeCorporate: 'Kurumsal',
+      clientTypeDiplomatic: 'Diplomatik',
+      
+      // Contents Types
+      contentsHHE: 'Ev Eşyaları',
+      contentsVehicle: 'Araç',
+      
+      // Units
+      unitDays: 'gün',
+      unitDay: 'gün',
+      unitMonth: 'ay',
+      unitMonths: 'ay',
+      unitKg: 'kg',
+      unitCbm: 'cbm',
+      
+      // Storage Billing
+      perCBM: 'CBM Başına',
+      flatRate: 'Sabit Ücret',
+      
+      // File Upload
+      dragDropText: 'Dosyayı buraya sürükleyin veya tıklayarak seçin',
+      labelDescription: 'Etiket / Açıklama',
+      
+      // Extra Job Types (for schedule dropdown)
+      jobCustom: 'Özel',
+      jobPacking: 'Paketleme',
+      jobSurvey: 'Survey',
+      jobDeliveryToResidence: 'Eve Teslimat',
+      jobContainerDelivery: 'Konteyner Teslimatı',
+      jobContainerPickup: 'Konteyner Alımı',
+      jobContainerUnloading: 'Konteyner Boşaltma',
+      jobContainerLoading: 'Konteyner Yükleme',
+      jobAirCargoPacking: 'Hava Kargo Paketleme',
+      jobAirCargoDeliveryToAddress: 'Hava Kargo Adrese Teslimat',
+      jobAirCargoDeliveryToAirport: 'Hava Kargo Havalimanına Teslimat',
+      jobDeliveryToPort: 'Limana Teslimat',
+      jobPickupFromPort: 'Limandan Alım',
+      jobAirCargoPickup: 'Hava Kargo Alımı',
+      jobAirCargoDelivery: 'Hava Kargo Teslimat',
+      jobWarehouseCleaning: 'Depo Temizliği',
+      jobTruckPreparation: 'Tır Hazırlama',
+      jobVehicleDelivery: 'Araç Teslimatı',
+      jobVehiclePickup: 'Araç Alımı',
+      
+      // Misc
+      additionalJob: 'Ek İş',
+      video: 'Video',
+      media: 'Medya',
+      nameEnglish: 'İsim (İngilizce)',
+      nameTurkish: 'İsim (Türkçe)',
+      fileLabel: 'Dosya',
+      selectQuoteToSee: 'Detayları görmek için bir teklif seçin.',
+      selectModeAndType: 'Mevcut öğeleri görmek için mod ve tip seçin',
+      selectTypeToSee: 'Mevcut öğeleri görmek için tip seçin',
+      freightItems: 'Navlun Kalemleri',
+      additionalItemsIf: 'Ek kalemler (ilgili masraflar dahilse)',
+      to: '-',
+      previousMoves: 'Önceki Taşımalar',
+      costBreakdown: 'Maliyet Dökümü',
+      moving: 'Taşıma',
+      subtotal: 'Ara Toplam',
+      total: 'Toplam',
+      addCharge: 'Masraf Ekle',
+      editCharge: 'Masrafı Düzenle',
+      deleteCharge: 'Masrafı Sil',
+      retrieveItem: 'Al',
+      selectOffice: 'Ofis Seçin',
+      clientNameOptional: 'Müşteri Adı (opsiyonel)',
+      enterClientName: 'Müşteri adı girin...',
+      dateLabel: 'Tarih',
+      timeLabel: 'Saat',
+      personnelLabel: 'Personel',
+      vehicleLabel: 'Araç',
+      addressLabel: 'Adres',
+      officeLabel: 'Ofis',
+      freeDaysLabel: 'Ücretsiz Günler',
+      billableDaysLabel: 'Faturalanabilir Günler',
+      totalDays: 'gün toplam',
+      estimatedCostLabel: 'Tahmini Maliyet',
+      totalCostLabel: 'Toplam Maliyet',
+      billingInfoLabel: 'Faturalama Bilgileri',
+      billingTypeLabel: 'Faturalama Tipi',
+      rateLabel: 'Ücret'
     }
   },
 
@@ -1504,13 +2665,103 @@ const I18n = {
     return (step && step.label) ? step.label : (id || '-');
   },
 
+  // Storage status translation
+  storageStatusText(status) {
+    const map = {
+      'Active': 'statusActive',
+      'Closed': 'statusClosed',
+      'In Storage': 'statusInStorage',
+      'Fully Retrieved': 'statusFullyRetrieved',
+      'Partially Retrieved': 'statusPartiallyRetrieved'
+    };
+    return map[status] ? this.t(map[status]) : (status || '-');
+  },
+
+  // Booking type translation
+  bookingTypeText(type) {
+    const map = {
+      'Door to Door': 'bookingDoorToDoor',
+      'Door to Port': 'bookingDoorToPort',
+      'Port to Door': 'bookingPortToDoor'
+    };
+    return map[type] ? this.t(map[type]) : (type || '-');
+  },
+
+  // Client type translation
+  clientTypeText(type) {
+    const map = {
+      'Private': 'clientTypePrivate',
+      'Corporate': 'clientTypeCorporate',
+      'Diplomatic': 'clientTypeDiplomatic'
+    };
+    return map[type] ? this.t(map[type]) : (type || '-');
+  },
+
+  // Contents type translation
+  contentsText(contents) {
+    if (!contents) return '-';
+    if (Array.isArray(contents)) {
+      return contents.map(c => this.contentsText(c)).join(', ');
+    }
+    const map = {
+      'HHE': 'contentsHHE',
+      'Household Goods': 'contentsHHE',
+      'Vehicle': 'contentsVehicle'
+    };
+    return map[contents] ? this.t(map[contents]) : contents;
+  },
+
+  // Billing type translation
+  billingTypeText(type) {
+    const map = {
+      'Per CBM': 'perCBM',
+      'Flat Rate': 'flatRate'
+    };
+    return map[type] ? this.t(map[type]) : (type || '-');
+  },
+
+  // Extra job type translation
+  extraJobTypeText(taskType) {
+    const t = String(taskType || '').trim();
+    if (!t) return '-';
+    
+    // Map task types to translation keys
+    const map = {
+      'Custom': 'jobCustom',
+      'Packing': 'jobPacking',
+      'Survey': 'jobSurvey',
+      'Delivery to Residence': 'jobDeliveryToResidence',
+      'Container Delivery': 'jobContainerDelivery',
+      'Container Pickup': 'jobContainerPickup',
+      'Container Unloading': 'jobContainerUnloading',
+      'Container Loading': 'jobContainerLoading',
+      'Air Cargo Packing': 'jobAirCargoPacking',
+      'Air Cargo Delivery to Address': 'jobAirCargoDeliveryToAddress',
+      'Air Cargo Delivery to Airport': 'jobAirCargoDeliveryToAirport',
+      'Delivery to Port': 'jobDeliveryToPort',
+      'Pickup from Port': 'jobPickupFromPort',
+      'Air Cargo Pickup': 'jobAirCargoPickup',
+      'Air Cargo Delivery': 'jobAirCargoDelivery',
+      'Warehouse Cleaning': 'jobWarehouseCleaning',
+      'Truck Preparation': 'jobTruckPreparation',
+      'Vehicle Delivery': 'jobVehicleDelivery',
+      'Vehicle Pickup': 'jobVehiclePickup'
+    };
+    
+    return map[t] ? this.t(map[t]) : t;
+  },
+
+  // Unit translation with value
+  formatDays(value) {
+    return `${value} ${this.t('unitDays')}`;
+  },
+
+  formatMonth(value) {
+    return `${value} ${this.t('unitMonth')}`;
+  },
+
 taskTypeText(taskType) {
-  if (State.lang === 'tr') return TR.extraJobType(taskType);
-  
-  // English: return as-is
-  const t = String(taskType || '');
-  if (!t) return '-';
-  return t;
+  return this.extraJobTypeText(taskType);
 },
   
 checklistText(text) {
@@ -1549,6 +2800,8 @@ checklistText(text) {
           langLabel.textContent = next === 'tr' ? 'TR' : 'EN';
         }
         this.applyStaticTexts();
+        Forms.refreshCountrySelects();
+        DashboardUI.render();
         JobsUI.render();
         if (State.selectedJobId) {
           const job = State.getJob(State.selectedJobId);
@@ -1562,6 +2815,16 @@ checklistText(text) {
         ScheduleUI.render();
         if (State.schedule.selectedDate) ScheduleUI.renderDay(State.schedule.selectedDate);
         DocumentsTabUI.render();
+        QuotesUI.render();
+        if (State.selectedQuoteId) {
+          const quote = State.quotes.find(q => q.id === State.selectedQuoteId);
+          if (quote) QuotesUI.showDetails(quote);
+        }
+        StorageUI.render();
+        if (State.selectedStorageId) {
+          const storage = State.getStorage(State.selectedStorageId);
+          if (storage) StorageUI.showDetails(storage);
+        }
       });
     } else if (langLabel) {
       langLabel.textContent = State.lang === 'tr' ? 'Türkçe' : 'English';
@@ -1721,6 +2984,256 @@ if (docUrlInput) {
 
     const langBtn = document.getElementById('langToggleBtn');
     if (langBtn) langBtn.textContent = this.t('langShort');
+    
+    // ========== QUOTES SECTION ==========
+    const quotesViewTitle = document.querySelector('#quotesView .left-panel .header-row h2');
+    if (quotesViewTitle) quotesViewTitle.textContent = this.t('quotesTitle');
+    
+    const openCreateQuote = $.get('openCreateQuote');
+    if (openCreateQuote) openCreateQuote.textContent = this.t('btnAddNewQuote');
+    
+    const quoteDetailsTitle = document.querySelector('#quotesView .right-panel .header-row h2');
+    if (quoteDetailsTitle) quoteDetailsTitle.textContent = this.t('quoteDetailsTitle');
+    
+    const editQuoteBtn = $.get('editQuoteBtn');
+    if (editQuoteBtn) editQuoteBtn.textContent = this.t('btnEditQuote');
+    
+    const quoteSearchInput = $.get('quoteSearchInput');
+    if (quoteSearchInput) quoteSearchInput.placeholder = this.t('searchQuotesPlaceholder');
+    
+    const hintSelectQuote = document.querySelector('#quoteDetails > p');
+    if (hintSelectQuote) hintSelectQuote.textContent = this.t('hintSelectQuote');
+    
+    // Quote modal title
+    const quoteModalTitle = $.get('quoteModalTitle');
+    if (quoteModalTitle) {
+      quoteModalTitle.textContent = State.quoteFormMode === 'edit' ? this.t('editQuoteTitle') : this.t('createQuoteTitle');
+    }
+    
+    // ========== STORAGE SECTION ==========
+    const navStorage = $.get('navStorage');
+    if (navStorage) {
+      const label = navStorage.querySelector('.nav-label');
+      if (label) label.textContent = this.t('storage');
+    }
+    
+    const storageViewTitle = document.querySelector('#storageView .left-panel .header-row h2');
+    if (storageViewTitle) storageViewTitle.textContent = this.t('storageTitle');
+    
+    const openCreateStorage = $.get('openCreateStorage');
+    if (openCreateStorage) openCreateStorage.textContent = this.t('btnAddStorage');
+    
+    const btnAddStorage = $.get('btnAddStorage');
+    if (btnAddStorage) btnAddStorage.textContent = this.t('btnAddStorage');
+    
+    const storageDetailsTitle = document.querySelector('#storageView .right-panel .header-row h2');
+    if (storageDetailsTitle) storageDetailsTitle.textContent = this.t('storageDetailsTitle');
+    
+    const editStorageBtn = $.get('editStorageBtn');
+    if (editStorageBtn) editStorageBtn.textContent = this.t('btnEditStorage');
+    
+    const storageSearchInput = $.get('storageSearchInput');
+    if (storageSearchInput) storageSearchInput.placeholder = this.t('searchStoragePlaceholder');
+    
+    // Storage filters
+    const storageLocationFilter = $.get('storageLocationFilter');
+    if (storageLocationFilter && storageLocationFilter.options[0]) {
+      storageLocationFilter.options[0].textContent = this.t('allLocations');
+    }
+    
+    const storageStatusFilter = $.get('storageStatusFilter');
+    if (storageStatusFilter) {
+      if (storageStatusFilter.options[0]) storageStatusFilter.options[0].textContent = this.t('allStatuses');
+      // Translate Active and Closed options
+      Array.from(storageStatusFilter.options).forEach(opt => {
+        if (opt.value === 'Active') opt.textContent = this.t('statusActive');
+        if (opt.value === 'Closed') opt.textContent = this.t('statusClosed');
+      });
+    }
+    
+    // Active Storage section title
+    const activeStorageTitle = document.querySelector('.storage-section-title[data-i18n="activeStorage"]');
+    if (activeStorageTitle) activeStorageTitle.textContent = this.t('activeStorage');
+    
+    // Hint text for storage
+    const hintSelectStorage = document.querySelector('#storageDetails > p');
+    if (hintSelectStorage) hintSelectStorage.textContent = this.t('hintSelectStorage');
+    
+    // Storage modal title
+    const storageModalTitle = $.get('storageModalTitle');
+    if (storageModalTitle) {
+      storageModalTitle.textContent = State.storageFormMode === 'edit' ? this.t('modalEditStorageTitle') : this.t('modalAddStorageTitle');
+    }
+    
+    // ========== AGENTS SECTION ==========
+    const agentsViewTitle = document.querySelector('#agentsView .left-panel .header-row h2');
+    if (agentsViewTitle) agentsViewTitle.textContent = this.t('agentsTitle');
+    
+    const agentDetailsTitle = document.querySelector('#agentsView .right-panel .header-row h2');
+    if (agentDetailsTitle) agentDetailsTitle.textContent = this.t('agentDetailsTitle');
+    
+    // Agent type tabs
+    const agentTypeAgentBtn = document.querySelector('#agentTypeFilter .filter-btn[data-type="Agent"]');
+    if (agentTypeAgentBtn) agentTypeAgentBtn.textContent = this.t('agentTypeAgent');
+    
+    const agentTypeBrokerBtn = document.querySelector('#agentTypeFilter .filter-btn[data-type="Broker"]');
+    if (agentTypeBrokerBtn) agentTypeBrokerBtn.textContent = this.t('agentTypeBroker');
+    
+    // ========== JOB MODAL ==========
+    const jobModalTitle = $.get('jobModalTitle');
+    if (jobModalTitle) {
+      jobModalTitle.textContent = State.jobFormMode === 'edit' ? this.t('editMoveTitle') : this.t('createMoveTitle');
+    }
+    
+    // Job form placeholders
+    const clientPhoneInput = document.querySelector('input[name="clientPhone"]');
+    if (clientPhoneInput) clientPhoneInput.placeholder = this.t('phPhone');
+    
+    const clientEmailInput = document.querySelector('input[name="clientEmail"]');
+    if (clientEmailInput) clientEmailInput.placeholder = this.t('phEmail');
+    
+    const tagInput = document.querySelector('input[name="tag"]');
+    if (tagInput) tagInput.placeholder = this.t('phTag');
+    
+    const originFloorInput = document.querySelector('input[name="originFloor"]');
+    if (originFloorInput) originFloorInput.placeholder = this.t('phFloor');
+    
+    const destFloorInput = document.querySelector('input[name="destinationFloor"]');
+    if (destFloorInput) destFloorInput.placeholder = this.t('phFloor');
+    
+    const originAccessInput = document.querySelector('input[name="originAccessConditions"]');
+    if (originAccessInput) originAccessInput.placeholder = this.t('phAccessConditions');
+    
+    const destAccessInput = document.querySelector('input[name="destinationAccessConditions"]');
+    if (destAccessInput) destAccessInput.placeholder = this.t('phAccessConditions');
+    
+    const moveManagerInput = document.querySelector('input[name="moveManager"]');
+    if (moveManagerInput) moveManagerInput.placeholder = this.t('phMoveManager');
+    
+    // Vehicle placeholders
+    const vehicleMakeInput = document.querySelector('input[name="jobVehicleMake"]');
+    if (vehicleMakeInput) vehicleMakeInput.placeholder = this.t('phMake');
+    
+    const vehicleModelInput = document.querySelector('input[name="jobVehicleModel"]');
+    if (vehicleModelInput) vehicleModelInput.placeholder = this.t('phModel');
+    
+    const vehicleVINInput = document.querySelector('input[name="jobVehicleVIN"]');
+    if (vehicleVINInput) vehicleVINInput.placeholder = this.t('phVIN');
+    
+    // Checklist input placeholder
+    const checklistNewItemInput = $.get('checklistNewItemInput');
+    if (checklistNewItemInput) checklistNewItemInput.placeholder = this.t('phEnterChecklist');
+    
+    // Document label placeholder (use different variable name to avoid conflict)
+    const docNameInputEl = $.get('docNameInput');
+    if (docNameInputEl) docNameInputEl.placeholder = this.t('phDocLabel');
+    
+    // Media label placeholder
+    const mediaLabelInput = $.get('mediaLabelInput');
+    if (mediaLabelInput) mediaLabelInput.placeholder = this.t('phMediaLabel');
+    
+    // Note textarea placeholder (use different variable name)
+    const noteTextarea = $.get('newNoteText');
+    if (noteTextarea) noteTextarea.placeholder = this.t('phWriteNote');
+    
+    // Quote form placeholders
+    const quoteOriginInput = document.querySelector('#quoteForm input[name="origin"]');
+    if (quoteOriginInput) quoteOriginInput.placeholder = this.t('phOrigin');
+    
+    const quoteDestInput = document.querySelector('#quoteForm input[name="destination"]');
+    if (quoteDestInput) quoteDestInput.placeholder = this.t('phDestination');
+    
+    const quoteVehicleMake = $.get('quoteVehicleMake');
+    if (quoteVehicleMake) quoteVehicleMake.placeholder = this.t('phMake');
+    
+    const quoteVehicleModel = $.get('quoteVehicleModel');
+    if (quoteVehicleModel) quoteVehicleModel.placeholder = this.t('phModel');
+    
+    const quoteVehicleVIN = $.get('quoteVehicleVIN');
+    if (quoteVehicleVIN) quoteVehicleVIN.placeholder = this.t('phVIN');
+    
+    // ========== JOB DETAILS SECTION TITLES ==========
+    const moveAgentsTitle = document.querySelector('[data-i18n="moveAgentsTitle"]');
+    if (moveAgentsTitle) moveAgentsTitle.textContent = this.t('moveAgentsTitle');
+    
+    const checklistTitle = document.querySelector('[data-i18n="checklistTitle"]');
+    if (checklistTitle) checklistTitle.textContent = this.t('checklistTitle');
+    
+    const documentsTitle = document.querySelector('[data-i18n="documentsTitle"]');
+    if (documentsTitle) documentsTitle.textContent = this.t('documentsTitle');
+    
+    const notesTitle = document.querySelector('[data-i18n="notesTitle"]');
+    if (notesTitle) notesTitle.textContent = this.t('notesTitle');
+    
+    // Photos & Videos doesn't have data-i18n, find by text content
+    const photosTitle = document.querySelector('#jobDetails h4.details-section-title:not([data-i18n])');
+    if (photosTitle && (photosTitle.textContent === 'Photos & Videos' || photosTitle.textContent === 'Fotoğraflar ve Videolar')) {
+      photosTitle.textContent = this.t('photosVideosTitle');
+    }
+    
+    // Drag & drop text
+    const dropZoneTexts = document.querySelectorAll('.drop-zone-text');
+    dropZoneTexts.forEach(el => {
+      el.textContent = this.t('dragDropText');
+    });
+    
+    // Label / Description
+    const labelDescLabels = document.querySelectorAll('label');
+    labelDescLabels.forEach(el => {
+      if (el.textContent === 'Label / Description' || el.textContent === 'Etiket / Açıklama') {
+        el.textContent = this.t('labelDescription');
+      }
+    });
+    
+    // Add Checklist Item button (has special structure with span)
+    const openAddChecklistBtn = document.querySelector('#openAddChecklistBtn');
+    if (openAddChecklistBtn) {
+      openAddChecklistBtn.innerHTML = '<span>+</span> ' + this.t('addChecklistItem');
+    }
+    
+    // Add Resource button
+    const addResourceBtn = document.querySelector('#addResourceBtn');
+    if (addResourceBtn) addResourceBtn.textContent = '+ ' + this.t('btnAddResource');
+    
+    // ========== UNIVERSAL DATA-I18N TRANSLATION ==========
+    // Translate ALL elements with data-i18n attribute
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (key && this.dict[State.lang] && this.dict[State.lang][key]) {
+        el.textContent = this.t(key);
+      }
+    });
+    
+    // Translate ALL elements with data-i18n-placeholder attribute
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (key && this.dict[State.lang] && this.dict[State.lang][key]) {
+        el.placeholder = this.t(key);
+      }
+    });
+    
+    // ========== SELECT DROPDOWN OPTIONS ==========
+    // Booking Type dropdown options
+    const bookingTypeSelect = document.querySelector('select[name="bookingType"]');
+    if (bookingTypeSelect) {
+      Array.from(bookingTypeSelect.options).forEach(opt => {
+        if (opt.value === '') opt.textContent = this.t('selectBookingType');
+        else if (opt.value === 'Door to Door') opt.textContent = this.t('bookingDoorToDoor');
+        else if (opt.value === 'Door to Port') opt.textContent = this.t('bookingDoorToPort');
+        else if (opt.value === 'Port to Door') opt.textContent = this.t('bookingPortToDoor');
+      });
+    }
+    
+    // Client Type dropdown options
+    const clientTypeSelect = document.querySelector('select[name="clientType"]');
+    if (clientTypeSelect) {
+      Array.from(clientTypeSelect.options).forEach(opt => {
+        if (opt.value === '') opt.textContent = this.t('selectClientType');
+        else if (opt.value === 'Private') opt.textContent = this.t('clientTypePrivate');
+        else if (opt.value === 'Corporate') opt.textContent = this.t('clientTypeCorporate');
+        else if (opt.value === 'Diplomatic') opt.textContent = this.t('clientTypeDiplomatic');
+      });
+    }
   },
 
   init() {
@@ -2495,7 +4008,9 @@ const Utils = {
   },
 
   location(city, country) {
-    return [city, country].filter(Boolean).join(', ') || '-';
+    // Translate country name if available
+    const translatedCountry = country ? CONFIG.getCountryName(country) : '';
+    return [city, translatedCountry].filter(Boolean).join(', ') || '-';
   },
 
   // safer unique IDs than Date.now() (prevents collisions)
@@ -2593,6 +4108,88 @@ const Utils = {
     const j = jobId ? State.getJob(jobId) : null;
     if (j) return `${j.jobCode || ''} – ${j.clientName || ''}`.trim();
     return fallbackCode || '';
+  }
+};
+
+// ============================================================
+// SEARCH HELPER - Bilingual search support
+// ============================================================
+
+const SearchHelper = {
+  // Bilingual term mappings (English <-> Turkish)
+  bilingualTerms: {
+    // Trade directions
+    'import': 'ithalat', 'ithalat': 'import',
+    'export': 'ihracat', 'ihracat': 'export',
+    'local': 'yurtiçi', 'yurtiçi': 'local', 'yurtici': 'local',
+    
+    // Transport modes
+    'sea': 'denizyolu', 'denizyolu': 'sea',
+    'air': 'havayolu', 'havayolu': 'air',
+    'land': 'karayolu', 'karayolu': 'land',
+    
+    // Statuses
+    'planned': 'planlandı', 'planlandı': 'planned', 'planlandi': 'planned',
+    'ongoing': 'devam ediyor', 'devam ediyor': 'ongoing',
+    'completed': 'tamamlandı', 'tamamlandı': 'completed', 'tamamlandi': 'completed',
+    'cancelled': 'iptal edildi', 'iptal edildi': 'cancelled',
+    
+    // Payment
+    'paid': 'ödendi', 'ödendi': 'paid', 'odendi': 'paid',
+    'unpaid': 'ödenmedi', 'ödenmedi': 'unpaid', 'odenmedi': 'unpaid',
+    
+    // Quote/Storage statuses
+    'draft': 'taslak', 'taslak': 'draft',
+    'sent': 'gönderildi', 'gönderildi': 'sent', 'gonderildi': 'sent',
+    'approved': 'onaylandı', 'onaylandı': 'approved', 'onaylandi': 'approved',
+    'rejected': 'reddedildi', 'reddedildi': 'rejected',
+    'expired': 'süresi doldu', 'süresi doldu': 'expired',
+    'active': 'aktif', 'aktif': 'active',
+    'closed': 'çıktı', 'çıktı': 'closed', 'cikti': 'closed',
+    
+    // Recipient types
+    'agent': 'acente', 'acente': 'agent',
+    'client': 'müşteri', 'müşteri': 'client', 'musteri': 'client',
+    
+    // Contents
+    'hhe': 'ev eşyası', 'ev eşyası': 'hhe',
+    'auto': 'araç', 'araç': 'auto', 'arac': 'auto'
+  },
+
+  // Get bilingual equivalent of a term
+  getBilingualTerm(term) {
+    const lower = term.toLowerCase();
+    return this.bilingualTerms[lower] || null;
+  },
+
+  // Check if text matches search term (with bilingual support)
+  matches(text, searchTerm) {
+    if (!text || !searchTerm) return false;
+    
+    const lowerText = text.toLowerCase();
+    const lowerTerm = searchTerm.toLowerCase();
+    
+    // Direct match
+    if (lowerText.includes(lowerTerm)) return true;
+    
+    // Try bilingual match
+    const bilingualTerm = this.getBilingualTerm(lowerTerm);
+    if (bilingualTerm && lowerText.includes(bilingualTerm)) return true;
+    
+    return false;
+  },
+
+  // Build searchable text from an array of values
+  buildSearchText(values) {
+    return values.filter(Boolean).join(' ').toLowerCase();
+  },
+
+  // Main search function - checks if any field matches
+  matchesAny(fields, searchTerm) {
+    if (!searchTerm) return true;
+    
+    const searchText = this.buildSearchText(fields);
+    return this.matches(searchText, searchTerm);
   }
 };
 
@@ -2716,17 +4313,51 @@ const QuoteUtils = {
 
   calculateTotals(charges) {
     const totals = {};
+    let hasVariableCharges = false;
+    
     (charges || []).forEach(c => {
+      const displayType = c.displayType || (c.isPerAcw ? 'ratePerKgACW' : 'fixed');
+      
+      // Check if this is a variable charge type
+      if (displayType !== 'fixed') {
+        hasVariableCharges = true;
+        return; // Don't add to totals
+      }
+      
       const curr = c.currency || 'USD';
       totals[curr] = (totals[curr] || 0) + (parseFloat(c.amount) || 0);
     });
+    
+    // Return null if any variable charges exist (caller should not show totals)
+    if (hasVariableCharges) return null;
+    
     return totals;
   },
 
   formatTotals(totals) {
+    if (!totals) return ''; // No totals if variable charges
     return Object.entries(totals)
       .map(([c, a]) => `${c} ${a.toFixed(2)}`)
       .join(' + ');
+  },
+
+  // Format a single charge for display (used by both UI and PDF)
+  formatChargeAmount(charge) {
+    const displayType = charge.displayType || (charge.isPerAcw ? 'ratePerKgACW' : 'fixed');
+    const currency = charge.currency || 'USD';
+    
+    switch (displayType) {
+      case 'ratePerKgACW':
+        return `${currency} ${parseFloat(charge.amount).toFixed(2)}/kg ACW`;
+      case 'ratePerCBM':
+        return `${currency} ${parseFloat(charge.amount).toFixed(2)}/CBM`;
+      case 'range':
+        const min = parseFloat(charge.amount).toFixed(2);
+        const max = parseFloat(charge.rangeMax || charge.amount).toFixed(2);
+        return `${currency} ${min} - ${max}`;
+      default: // fixed
+        return `${currency} ${parseFloat(charge.amount).toFixed(2)}`;
+    }
   }
 };
 
@@ -3251,15 +4882,24 @@ const DashboardUI = {
         stepDate.setHours(0, 0, 0, 0);
         
         if (stepDate >= today && stepDate <= futureDate) {
-          let stepName = step.label || step.customLabel || '';
-          if (!stepName && step.id) {
+          // First try to translate using step.id
+          let stepName = '';
+          if (step.id) {
             const translationKey = 'step_' + step.id;
-            stepName = I18n.t(translationKey);
-            if (stepName === translationKey || stepName.startsWith('step_')) {
-              stepName = step.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const translated = I18n.t(translationKey);
+            if (translated !== translationKey && !translated.startsWith('step_')) {
+              stepName = translated;
             }
           }
-          if (!stepName) stepName = 'Step';
+          // If no translation found, use label or customLabel
+          if (!stepName) {
+            stepName = step.customLabel || step.label || '';
+          }
+          // Fallback: format the id nicely
+          if (!stepName && step.id) {
+            stepName = step.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          }
+          if (!stepName) stepName = (State.lang === 'tr') ? 'Adım' : 'Step';
           
           items.push({
             date: step.date,
@@ -3356,15 +4996,24 @@ const DashboardUI = {
         stepDate.setHours(0, 0, 0, 0);
         
         if (stepDate < today) {
-          let stepName = step.label || step.customLabel || '';
-          if (!stepName && step.id) {
+          // First try to translate using step.id
+          let stepName = '';
+          if (step.id) {
             const translationKey = 'step_' + step.id;
-            stepName = I18n.t(translationKey);
-            if (stepName === translationKey || stepName.startsWith('step_')) {
-              stepName = step.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const translated = I18n.t(translationKey);
+            if (translated !== translationKey && !translated.startsWith('step_')) {
+              stepName = translated;
             }
           }
-          if (!stepName) stepName = 'Step';
+          // If no translation found, use label or customLabel
+          if (!stepName) {
+            stepName = step.customLabel || step.label || '';
+          }
+          // Fallback: format the id nicely
+          if (!stepName && step.id) {
+            stepName = step.id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          }
+          if (!stepName) stepName = (State.lang === 'tr') ? 'Adım' : 'Step';
           
           items.push({
             date: step.date,
@@ -3433,7 +5082,7 @@ const DashboardUI = {
       const clientEl = $.el('span', { className: 'dashboard-unpaid-client', textContent: job.clientName || '-' });
       row.appendChild(clientEl);
       
-      const statusEl = $.el('span', { className: 'dashboard-unpaid-status', textContent: job.status || '-' });
+      const statusEl = $.el('span', { className: 'dashboard-unpaid-status', textContent: I18n.statusText(job.status) || '-' });
       row.appendChild(statusEl);
       
       list.appendChild(row);
@@ -3683,23 +5332,35 @@ const JobsUI = {
     else if (State.filters.payment === 'Unpaid') list = list.filter(j => !j.paymentReceived);
 
     if (State.filters.search) {
-      const term = State.filters.search.toLowerCase();
+      const term = State.filters.search.trim();
       list = list.filter(job => {
-        const text = [
+        const fields = [
+          // Identifiers
           job.jobCode,
+          job.tag,
+          // Client info
           job.clientName,
+          job.clientOrganization,
+          job.clientPhone,
+          job.clientEmail,
+          // Origin
           job.originCity,
           job.originCountry,
+          // Destination
           job.destinationCity,
           job.destinationCountry,
+          // Agents
           State.getAgentName(job.originAgentId),
           State.getAgentName(job.destinationAgentId),
-          job.tradeDirection
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return text.includes(term);
+          // Type/Mode/Status (bilingual)
+          job.tradeDirection,
+          job.status,
+          job.bookingType,
+          job.clientType,
+          // Modes as string
+          ...(job.modes || [])
+        ];
+        return SearchHelper.matchesAny(fields, term);
       });
     }
 
@@ -3729,7 +5390,7 @@ const JobsUI = {
     
     // Row 1: Client Name (left) — Job Code (right)
     const row1 = $.el('div', { className: 'job-card-header' });
-    row1.appendChild($.el('span', { className: 'job-card-client', textContent: job.clientName || 'No client name' }));
+    row1.appendChild($.el('span', { className: 'job-card-client', textContent: job.clientName || I18n.t('noClientName') }));
     row1.appendChild($.el('span', { className: 'job-card-code', textContent: job.jobCode || '' }));
     card.appendChild(row1);
     
@@ -3746,7 +5407,8 @@ const JobsUI = {
     const modesContainer = $.el('span', { className: 'job-card-modes' });
     if (job.modes && job.modes.length > 0) {
       job.modes.forEach(mode => {
-        modesContainer.appendChild($.el('span', { className: 'mode-badge', textContent: mode }));
+        const modeText = I18n.modeText(mode);
+        modesContainer.appendChild($.el('span', { className: 'mode-badge', textContent: modeText }));
       });
     }
     row3.appendChild(modesContainer);
@@ -3793,7 +5455,7 @@ const JobsUI = {
 
     // ===== HEADER: Job Code + Client Name + Tag =====
     const titleContainer = $.el('div', { className: 'move-details-header' });
-    const titleText = `${job.jobCode || ''} – ${job.clientName || 'No client name'}`;
+    const titleText = `${job.jobCode || ''} – ${job.clientName || I18n.t('noClientName')}`;
     titleContainer.appendChild($.el('h3', { textContent: titleText }));
     
     if (job.tag && job.tag.trim()) {
@@ -3836,7 +5498,7 @@ const JobsUI = {
     if (job.organizationName) this.addDetailItem(clientGrid, I18n.t('organization'), job.organizationName);
     if (job.clientPhone) this.addDetailItem(clientGrid, I18n.t('clientPhoneLabel'), job.clientPhone);
     if (job.clientEmail) this.addDetailItem(clientGrid, I18n.t('clientEmailLabel'), job.clientEmail);
-    this.addDetailItem(clientGrid, I18n.t('clientTypeLabel'), job.clientType || '-');
+    this.addDetailItem(clientGrid, I18n.t('clientTypeLabel'), I18n.clientTypeText(job.clientType) || '-');
     
     clientCard.appendChild(clientGrid);
     container.appendChild(clientCard);
@@ -3848,9 +5510,9 @@ const JobsUI = {
     
     this.addDetailItem(moveGrid, I18n.t('moveId'), job.jobCode || '-');
     this.addDetailItem(moveGrid, I18n.t('typeLabel'), I18n.typeText(job.tradeDirection) || '-');
-    this.addDetailItem(moveGrid, I18n.t('bookingTypeLabel'), job.bookingType || '-');
+    this.addDetailItem(moveGrid, I18n.t('bookingTypeLabel'), I18n.bookingTypeText(job.bookingType) || '-');
     this.addDetailItem(moveGrid, I18n.t('moveManager'), job.moveManager || '-');
-    this.addDetailItem(moveGrid, I18n.t('shipmentContents'), (job.shipmentContents || ['HHE']).join(' + '));
+    this.addDetailItem(moveGrid, I18n.t('shipmentContents'), I18n.contentsText(job.shipmentContents || ['HHE']));
     
     moveCard.appendChild(moveGrid);
     container.appendChild(moveCard);
@@ -3974,14 +5636,14 @@ const modeInfoContainer = $.el('div', { style: 'margin-top: 16px;' });
 
 if (job.modes && job.modes.includes('Sea')) {
   const seaBox = $.el('div', { className: 'mode-info-box sea' });
-  seaBox.appendChild($.el('h5', { textContent: 'Sea Freight Details' }));
+  seaBox.appendChild($.el('h5', { textContent: I18n.t('sectionSeaFreightDetails') }));
   const seaRows = [
-    ['Volume', `${job.seaVolume || 0} cbm`],
-    ['Container', job.containerDetails || '-']
+    [I18n.t('lblVolume'), `${job.seaVolume || 0} cbm`],
+    [I18n.t('lblContainer'), job.containerDetails || '-']
   ];
   // Add gross weight if entered
   if (job.seaGrossWeight) {
-    seaRows.push(['Gross Weight', `${job.seaGrossWeight} kg`]);
+    seaRows.push([I18n.t('lblGrossWeight'), `${job.seaGrossWeight} kg`]);
   }
   seaRows.forEach(([label, value]) => {
     const row = $.el('div', { className: 'mode-info-row' });
@@ -3994,11 +5656,11 @@ if (job.modes && job.modes.includes('Sea')) {
 
 if (job.modes && job.modes.includes('Air')) {
   const airBox = $.el('div', { className: 'mode-info-box air' });
-  airBox.appendChild($.el('h5', { textContent: 'Air Freight Details' }));
+  airBox.appendChild($.el('h5', { textContent: I18n.t('sectionAirFreightDetails') }));
   const airRows = [
-    ['Volume', `${job.airVolume || 0} cbm`],
-    ['Cargo Weight', `${job.airCargoWeight || 0} kg`],
-    ['Chargeable Weight (ACW)', `${job.airACW || 0} kg`]
+    [I18n.t('lblVolume'), `${job.airVolume || 0} cbm`],
+    [I18n.t('lblCargoWeightShort'), `${job.airCargoWeight || 0} kg`],
+    [I18n.t('lblChargeableWeight'), `${job.airACW || 0} kg`]
   ];
   airRows.forEach(([label, value]) => {
     const row = $.el('div', { className: 'mode-info-row' });
@@ -4011,13 +5673,13 @@ if (job.modes && job.modes.includes('Air')) {
 
 if (job.modes && job.modes.includes('Land')) {
   const landBox = $.el('div', { className: 'mode-info-box land' });
-  landBox.appendChild($.el('h5', { textContent: 'Land Freight Details' }));
+  landBox.appendChild($.el('h5', { textContent: I18n.t('sectionLandFreightDetails') }));
   const landRows = [
-    ['Volume', `${job.landVolume || 0} cbm`]
+    [I18n.t('lblVolume'), `${job.landVolume || 0} cbm`]
   ];
   // Add gross weight if entered
   if (job.landGrossWeight) {
-    landRows.push(['Gross Weight', `${job.landGrossWeight} kg`]);
+    landRows.push([I18n.t('lblGrossWeight'), `${job.landGrossWeight} kg`]);
   }
   landRows.forEach(([label, value]) => {
     const row = $.el('div', { className: 'mode-info-row' });
@@ -4031,13 +5693,13 @@ if (job.modes && job.modes.includes('Land')) {
 // Vehicle information if present
 if (job.shipmentContents && job.shipmentContents.includes('Vehicle') && job.vehicleType) {
   const vehicleBox = $.el('div', { className: 'mode-info-box vehicle' });
-  vehicleBox.appendChild($.el('h5', { textContent: 'Vehicle Details' }));
+  vehicleBox.appendChild($.el('h5', { textContent: I18n.t('lblVehicleDetails') }));
   const vehicleRows = [
-    ['Type', job.vehicleType || '-'],
-    ['Make/Model', `${job.vehicleMake || '-'} ${job.vehicleModel || ''}`.trim()],
-    ['Year', job.vehicleYear || '-'],
-    ['VIN', job.vehicleVIN || '-'],
-    ['Condition', job.vehicleCondition || '-']
+    [I18n.t('lblVehicleType'), job.vehicleType || '-'],
+    [I18n.t('lblVehicleMake') + '/' + I18n.t('lblVehicleModel'), `${job.vehicleMake || '-'} ${job.vehicleModel || ''}`.trim()],
+    [I18n.t('lblVehicleYear'), job.vehicleYear || '-'],
+    [I18n.t('lblVehicleVIN'), job.vehicleVIN || '-'],
+    [I18n.t('lblVehicleCondition'), job.vehicleCondition === 'Running' ? I18n.t('lblRunning') : (job.vehicleCondition === 'Non-Running' ? I18n.t('lblNonRunning') : (job.vehicleCondition || '-'))]
   ];
   vehicleRows.forEach(([label, value]) => {
     const row = $.el('div', { className: 'mode-info-row' });
@@ -4777,7 +6439,7 @@ linkedExtraJobCollapsible(job, item) {
   headerLeft.appendChild(statusIndicator);
   
   const titleGroup = $.el('div');
-  titleGroup.appendChild($.el('div', { className: 'step-card-title', textContent: taskName || 'Additional Job' }));
+  titleGroup.appendChild($.el('div', { className: 'step-card-title', textContent: taskName || I18n.t('additionalJob') }));
   
   const subtitle = $.el('div', { className: 'step-card-subtitle' });
   subtitle.appendChild($.el('span', { textContent: Utils.formatDate(dateStr) }));
@@ -5181,7 +6843,7 @@ linkedExtraJobCollapsible(job, item) {
       ? ej.customTaskName
       : I18n.taskTypeText(ej.taskType || '');
 
-    header.appendChild($.el('div', { className: 'step-card-header-title', textContent: taskName || 'Additional Job' }));
+    header.appendChild($.el('div', { className: 'step-card-header-title', textContent: taskName || I18n.t('additionalJob') }));
     header.appendChild($.el('div', { innerHTML: Utils.formatDate(dateStr), style: 'font-size: 11px; color:#6b7280;' }));
     card.appendChild(header);
 
@@ -5733,14 +7395,14 @@ const MediaUI = {
         const img = $.el('img', { src: item.fileData, alt: item.label || 'Image' });
         preview.appendChild(img);
       } else if (item.fileData && item.fileType && item.fileType.startsWith('video/')) {
-        preview.appendChild($.el('span', { className: 'media-icon', textContent: 'Video' }));
+        preview.appendChild($.el('span', { className: 'media-icon', textContent: I18n.t('video') }));
       } else {
-        preview.appendChild($.el('span', { className: 'media-icon', textContent: 'Media' }));
+        preview.appendChild($.el('span', { className: 'media-icon', textContent: I18n.t('media') }));
       }
       card.appendChild(preview);
       
       // Label
-      const label = $.el('div', { className: 'media-label', textContent: item.label || item.fileName || 'Media' });
+      const label = $.el('div', { className: 'media-label', textContent: item.label || item.fileName || I18n.t('media') });
       card.appendChild(label);
       
       // Actions
@@ -5801,6 +7463,15 @@ const DocumentsTabUI = {
     // Update right panel title
     const rightTitle = $.get('documentsRightTitle');
     if (rightTitle) rightTitle.textContent = (State.lang === 'tr') ? 'Belge Detayları' : 'Document Details';
+    
+    // Clear details panel and show hint
+    const container = $.get('documentDetailsContent');
+    if (container) $.clear(container);
+    const hint = $.get('documentDetailsHint');
+    if (hint) {
+      hint.style.display = 'block';
+      hint.textContent = I18n.t('hintSelectDocument');
+    }
     
     // Get containers
     const listEl = $.get('documentsListGlobal');
@@ -5867,6 +7538,17 @@ const DocumentsTabUI = {
     const rightTitle = $.get('documentsRightTitle');
     if (rightTitle) rightTitle.textContent = (State.lang === 'tr') ? 'Kaynak Detayları' : 'Resource Details';
     
+    // Clear details panel and show hint
+    const container = $.get('documentDetailsContent');
+    if (container) $.clear(container);
+    const hint = $.get('documentDetailsHint');
+    if (hint) {
+      hint.style.display = 'block';
+      hint.textContent = (State.lang === 'tr') 
+        ? 'Detayları görmek için soldan bir kaynak seçin.' 
+        : 'Select a resource from the left to see details.';
+    }
+    
     // Render resource library
     ResourceLibraryUI.render();
   },
@@ -5911,6 +7593,15 @@ const DocumentsTabUI = {
 
   row(job, doc) {
     const row = $.el('div', { className: 'document-item' });
+    row.style.cursor = 'pointer';
+    
+    // Add click handler to show details in right panel
+    row.addEventListener('click', (e) => {
+      // Don't trigger if clicking a button
+      if (e.target.tagName === 'BUTTON') return;
+      this.showDocumentDetails(job, doc);
+    });
+    
     const main = $.el('div', { className: 'document-main' });
 
     const title = $.el('div', { className: 'document-name' });
@@ -5924,7 +7615,7 @@ const DocumentsTabUI = {
     const typeLabel = I18n.typeText(job.tradeDirection) || '-';
     const routeLabel = `${Utils.location(job.originCity, job.originCountry)} → ${Utils.location(job.destinationCity, job.destinationCountry)}`;
     meta.textContent = [
-      job.clientName || 'No client',
+      job.clientName || I18n.t('noClientName'),
       modeLabel,
       typeLabel,
       routeLabel
@@ -5961,6 +7652,126 @@ const DocumentsTabUI = {
     row.appendChild(main);
     row.appendChild(actions);
     return row;
+  },
+  
+  showDocumentDetails(job, doc) {
+    const container = $.get('documentDetailsContent');
+    if (!container) return;
+    $.clear(container);
+    
+    // Hide the hint text
+    const hint = $.get('documentDetailsHint');
+    if (hint) hint.style.display = 'none';
+    
+    // Document info card
+    const card = $.el('div', { className: 'details-card' });
+    
+    // Document name and type
+    const header = $.el('div', { className: 'document-details-header' });
+    const docName = doc.name || doc.fileName || 'Document';
+    header.appendChild($.el('h3', { textContent: docName }));
+    
+    if (doc.fileName) {
+      const fileExt = doc.fileName.split('.').pop().toUpperCase();
+      header.appendChild($.el('span', { 
+        className: 'document-type-badge',
+        textContent: fileExt
+      }));
+    }
+    card.appendChild(header);
+    
+    // Document metadata - only show if there's meaningful info
+    if (doc.date) {
+      const dateItem = $.el('div', { className: 'detail-item', style: 'margin-top: 12px;' });
+      dateItem.appendChild($.el('span', { className: 'detail-label', textContent: (State.lang === 'tr') ? 'TARİH' : 'DATE' }));
+      dateItem.appendChild($.el('span', { className: 'detail-value', textContent: Utils.formatDate(doc.date) }));
+      card.appendChild(dateItem);
+    }
+    
+    container.appendChild(card);
+    
+    // Linked Move card
+    const moveCard = $.el('div', { className: 'details-card' });
+    moveCard.appendChild($.el('h4', { 
+      className: 'details-card-title', 
+      textContent: (State.lang === 'tr') ? 'BAĞLI TAŞIMA' : 'LINKED MOVE' 
+    }));
+    
+    const moveInfo = $.el('div', { className: 'linked-move-info' });
+    
+    const moveLink = $.el('a', { 
+      href: '#',
+      className: 'linked-move-code',
+      textContent: job.jobCode || '-'
+    });
+    moveLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      Views.show('moves');
+      JobsUI.render();
+      JobsUI.showDetails(job);
+    });
+    moveInfo.appendChild(moveLink);
+    
+    moveInfo.appendChild($.el('div', { 
+      className: 'linked-move-client',
+      textContent: job.clientName || I18n.t('noClientName')
+    }));
+    
+    moveInfo.appendChild($.el('div', { 
+      className: 'linked-move-route',
+      textContent: `${Utils.location(job.originCity, job.originCountry)} → ${Utils.location(job.destinationCity, job.destinationCountry)}`
+    }));
+    
+    moveCard.appendChild(moveInfo);
+    container.appendChild(moveCard);
+    
+    // Actions card
+    const actionsCard = $.el('div', { className: 'details-card' });
+    actionsCard.appendChild($.el('h4', { 
+      className: 'details-card-title', 
+      textContent: (State.lang === 'tr') ? 'İŞLEMLER' : 'ACTIONS' 
+    }));
+    
+    const actionsRow = $.el('div', { className: 'document-details-actions' });
+    
+    if (doc.fileData) {
+      const downloadBtn = $.el('button', { 
+        type: 'button', 
+        className: 'btn-primary',
+        textContent: I18n.t('download')
+      });
+      downloadBtn.addEventListener('click', () => {
+        const a = document.createElement('a');
+        a.href = doc.fileData;
+        a.download = doc.fileName || doc.name || 'document';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+      actionsRow.appendChild(downloadBtn);
+    } else if (doc.url) {
+      const openBtn = $.el('button', { 
+        type: 'button', 
+        className: 'btn-primary',
+        textContent: I18n.t('openLink')
+      });
+      openBtn.addEventListener('click', () => window.open(doc.url, '_blank', 'noopener'));
+      actionsRow.appendChild(openBtn);
+    }
+    
+    const goToMoveBtn = $.el('button', { 
+      type: 'button',
+      textContent: I18n.t('openMove')
+    });
+    goToMoveBtn.addEventListener('click', () => {
+      Views.show('moves');
+      JobsUI.render();
+      JobsUI.showDetails(job);
+    });
+    actionsRow.appendChild(goToMoveBtn);
+    
+    actionsCard.appendChild(actionsRow);
+    container.appendChild(actionsCard);
   }
 };
 
@@ -5972,38 +7783,57 @@ const ResourceLibraryUI = {
 
     $.clear(container);
 
-    // Header with Add button
-    const header = $.el('div', { className: 'resource-library-header' });
-    
-    const title = $.el('h3', { 
-      textContent: (State.lang === 'tr') ? 'Kaynak Kütüphanesi' : 'Resource Library'
-    });
-    
-    const addBtn = $.el('button', { 
-      type: 'button',
-      textContent: (State.lang === 'tr') ? '+ Kaynak Ekle' : '+ Add Resource'
-    });
-    addBtn.addEventListener('click', () => this.openAddModal());
-    
-    header.appendChild(title);
-    header.appendChild(addBtn);
-    container.appendChild(header);
+    // Ensure resourceLibrary exists
+    if (!State.resourceLibrary) {
+      State.resourceLibrary = { categories: [] };
+    }
+    if (!State.resourceLibrary.categories) {
+      State.resourceLibrary.categories = [];
+    }
 
-    // Render categories
-    if (!State.resourceLibrary || !State.resourceLibrary.categories) {
-      const emptyState = $.el('div', { className: 'empty-state' });
-      emptyState.appendChild($.el('div', { className: 'empty-state-icon', textContent: '' }));
+    // Check if there are any categories
+    if (State.resourceLibrary.categories.length === 0) {
+      // Empty state - no categories yet
+      const emptyState = $.el('div', { className: 'empty-state', style: 'padding: 40px 20px; text-align: center;' });
+      emptyState.appendChild($.el('div', { 
+        className: 'empty-state-icon', 
+        textContent: '📁',
+        style: 'font-size: 48px; margin-bottom: 16px;'
+      }));
       emptyState.appendChild($.el('p', { 
         className: 'empty-state-text',
-        textContent: (State.lang === 'tr') ? 'Henüz kaynak yok.' : 'No resources yet.'
+        textContent: I18n.t('noCategories'),
+        style: 'color: #6b7280; margin-bottom: 20px;'
       }));
+      
+      const addCatBtn = $.el('button', {
+        type: 'button',
+        className: 'btn-primary',
+        textContent: '+ ' + I18n.t('addCategory')
+      });
+      addCatBtn.addEventListener('click', () => this.openCategoryModal());
+      emptyState.appendChild(addCatBtn);
+      
       container.appendChild(emptyState);
       return;
     }
 
+    // Render categories
     State.resourceLibrary.categories.forEach(category => {
       container.appendChild(this.renderCategory(category));
     });
+    
+    // Add Category button at bottom
+    const addCatRow = $.el('div', { className: 'add-category-row', style: 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;' });
+    const addCatBtn = $.el('button', {
+      type: 'button',
+      className: 'btn-secondary',
+      style: 'width: 100%;',
+      textContent: '+ ' + I18n.t('addCategory')
+    });
+    addCatBtn.addEventListener('click', () => this.openCategoryModal());
+    addCatRow.appendChild(addCatBtn);
+    container.appendChild(addCatRow);
   },
 
   renderCategory(category) {
@@ -6012,30 +7842,64 @@ const ResourceLibraryUI = {
     // Category header
     const header = $.el('div', { className: 'resource-category-header' });
     
-    const icon = $.el('span', { className: 'resource-category-icon', textContent: '' });
+    const leftSide = $.el('div', { className: 'category-header-left', style: 'display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer;' });
+    
+    const arrow = $.el('span', { 
+      textContent: '▼', 
+      className: 'category-arrow',
+      style: 'transition: transform 0.2s;'
+    });
     const name = $.el('span', { 
       className: 'resource-category-name',
-      textContent: (State.lang === 'tr' ? category.nametr : category.name)
+      textContent: (State.lang === 'tr' ? category.nametr : category.name) || category.name
     });
     const count = $.el('span', {
       className: 'resource-category-count',
-      textContent: category.items.length
-    });
-    const arrow = $.el('span', { 
-      textContent: '▼', 
-      className: 'category-arrow'
+      textContent: category.items ? category.items.length : 0
     });
     
-    header.appendChild(icon);
-    header.appendChild(name);
-    header.appendChild(count);
-    header.appendChild(arrow);
+    leftSide.appendChild(arrow);
+    leftSide.appendChild(name);
+    leftSide.appendChild(count);
+    
+    // Category actions (edit/delete)
+    const actionsDiv = $.el('div', { className: 'category-actions', style: 'display: flex; gap: 4px;' });
+    
+    const editBtn = $.el('button', {
+      type: 'button',
+      className: 'btn-icon-sm',
+      textContent: '✏️',
+      title: I18n.t('editCategory'),
+      style: 'padding: 4px 8px; font-size: 12px; background: transparent; border: none; cursor: pointer;'
+    });
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.openCategoryModal(category);
+    });
+    
+    const deleteBtn = $.el('button', {
+      type: 'button',
+      className: 'btn-icon-sm',
+      textContent: '🗑️',
+      title: I18n.t('deleteCategory'),
+      style: 'padding: 4px 8px; font-size: 12px; background: transparent; border: none; cursor: pointer;'
+    });
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.deleteCategory(category.id);
+    });
+    
+    actionsDiv.appendChild(editBtn);
+    actionsDiv.appendChild(deleteBtn);
+    
+    header.appendChild(leftSide);
+    header.appendChild(actionsDiv);
     categoryDiv.appendChild(header);
 
     // Items container (collapsible)
     const itemsContainer = $.el('div', { className: 'resource-items' });
 
-    if (category.items.length === 0) {
+    if (!category.items || category.items.length === 0) {
       const emptyMsg = $.el('p', { 
         textContent: (State.lang === 'tr') ? 'Bu kategoride kaynak yok.' : 'No resources in this category.',
         style: 'color:#6b7280; font-size:13px; padding:8px 0;'
@@ -6049,9 +7913,12 @@ const ResourceLibraryUI = {
 
     categoryDiv.appendChild(itemsContainer);
 
-    // Toggle collapse
-    let isCollapsed = false;
-    header.addEventListener('click', () => {
+    // Toggle collapse on left side click - START COLLAPSED
+    let isCollapsed = true;
+    itemsContainer.style.display = 'none';
+    arrow.style.transform = 'rotate(-90deg)';
+    
+    leftSide.addEventListener('click', () => {
       isCollapsed = !isCollapsed;
       itemsContainer.style.display = isCollapsed ? 'none' : 'block';
       arrow.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
@@ -6062,13 +7929,21 @@ const ResourceLibraryUI = {
 
   renderItem(item, categoryId) {
     const itemDiv = $.el('div', { className: 'resource-item' });
+    itemDiv.style.cursor = 'pointer';
+    
+    // Add click handler to show details
+    itemDiv.addEventListener('click', (e) => {
+      // Don't trigger if clicking a button
+      if (e.target.tagName === 'BUTTON') return;
+      this.showResourceDetails(item, categoryId);
+    });
 
     // Left side: icon + name
     const infoDiv = $.el('div', { className: 'resource-item-info' });
-    const fileIcon = $.el('span', { className: 'resource-item-icon', textContent: '' });
+    const fileIcon = $.el('span', { className: 'resource-item-icon', textContent: '📄' });
     const nameSpan = $.el('span', { 
       className: 'resource-item-name',
-      textContent: State.lang === 'tr' ? item.nametr : item.name
+      textContent: (State.lang === 'tr' ? item.nametr : item.name) || item.name
     });
     
     infoDiv.appendChild(fileIcon);
@@ -6081,17 +7956,23 @@ const ResourceLibraryUI = {
     const downloadBtn = $.el('button', { 
       type: 'button',
       className: 'download-btn',
-      textContent: (State.lang === 'tr') ? 'İndir' : 'Download'
+      textContent: I18n.t('btnDownload')
     });
-    downloadBtn.addEventListener('click', () => this.downloadItem(item));
+    downloadBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.downloadItem(item);
+    });
 
     // Delete button
     const deleteBtn = $.el('button', { 
       type: 'button',
       className: 'delete-btn',
-      textContent: (State.lang === 'tr') ? 'Sil' : 'Delete'
+      textContent: I18n.t('btnDelete')
     });
-    deleteBtn.addEventListener('click', () => this.deleteItem(item.id, categoryId));
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.deleteItem(item.id, categoryId);
+    });
 
     actionsDiv.appendChild(downloadBtn);
     actionsDiv.appendChild(deleteBtn);
@@ -6102,18 +7983,292 @@ const ResourceLibraryUI = {
     return itemDiv;
   },
 
+  showResourceDetails(item, categoryId) {
+    const container = $.get('documentDetailsContent');
+    if (!container) return;
+    $.clear(container);
+    
+    // Hide the hint text
+    const hint = $.get('documentDetailsHint');
+    if (hint) hint.style.display = 'none';
+    
+    // Update right panel title
+    const titleEl = $.get('documentsRightTitle');
+    if (titleEl) titleEl.textContent = I18n.t('resourceDetails');
+    
+    // Find category name
+    const category = State.resourceLibrary?.categories?.find(c => c.id === categoryId);
+    const categoryName = category ? ((State.lang === 'tr' ? category.nametr : category.name) || category.name) : '';
+    
+    // Resource details card
+    const detailsCard = $.el('div', { className: 'resource-details-card' });
+    
+    // Header with icon and name
+    const headerDiv = $.el('div', { className: 'resource-details-header', style: 'display: flex; align-items: center; gap: 12px; margin-bottom: 16px;' });
+    headerDiv.appendChild($.el('span', { style: 'font-size: 32px;', textContent: '📄' }));
+    
+    const headerText = $.el('div');
+    headerText.appendChild($.el('h3', { 
+      textContent: (State.lang === 'tr' ? item.nametr : item.name) || item.name,
+      style: 'margin: 0 0 4px 0;'
+    }));
+    headerText.appendChild($.el('p', { 
+      textContent: categoryName,
+      style: 'margin: 0; color: #6b7280; font-size: 13px;'
+    }));
+    headerDiv.appendChild(headerText);
+    detailsCard.appendChild(headerDiv);
+    
+    // File info
+    const infoGrid = $.el('div', { className: 'resource-info-grid', style: 'display: grid; gap: 12px; margin-bottom: 20px;' });
+    
+    if (item.fileName) {
+      const fileRow = $.el('div', { className: 'info-row' });
+      fileRow.appendChild($.el('span', { className: 'info-label', textContent: (State.lang === 'tr') ? 'Dosya:' : 'File:', style: 'font-weight: 500; color: #374151;' }));
+      fileRow.appendChild($.el('span', { className: 'info-value', textContent: item.fileName, style: 'color: #6b7280;' }));
+      infoGrid.appendChild(fileRow);
+    }
+    
+    if (item.uploadedAt) {
+      const dateRow = $.el('div', { className: 'info-row' });
+      dateRow.appendChild($.el('span', { className: 'info-label', textContent: (State.lang === 'tr') ? 'Yüklenme:' : 'Uploaded:', style: 'font-weight: 500; color: #374151;' }));
+      dateRow.appendChild($.el('span', { className: 'info-value', textContent: Utils.fmtDate(item.uploadedAt), style: 'color: #6b7280;' }));
+      infoGrid.appendChild(dateRow);
+    }
+    
+    detailsCard.appendChild(infoGrid);
+    
+    // Actions
+    const actionsCard = $.el('div', { className: 'resource-actions', style: 'display: flex; gap: 8px;' });
+    
+    const downloadBtn = $.el('button', {
+      type: 'button',
+      className: 'btn-primary',
+      textContent: I18n.t('btnDownload')
+    });
+    downloadBtn.addEventListener('click', () => this.downloadItem(item));
+    actionsCard.appendChild(downloadBtn);
+    
+    const deleteBtn = $.el('button', {
+      type: 'button',
+      className: 'btn-danger',
+      textContent: I18n.t('btnDelete')
+    });
+    deleteBtn.addEventListener('click', async () => {
+      const confirmed = await Modals.confirm({
+        title: I18n.t('deleteConfirm'),
+        message: (State.lang === 'tr') ? 'Bu kaynak silinsin mi?' : 'Delete this resource?',
+        confirmText: I18n.t('btnDelete'),
+        danger: true
+      });
+      if (confirmed) {
+        this.deleteItem(item.id, categoryId);
+        // Clear details panel
+        $.clear(container);
+        const hint = $.get('documentDetailsHint');
+        if (hint) {
+          hint.style.display = 'block';
+          hint.textContent = I18n.t('hintSelectResource');
+        }
+      }
+    });
+    actionsCard.appendChild(deleteBtn);
+    
+    detailsCard.appendChild(actionsCard);
+    container.appendChild(detailsCard);
+  },
+
+  // Category Modal
+  openCategoryModal(existingCategory = null) {
+    const isEdit = !!existingCategory;
+    
+    // Remove existing modal if any
+    const existingModal = $.get('categoryModal');
+    if (existingModal) existingModal.remove();
+    
+    // Create modal
+    const modal = $.el('div', { 
+      id: 'categoryModal',
+      className: 'modal'
+    });
+
+    const modalCard = $.el('div', { className: 'modal-card', style: 'max-width: 450px;' });
+
+    // Header
+    const modalHeader = $.el('div', { className: 'modal-header' });
+    const title = $.el('h2', { 
+      textContent: isEdit ? I18n.t('editCategory') : I18n.t('addCategory')
+    });
+    const closeBtn = $.el('button', { 
+      type: 'button',
+      className: 'close-button',
+      textContent: '×'
+    });
+    closeBtn.addEventListener('click', () => {
+      modal.remove();
+    });
+    
+    modalHeader.appendChild(title);
+    modalHeader.appendChild(closeBtn);
+    modalCard.appendChild(modalHeader);
+
+    // Form
+    const form = $.el('form', { id: 'categoryForm' });
+
+    // Name (English)
+    const nameEnLabel = $.el('label', { textContent: I18n.t('categoryNameEn') });
+    const nameEnInput = $.el('input', { 
+      type: 'text',
+      name: 'nameEn',
+      required: true,
+      value: isEdit ? existingCategory.name : ''
+    });
+    form.appendChild(nameEnLabel);
+    form.appendChild(nameEnInput);
+
+    // Name (Turkish)
+    const nameTrLabel = $.el('label', { textContent: I18n.t('categoryNameTr') });
+    const nameTrInput = $.el('input', { 
+      type: 'text',
+      name: 'nameTr',
+      required: true,
+      value: isEdit ? (existingCategory.nametr || '') : ''
+    });
+    form.appendChild(nameTrLabel);
+    form.appendChild(nameTrInput);
+
+    // Actions
+    const actionsDiv = $.el('div', { className: 'modal-actions' });
+    const cancelBtn = $.el('button', { 
+      type: 'button',
+      textContent: I18n.t('btnCancel')
+    });
+    cancelBtn.addEventListener('click', () => {
+      modal.remove();
+    });
+    
+    const submitBtn = $.el('button', { 
+      type: 'submit',
+      textContent: I18n.t('btnSave')
+    });
+
+    actionsDiv.appendChild(cancelBtn);
+    actionsDiv.appendChild(submitBtn);
+    form.appendChild(actionsDiv);
+
+    // Form submit handler
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameEn = form.nameEn.value.trim();
+      const nameTr = form.nameTr.value.trim();
+      
+      if (!nameEn || !nameTr) return;
+      
+      if (isEdit) {
+        // Update existing category
+        existingCategory.name = nameEn;
+        existingCategory.nametr = nameTr;
+      } else {
+        // Create new category
+        const newCategory = {
+          id: Utils.makeId('cat'),
+          name: nameEn,
+          nametr: nameTr,
+          items: []
+        };
+        State.resourceLibrary.categories.push(newCategory);
+      }
+      
+      Storage.saveResourceLibrary();
+      modal.remove();
+      this.render();
+    });
+    
+    modalCard.appendChild(form);
+    modal.appendChild(modalCard);
+    document.body.appendChild(modal);
+    
+    // Focus first input
+    nameEnInput.focus();
+  },
+  
+  deleteCategory(categoryId) {
+    const category = State.resourceLibrary.categories.find(c => c.id === categoryId);
+    if (!category) return;
+    
+    // Check if category has items
+    if (category.items && category.items.length > 0) {
+      Modals.alert({
+        title: (State.lang === 'tr') ? 'Uyarı' : 'Warning',
+        message: I18n.t('cannotDeleteNonEmpty')
+      });
+      return;
+    }
+    
+    Modals.confirm({
+      title: I18n.t('deleteCategory'),
+      message: I18n.t('confirmDeleteCategory'),
+      confirmText: I18n.t('btnDelete'),
+      danger: true
+    }).then(confirmed => {
+      if (!confirmed) return;
+      
+      const index = State.resourceLibrary.categories.findIndex(c => c.id === categoryId);
+      if (index !== -1) {
+        State.resourceLibrary.categories.splice(index, 1);
+        Storage.saveResourceLibrary();
+        this.render();
+      }
+    });
+  },
+
   openAddModal() {
     // Show modal
     const modal = $.get('resourceLibraryModal');
     if (!modal) {
       this.createModal();
+    } else {
+      // Update category dropdown options
+      this.updateCategoryOptions();
     }
     
     // Reset form
     const form = $.get('resourceLibraryForm');
     if (form) form.reset();
     
+    // Reset drop zone text
+    const dropZone = $.get('resourceDropZone');
+    const dropText = dropZone?.querySelector('.drop-zone-text');
+    if (dropZone && dropText) {
+      dropZone.classList.remove('has-file');
+      dropText.textContent = I18n.t('dragDropText');
+    }
+    
     Modals.open('resourceLibraryModal');
+  },
+  
+  updateCategoryOptions() {
+    const categorySelect = document.querySelector('#resourceLibraryForm select[name="category"]');
+    if (!categorySelect) return;
+    
+    $.clear(categorySelect);
+    
+    if (!State.resourceLibrary.categories || State.resourceLibrary.categories.length === 0) {
+      categorySelect.appendChild($.el('option', {
+        value: '',
+        textContent: (State.lang === 'tr') ? '-- Önce kategori ekleyin --' : '-- Add a category first --',
+        disabled: true,
+        selected: true
+      }));
+      return;
+    }
+    
+    State.resourceLibrary.categories.forEach(cat => {
+      categorySelect.appendChild($.el('option', {
+        value: cat.id,
+        textContent: (State.lang === 'tr' ? cat.nametr : cat.name) || cat.name
+      }));
+    });
   },
 
   createModal() {
@@ -6128,7 +8283,7 @@ const ResourceLibraryUI = {
     // Header
     const modalHeader = $.el('div', { className: 'modal-header' });
     const title = $.el('h2', { 
-      textContent: (State.lang === 'tr') ? 'Kaynak Ekle' : 'Add Resource'
+      textContent: I18n.t('btnAddResource')
     });
     const closeBtn = $.el('button', { 
       type: 'button',
@@ -6153,18 +8308,28 @@ const ResourceLibraryUI = {
       required: true
     });
     
-    State.resourceLibrary.categories.forEach(cat => {
+    // Populate category options
+    if (!State.resourceLibrary.categories || State.resourceLibrary.categories.length === 0) {
       categorySelect.appendChild($.el('option', {
-        value: cat.id,
-        textContent: State.lang === 'tr' ? cat.nametr : cat.name
+        value: '',
+        textContent: (State.lang === 'tr') ? '-- Önce kategori ekleyin --' : '-- Add a category first --',
+        disabled: true,
+        selected: true
       }));
-    });
+    } else {
+      State.resourceLibrary.categories.forEach(cat => {
+        categorySelect.appendChild($.el('option', {
+          value: cat.id,
+          textContent: (State.lang === 'tr' ? cat.nametr : cat.name) || cat.name
+        }));
+      });
+    }
 
     form.appendChild(categoryLabel);
     form.appendChild(categorySelect);
 
     // Name (English)
-    const nameEnLabel = $.el('label', { textContent: 'Name (English)' });
+    const nameEnLabel = $.el('label', { textContent: I18n.t('nameEnglish') });
     const nameEnInput = $.el('input', { 
       type: 'text',
       name: 'nameEn',
@@ -6174,7 +8339,7 @@ const ResourceLibraryUI = {
     form.appendChild(nameEnInput);
 
     // Name (Turkish)
-    const nameTrLabel = $.el('label', { textContent: 'Name (Turkish)' });
+    const nameTrLabel = $.el('label', { textContent: I18n.t('nameTurkish') });
     const nameTrInput = $.el('input', { 
       type: 'text',
       name: 'nameTr',
@@ -6183,29 +8348,45 @@ const ResourceLibraryUI = {
     form.appendChild(nameTrLabel);
     form.appendChild(nameTrInput);
 
-    // File upload
+    // File upload with drop zone
     const fileLabel = $.el('label', { 
-      textContent: (State.lang === 'tr') ? 'Dosya' : 'File'
+      textContent: I18n.t('fileLabel')
+    });
+    form.appendChild(fileLabel);
+    
+    const dropZone = $.el('div', { 
+      id: 'resourceDropZone',
+      className: 'drop-zone'
+    });
+    const dropText = $.el('span', { 
+      className: 'drop-zone-text',
+      textContent: I18n.t('dragDropText')
     });
     const fileInput = $.el('input', { 
       type: 'file',
+      id: 'resourceFileInput',
       name: 'file',
-      required: true
+      className: 'drop-zone-input',
+      accept: '.pdf,.doc,.docx,.xls,.xlsx,.txt,.png,.jpg,.jpeg'
     });
-    form.appendChild(fileLabel);
-    form.appendChild(fileInput);
+    dropZone.appendChild(dropText);
+    dropZone.appendChild(fileInput);
+    form.appendChild(dropZone);
+    
+    // Setup drop zone functionality
+    this.setupModalDropZone(dropZone, fileInput, dropText);
 
     // Actions
     const actionsDiv = $.el('div', { className: 'modal-actions' });
     const cancelBtn = $.el('button', { 
       type: 'button',
-      textContent: (State.lang === 'tr') ? 'İptal' : 'Cancel'
+      textContent: I18n.t('btnCancel')
     });
     cancelBtn.addEventListener('click', () => Modals.close('resourceLibraryModal'));
     
     const submitBtn = $.el('button', { 
       type: 'submit',
-      textContent: (State.lang === 'tr') ? 'Kaydet' : 'Save'
+      textContent: I18n.t('btnSave')
     });
 
     actionsDiv.appendChild(cancelBtn);
@@ -6213,78 +8394,94 @@ const ResourceLibraryUI = {
     form.appendChild(actionsDiv);
 
     // Form submit handler
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const categoryId = form.category.value;
-  const nameEn = form.nameEn.value.trim();
-  const nameTr = form.nameTr.value.trim();
-  const file = form.file.files[0];
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const categoryId = form.category.value;
+      const nameEn = form.nameEn.value.trim();
+      const nameTr = form.nameTr.value.trim();
+      const file = form.file.files[0];
 
-  if (!file) {
-    Modals.alert({ title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', message: (State.lang === 'tr') ? 'Lütfen dosya seçin.' : 'Please select a file.' });
-    return;
-  }
+      if (!categoryId) {
+        Modals.alert({ 
+          title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', 
+          message: (State.lang === 'tr') ? 'Lütfen önce bir kategori ekleyin.' : 'Please add a category first.' 
+        });
+        return;
+      }
 
-  // Read file as base64
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const category = State.resourceLibrary.categories.find(c => c.id === categoryId);
-    if (!category) return;
+      if (!file) {
+        Modals.alert({ 
+          title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', 
+          message: (State.lang === 'tr') ? 'Lütfen dosya seçin.' : 'Please select a file.' 
+        });
+        return;
+      }
 
-    // Create new item
-    const newItem = {
-      id: Utils.makeId('resource'),
-      name: nameEn,
-      nametr: nameTr,
-      fileName: file.name,
-      fileData: event.target.result,
-      uploadedAt: new Date().toISOString()
-    };
+      // Read file as base64
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const category = State.resourceLibrary.categories.find(c => c.id === categoryId);
+        if (!category) return;
 
-    category.items.push(newItem);
-    Storage.saveResourceLibrary();
+        // Ensure items array exists
+        if (!category.items) category.items = [];
 
-    // Close modal and refresh
-    Modals.close('resourceLibraryModal');
-    ResourceLibraryUI.render();
+        // Create new item
+        const newItem = {
+          id: Utils.makeId('resource'),
+          name: nameEn,
+          nametr: nameTr,
+          fileName: file.name,
+          fileData: event.target.result,
+          uploadedAt: new Date().toISOString()
+        };
 
-    Modals.alert({ title: (State.lang === 'tr') ? 'Başarılı' : 'Success', message: (State.lang === 'tr') ? 'Kaynak eklendi!' : 'Resource added!' });
-  };
+        category.items.push(newItem);
+        Storage.saveResourceLibrary();
 
-  reader.readAsDataURL(file);
-});
+        // Close modal and refresh
+        Modals.close('resourceLibraryModal');
+        ResourceLibraryUI.render();
+      };
+
+      reader.readAsDataURL(file);
+    });
     
-modalCard.appendChild(form);
-modal.appendChild(modalCard);
+    modalCard.appendChild(form);
+    modal.appendChild(modalCard);
 
-document.body.appendChild(modal);
-},
+    document.body.appendChild(modal);
+  },
     
   downloadItem(item) {
     if (!item.fileData) {
-      Modals.alert({ title: (State.lang === 'tr') ? 'Hata' : 'Error', message: (State.lang === 'tr') ? 'Dosya bulunamadı.' : 'File not found.' });
+      Modals.alert({ 
+        title: (State.lang === 'tr') ? 'Hata' : 'Error', 
+        message: (State.lang === 'tr') ? 'Dosya bulunamadı.' : 'File not found.' 
+      });
       return;
     }
 
-    const a = document.createElement('a');
-    a.href = item.fileData;
-    a.download = item.fileName || item.name || 'document';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Create download link
+    const link = document.createElement('a');
+    link.href = item.fileData;
+    link.download = item.fileName || 'download';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   },
 
   deleteItem(itemId, categoryId) {
     Modals.confirm({
-      title: (State.lang === 'tr') ? 'Kaynağı Sil' : 'Delete Resource',
-      message: (State.lang === 'tr') ? 'Bu kaynağı silmek istediğinize emin misiniz?' : 'Are you sure you want to delete this resource?',
+      title: (State.lang === 'tr') ? 'Silme Onayı' : 'Confirm Delete',
+      message: (State.lang === 'tr') ? 'Bu kaynak silinsin mi?' : 'Delete this resource?',
       danger: true,
-      confirmText: (State.lang === 'tr') ? 'Sil' : 'Delete'
+      confirmText: I18n.t('btnDelete')
     }).then(confirmed => {
       if (!confirmed) return;
 
       const category = State.resourceLibrary.categories.find(c => c.id === categoryId);
-      if (!category) return;
+      if (!category || !category.items) return;
 
       const index = category.items.findIndex(item => item.id === itemId);
       if (index !== -1) {
@@ -6293,6 +8490,766 @@ document.body.appendChild(modal);
         this.render();
       }
     });
+  },
+
+  setupModalDropZone(dropZone, fileInput, textEl) {
+    const originalText = textEl.textContent;
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('drag-over');
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        dropZone.classList.add('has-file');
+        textEl.textContent = files[0].name;
+      }
+    });
+
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        dropZone.classList.add('has-file');
+        textEl.textContent = fileInput.files[0].name;
+      } else {
+        dropZone.classList.remove('has-file');
+        textEl.textContent = originalText;
+      }
+    });
+  }
+};
+
+// ========== // QUOTE VARIANTS MANAGER // ========== //
+
+const VariantsManager = {
+  // Track current variants state for each mode
+  variants: {
+    Sea: [],
+    Air: [],
+    Land: []
+  },
+  
+  // Counter for unique IDs within session
+  variantCounter: 0,
+  
+  // Initialize variants for a mode (called when mode is enabled)
+  initMode(mode) {
+    if (this.variants[mode].length === 0) {
+      // Add one default variant
+      this.addVariant(mode, false);
+    }
+    this.renderVariants(mode);
+  },
+  
+  // Clear variants for a mode (called when mode is disabled)
+  clearMode(mode) {
+    this.variants[mode] = [];
+    const container = $.get(`${mode.toLowerCase()}VariantsContainer`);
+    if (container) container.innerHTML = '';
+  },
+  
+  // Reset all variants (called when opening form fresh)
+  reset() {
+    this.variants = { Sea: [], Air: [], Land: [] };
+    this.variantCounter = 0;
+  },
+  
+  // Generate unique variant ID
+  generateId(mode) {
+    this.variantCounter++;
+    return `${mode.toLowerCase()}-${this.variantCounter}-${Date.now()}`;
+  },
+  
+  // Add a new variant to a mode
+  addVariant(mode, render = true) {
+    const id = this.generateId(mode);
+    const optionNum = this.variants[mode].length + 1;
+    
+    const variant = {
+      id: id,
+      label: `${I18n.t('variantOption')} ${optionNum}`,
+      expanded: true, // Start expanded
+      // Mode-specific fields will be populated with defaults
+      ...this.getDefaultFields(mode)
+    };
+    
+    this.variants[mode].push(variant);
+    
+    if (render) {
+      this.renderVariants(mode);
+      // Scroll to and focus the new variant
+      setTimeout(() => {
+        const card = document.querySelector(`[data-variant-id="${id}"]`);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+    
+    return variant;
+  },
+  
+  // Get default fields based on mode
+  getDefaultFields(mode) {
+    if (mode === 'Sea') {
+      return {
+        departurePort: '',
+        poe: '',
+        containerDetails: '',
+        volume: '',
+        transitTime: '',
+        charges: []
+      };
+    } else if (mode === 'Air') {
+      return {
+        departureAirportName: '',
+        departureAirportIATA: '',
+        arrivalAirportName: '',
+        arrivalAirportIATA: '',
+        airlineName: '',
+        cargoWeight: '',
+        volume: '',
+        acw: '',
+        transitTime: '',
+        charges: []
+      };
+    } else if (mode === 'Land') {
+      return {
+        truckType: 'Dedicated',
+        volume: '',
+        transitTime: '',
+        charges: []
+      };
+    }
+    return { charges: [] };
+  },
+  
+  // Duplicate a variant
+  duplicateVariant(mode, variantId) {
+    const source = this.variants[mode].find(v => v.id === variantId);
+    if (!source) return;
+    
+    const id = this.generateId(mode);
+    const optionNum = this.variants[mode].length + 1;
+    
+    // Deep clone the source variant
+    const newVariant = JSON.parse(JSON.stringify(source));
+    newVariant.id = id;
+    newVariant.label = `${I18n.t('variantOption')} ${optionNum}`;
+    newVariant.expanded = true;
+    
+    this.variants[mode].push(newVariant);
+    this.renderVariants(mode);
+    
+    // Scroll to the new variant
+    setTimeout(() => {
+      const card = document.querySelector(`[data-variant-id="${id}"]`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  },
+  
+  // Delete a variant
+  deleteVariant(mode, variantId) {
+    const index = this.variants[mode].findIndex(v => v.id === variantId);
+    if (index === -1) return;
+    
+    // Don't allow deleting the last variant
+    if (this.variants[mode].length <= 1) {
+      Modals.alert({ 
+        title: (State.lang === 'tr') ? 'Uyarı' : 'Warning', 
+        message: (State.lang === 'tr') ? 'En az bir seçenek gereklidir.' : 'At least one option is required.' 
+      });
+      return;
+    }
+    
+    Modals.confirm({
+      title: (State.lang === 'tr') ? 'Seçeneği Sil' : 'Delete Option',
+      message: I18n.t('confirmDeleteVariant'),
+      confirmText: I18n.t('btnDelete'),
+      cancelText: I18n.t('btnCancel'),
+      onConfirm: () => {
+        this.variants[mode].splice(index, 1);
+        this.renderVariants(mode);
+      }
+    });
+  },
+  
+  // Toggle variant expansion
+  toggleVariant(mode, variantId) {
+    const variant = this.variants[mode].find(v => v.id === variantId);
+    if (variant) {
+      variant.expanded = !variant.expanded;
+      this.renderVariants(mode);
+    }
+  },
+  
+  // Save current form values back to variant object
+  saveVariantFromForm(mode, variantId) {
+    const variant = this.variants[mode].find(v => v.id === variantId);
+    if (!variant) return;
+    
+    const card = document.querySelector(`[data-variant-id="${variantId}"]`);
+    if (!card) return;
+    
+    // Save label
+    const labelInput = card.querySelector('.variant-label-input');
+    if (labelInput) variant.label = labelInput.value;
+    
+    // Save mode-specific fields
+    if (mode === 'Sea') {
+      variant.departurePort = card.querySelector('[data-field="departurePort"]')?.value || '';
+      variant.poe = card.querySelector('[data-field="poe"]')?.value || '';
+      variant.containerDetails = card.querySelector('[data-field="containerDetails"]')?.value || '';
+      variant.volume = card.querySelector('[data-field="volume"]')?.value || '';
+      variant.transitTime = card.querySelector('[data-field="transitTime"]')?.value || '';
+    } else if (mode === 'Air') {
+      variant.departureAirportName = card.querySelector('[data-field="departureAirportName"]')?.value || '';
+      variant.departureAirportIATA = card.querySelector('[data-field="departureAirportIATA"]')?.value || '';
+      variant.arrivalAirportName = card.querySelector('[data-field="arrivalAirportName"]')?.value || '';
+      variant.arrivalAirportIATA = card.querySelector('[data-field="arrivalAirportIATA"]')?.value || '';
+      variant.airlineName = card.querySelector('[data-field="airlineName"]')?.value || '';
+      variant.cargoWeight = card.querySelector('[data-field="cargoWeight"]')?.value || '';
+      variant.volume = card.querySelector('[data-field="volume"]')?.value || '';
+      variant.acw = card.querySelector('[data-field="acw"]')?.value || '';
+      variant.transitTime = card.querySelector('[data-field="transitTime"]')?.value || '';
+    } else if (mode === 'Land') {
+      const truckTypeRadio = card.querySelector('input[name="truckType_' + variantId + '"]:checked');
+      variant.truckType = truckTypeRadio?.value || 'Dedicated';
+      variant.volume = card.querySelector('[data-field="volume"]')?.value || '';
+      variant.transitTime = card.querySelector('[data-field="transitTime"]')?.value || '';
+    }
+    
+    // Save charges
+    variant.charges = [];
+    const chargesContainer = card.querySelector('.variant-charges-list');
+    if (chargesContainer) {
+      chargesContainer.querySelectorAll('.charge-row').forEach(row => {
+        const category = row.querySelector('.charge-category-input')?.value.trim();
+        const displayType = row.querySelector('.charge-type-select')?.value || 'fixed';
+        const amount = parseFloat(row.querySelector('.charge-amount-input')?.value) || 0;
+        const rangeMax = parseFloat(row.querySelector('.charge-range-max')?.value) || 0;
+        
+        if (category) {
+          variant.charges.push({ category, amount, displayType, rangeMax });
+        }
+      });
+    }
+  },
+  
+  // Save all variants for a mode before rendering
+  saveAllVariants(mode) {
+    this.variants[mode].forEach(v => {
+      this.saveVariantFromForm(mode, v.id);
+    });
+  },
+  
+  // Render all variants for a mode
+  renderVariants(mode) {
+    const container = $.get(`${mode.toLowerCase()}VariantsContainer`);
+    if (!container) return;
+    
+    // Save current values before re-rendering
+    this.saveAllVariants(mode);
+    
+    container.innerHTML = '';
+    
+    if (this.variants[mode].length === 0) {
+      container.innerHTML = `<p style="color: #6b7280; font-style: italic; padding: 12px;">${I18n.t('noVariants')}</p>`;
+      return;
+    }
+    
+    this.variants[mode].forEach((variant, index) => {
+      const card = this.buildVariantCard(mode, variant, index);
+      container.appendChild(card);
+    });
+  },
+  
+  // Build a single variant card
+  buildVariantCard(mode, variant, index) {
+    const modeColors = {
+      Sea: { bg: '#f0f9ff', border: '#bae6fd', header: '#0369a1' },
+      Air: { bg: '#f5f3ff', border: '#c4b5fd', header: '#7c3aed' },
+      Land: { bg: '#ecfdf5', border: '#a7f3d0', header: '#059669' }
+    };
+    const colors = modeColors[mode];
+    
+    const card = $.el('div', {
+      className: 'variant-card',
+      'data-variant-id': variant.id,
+      style: `border: 1px solid ${colors.border}; border-radius: 8px; margin-bottom: 16px; overflow: hidden;`
+    });
+    
+    // Card header - always visible
+    const header = $.el('div', {
+      className: 'variant-card-header',
+      style: `display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: ${colors.bg}; border-bottom: ${variant.expanded ? '1px solid ' + colors.border : 'none'}; cursor: pointer;`
+    });
+    
+    // Left side: expand/collapse + label input
+    const leftSide = $.el('div', { style: 'display: flex; align-items: center; gap: 12px; flex: 1;' });
+    
+    const expandBtn = $.el('button', {
+      type: 'button',
+      innerHTML: variant.expanded ? '▼' : '▶',
+      style: 'background: none; border: none; cursor: pointer; font-size: 12px; color: #6b7280; padding: 4px;',
+      title: variant.expanded ? I18n.t('collapseVariant') : I18n.t('expandVariant')
+    });
+    expandBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleVariant(mode, variant.id);
+    });
+    
+    const labelInput = $.el('input', {
+      type: 'text',
+      className: 'variant-label-input',
+      value: variant.label,
+      placeholder: I18n.t('variantLabel'),
+      style: 'font-weight: 600; font-size: 14px; color: ' + colors.header + '; border: 1px solid transparent; background: transparent; padding: 4px 8px; border-radius: 4px; flex: 1; max-width: 250px;'
+    });
+    labelInput.addEventListener('focus', () => {
+      labelInput.style.borderColor = colors.border;
+      labelInput.style.background = 'white';
+    });
+    labelInput.addEventListener('blur', () => {
+      labelInput.style.borderColor = 'transparent';
+      labelInput.style.background = 'transparent';
+      variant.label = labelInput.value;
+    });
+    labelInput.addEventListener('click', (e) => e.stopPropagation());
+    
+    // Summary text when collapsed
+    const summaryText = this.getVariantSummary(mode, variant);
+    const summary = $.el('span', {
+      textContent: summaryText,
+      style: 'font-size: 12px; color: #6b7280; margin-left: 8px;' + (variant.expanded ? ' display: none;' : '')
+    });
+    
+    leftSide.appendChild(expandBtn);
+    leftSide.appendChild(labelInput);
+    leftSide.appendChild(summary);
+    
+    // Right side: action buttons
+    const rightSide = $.el('div', { style: 'display: flex; align-items: center; gap: 8px;' });
+    
+    const duplicateBtn = $.el('button', {
+      type: 'button',
+      textContent: I18n.t('duplicateVariant'),
+      style: 'background: #e0e7ff; color: #4338ca; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;'
+    });
+    duplicateBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.saveVariantFromForm(mode, variant.id);
+      this.duplicateVariant(mode, variant.id);
+    });
+    
+    const deleteBtn = $.el('button', {
+      type: 'button',
+      textContent: '×',
+      style: 'background: #fee2e2; color: #dc2626; border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; font-size: 18px; line-height: 1;',
+      title: I18n.t('deleteVariant')
+    });
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.deleteVariant(mode, variant.id);
+    });
+    
+    rightSide.appendChild(duplicateBtn);
+    rightSide.appendChild(deleteBtn);
+    
+    header.appendChild(leftSide);
+    header.appendChild(rightSide);
+    
+    // Make header clickable to expand/collapse
+    header.addEventListener('click', () => this.toggleVariant(mode, variant.id));
+    
+    card.appendChild(header);
+    
+    // Card body - only visible when expanded
+    if (variant.expanded) {
+      const body = $.el('div', {
+        className: 'variant-card-body',
+        style: 'padding: 16px; background: white;'
+      });
+      
+      // Route details section
+      const detailsSection = this.buildDetailsSection(mode, variant);
+      body.appendChild(detailsSection);
+      
+      // Charges section
+      const chargesSection = this.buildChargesSection(mode, variant);
+      body.appendChild(chargesSection);
+      
+      card.appendChild(body);
+    }
+    
+    return card;
+  },
+  
+  // Get a summary string for collapsed variant
+  getVariantSummary(mode, variant) {
+    if (mode === 'Sea') {
+      const parts = [];
+      if (variant.departurePort) parts.push(variant.departurePort);
+      if (variant.poe) parts.push('→ ' + variant.poe);
+      if (variant.containerDetails) parts.push('| ' + variant.containerDetails);
+      return parts.join(' ') || '(No details)';
+    } else if (mode === 'Air') {
+      const parts = [];
+      if (variant.departureAirportIATA) parts.push(variant.departureAirportIATA);
+      if (variant.arrivalAirportIATA) parts.push('→ ' + variant.arrivalAirportIATA);
+      if (variant.airlineName) parts.push('| ' + variant.airlineName);
+      return parts.join(' ') || '(No details)';
+    } else if (mode === 'Land') {
+      const parts = [];
+      if (variant.truckType) parts.push(variant.truckType);
+      if (variant.volume) parts.push('| ' + variant.volume + ' cbm');
+      return parts.join(' ') || '(No details)';
+    }
+    return '';
+  },
+  
+  // Build details section based on mode
+  buildDetailsSection(mode, variant) {
+    const section = $.el('div', {
+      className: 'variant-details-section',
+      style: 'margin-bottom: 20px;'
+    });
+    
+    const title = $.el('h5', {
+      textContent: I18n.t('variantDetails'),
+      style: 'margin: 0 0 12px 0; font-size: 13px; color: #374151; font-weight: 600;'
+    });
+    section.appendChild(title);
+    
+    const grid = $.el('div', {
+      style: 'display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;'
+    });
+    
+    if (mode === 'Sea') {
+      grid.appendChild(this.buildField('Departure Port', 'departurePort', variant.departurePort, 'e.g. Istanbul'));
+      grid.appendChild(this.buildField('Port of Entry (POE)', 'poe', variant.poe, 'e.g. Rotterdam'));
+      grid.appendChild(this.buildField('Container Details', 'containerDetails', variant.containerDetails, 'e.g. LCL or 20ft FCL'));
+      grid.appendChild(this.buildField('Volume (cbm)', 'volume', variant.volume, 'e.g. 12', 'number'));
+      grid.appendChild(this.buildField('Transit Time (days)', 'transitTime', variant.transitTime, 'e.g. 21', 'number'));
+    } else if (mode === 'Air') {
+      grid.appendChild(this.buildField('Departure Airport', 'departureAirportName', variant.departureAirportName, 'e.g. Istanbul Ataturk'));
+      grid.appendChild(this.buildField('Departure IATA', 'departureAirportIATA', variant.departureAirportIATA, 'e.g. IST'));
+      grid.appendChild(this.buildField('Arrival Airport', 'arrivalAirportName', variant.arrivalAirportName, 'e.g. Dubai International'));
+      grid.appendChild(this.buildField('Arrival IATA', 'arrivalAirportIATA', variant.arrivalAirportIATA, 'e.g. DXB'));
+      grid.appendChild(this.buildField('Airline', 'airlineName', variant.airlineName, 'e.g. Turkish Airlines'));
+      grid.appendChild(this.buildField('Cargo Weight (kg)', 'cargoWeight', variant.cargoWeight, 'e.g. 500', 'number'));
+      grid.appendChild(this.buildField('Volume (cbm)', 'volume', variant.volume, 'e.g. 5', 'number'));
+      grid.appendChild(this.buildField('ACW (kg)', 'acw', variant.acw, 'e.g. 835', 'number'));
+      grid.appendChild(this.buildField('Transit Time (days)', 'transitTime', variant.transitTime, 'e.g. 3', 'number'));
+    } else if (mode === 'Land') {
+      // Truck type as radio buttons
+      const truckTypeDiv = $.el('div', { style: 'grid-column: span 2;' });
+      const truckLabel = $.el('label', { 
+        textContent: 'Truck Type',
+        style: 'display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;'
+      });
+      const radioGroup = $.el('div', { style: 'display: flex; gap: 16px;' });
+      
+      ['Dedicated', 'Consolidated'].forEach(type => {
+        const label = $.el('label', { style: 'display: flex; align-items: center; gap: 4px; cursor: pointer;' });
+        const radio = $.el('input', {
+          type: 'radio',
+          name: `truckType_${variant.id}`,
+          value: type
+        });
+        if (variant.truckType === type) radio.checked = true;
+        label.appendChild(radio);
+        label.appendChild(document.createTextNode(type));
+        radioGroup.appendChild(label);
+      });
+      
+      truckTypeDiv.appendChild(truckLabel);
+      truckTypeDiv.appendChild(radioGroup);
+      grid.appendChild(truckTypeDiv);
+      
+      grid.appendChild(this.buildField('Volume (cbm)', 'volume', variant.volume, 'e.g. 14.5', 'number'));
+      grid.appendChild(this.buildField('Transit Time (days)', 'transitTime', variant.transitTime, 'e.g. 7', 'number'));
+    }
+    
+    section.appendChild(grid);
+    return section;
+  },
+  
+  // Build a single field
+  buildField(label, fieldName, value, placeholder, type = 'text') {
+    const div = $.el('div');
+    const labelEl = $.el('label', {
+      textContent: label,
+      style: 'display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;'
+    });
+    const input = $.el('input', {
+      type: type,
+      'data-field': fieldName,
+      value: value || '',
+      placeholder: placeholder,
+      style: 'width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px;'
+    });
+    if (type === 'number') {
+      input.step = '0.01';
+    }
+    div.appendChild(labelEl);
+    div.appendChild(input);
+    return div;
+  },
+  
+  // Build charges section
+  buildChargesSection(mode, variant) {
+    const section = $.el('div', { className: 'variant-charges-section' });
+    
+    const headerRow = $.el('div', { 
+      style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;'
+    });
+    const title = $.el('h5', {
+      textContent: I18n.t('variantCharges'),
+      style: 'margin: 0; font-size: 13px; color: #374151; font-weight: 600;'
+    });
+    const addBtn = $.el('button', {
+      type: 'button',
+      textContent: '+ Add Charge',
+      style: 'background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;'
+    });
+    addBtn.addEventListener('click', () => this.addChargeRow(mode, variant.id));
+    
+    headerRow.appendChild(title);
+    headerRow.appendChild(addBtn);
+    section.appendChild(headerRow);
+    
+    // Charges list container
+    const chargesList = $.el('div', { 
+      className: 'variant-charges-list',
+      'data-variant-id': variant.id
+    });
+    
+    // Add existing charges
+    if (variant.charges && variant.charges.length > 0) {
+      variant.charges.forEach(charge => {
+        const row = this.buildChargeRow(charge.category, charge.amount, charge.displayType, charge.rangeMax);
+        chargesList.appendChild(row);
+      });
+    }
+    
+    section.appendChild(chargesList);
+    return section;
+  },
+  
+  // Add a charge row to a variant
+  addChargeRow(mode, variantId, category = '', amount = '', displayType = 'fixed', rangeMax = '') {
+    const card = document.querySelector(`[data-variant-id="${variantId}"]`);
+    if (!card) return;
+    
+    const chargesList = card.querySelector('.variant-charges-list');
+    if (!chargesList) return;
+    
+    const row = this.buildChargeRow(category, amount, displayType, rangeMax);
+    chargesList.appendChild(row);
+  },
+  
+  // Build a single charge row
+  buildChargeRow(category = '', amount = '', displayType = 'fixed', rangeMax = '') {
+    const row = $.el('div', { 
+      className: 'charge-row',
+      style: 'display: grid; grid-template-columns: 2fr 110px 1fr 32px; gap: 8px; margin-bottom: 8px; align-items: center;'
+    });
+    
+    // Category input
+    const categoryInput = $.el('input', { 
+      type: 'text', 
+      placeholder: (State.lang === 'tr') ? 'Masraf açıklaması' : 'Charge description',
+      className: 'charge-category-input',
+      value: category,
+      style: 'padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px;'
+    });
+    
+    // Display type selector
+    const typeSelect = $.el('select', { 
+      className: 'charge-type-select', 
+      style: 'padding: 6px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 4px;' 
+    });
+    const typeOptions = [
+      { value: 'fixed', label: (State.lang === 'tr') ? 'Sabit' : 'Fixed' },
+      { value: 'ratePerKgACW', label: '/kg ACW' },
+      { value: 'ratePerCBM', label: '/CBM' },
+      { value: 'range', label: (State.lang === 'tr') ? 'Aralık' : 'Range' }
+    ];
+    typeOptions.forEach(opt => {
+      const option = $.el('option', { value: opt.value, textContent: opt.label });
+      if (opt.value === displayType) option.selected = true;
+      typeSelect.appendChild(option);
+    });
+    
+    // Amount container
+    const amountContainer = $.el('div', { 
+      className: 'charge-amount-container', 
+      style: 'display: flex; gap: 4px; align-items: center;' 
+    });
+    
+    const updateAmountInputs = () => {
+      $.clear(amountContainer);
+      const type = typeSelect.value;
+      
+      if (type === 'range') {
+        const minInput = $.el('input', { 
+          type: 'number', 
+          step: '0.01',
+          placeholder: 'Min',
+          className: 'charge-amount-input',
+          value: amount,
+          style: 'width: 65px; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px;'
+        });
+        const dash = $.el('span', { textContent: '–', style: 'margin: 0 2px; color: #6b7280;' });
+        const maxInput = $.el('input', { 
+          type: 'number', 
+          step: '0.01',
+          placeholder: 'Max',
+          className: 'charge-range-max',
+          value: rangeMax,
+          style: 'width: 65px; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px;'
+        });
+        amountContainer.appendChild(minInput);
+        amountContainer.appendChild(dash);
+        amountContainer.appendChild(maxInput);
+      } else {
+        const amountInput = $.el('input', { 
+          type: 'number', 
+          step: '0.01',
+          placeholder: type === 'fixed' ? ((State.lang === 'tr') ? 'Tutar' : 'Amount') : ((State.lang === 'tr') ? 'Oran' : 'Rate'),
+          className: 'charge-amount-input',
+          value: amount,
+          style: 'flex: 1; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px;'
+        });
+        amountContainer.appendChild(amountInput);
+      }
+    };
+    
+    typeSelect.addEventListener('change', updateAmountInputs);
+    updateAmountInputs();
+    
+    // Delete button
+    const deleteBtn = $.el('button', { 
+      type: 'button', 
+      textContent: '×',
+      style: 'background: #ef4444; color: white; border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; font-size: 16px; line-height: 1;'
+    });
+    deleteBtn.addEventListener('click', () => row.remove());
+    
+    row.appendChild(categoryInput);
+    row.appendChild(typeSelect);
+    row.appendChild(amountContainer);
+    row.appendChild(deleteBtn);
+    
+    return row;
+  },
+  
+  // Populate charges for a variant from templates
+  populateDefaultCharges(mode, variantId, type, recipientType) {
+    const variant = this.variants[mode].find(v => v.id === variantId);
+    if (!variant) return;
+    
+    const templateKey = `${mode}|${type}|${recipientType === 'agent' ? 'Agent' : 'Client'}`;
+    const template = QUOTE_TEMPLATES[templateKey];
+    
+    if (template && template.chargeCategories) {
+      variant.charges = template.chargeCategories.map(cat => ({
+        category: cat,
+        amount: '',
+        displayType: 'fixed',
+        rangeMax: ''
+      }));
+    }
+    
+    this.renderVariants(mode);
+  },
+  
+  // Load variants from a saved quote
+  loadFromQuote(quote) {
+    this.reset();
+    
+    // Check if quote has new variant structure
+    if (quote.variants) {
+      ['Sea', 'Air', 'Land'].forEach(mode => {
+        if (quote.variants[mode] && quote.variants[mode].length > 0) {
+          this.variants[mode] = JSON.parse(JSON.stringify(quote.variants[mode]));
+        }
+      });
+    } else if (quote.chargesByMode) {
+      // Migrate from old structure - create one variant per mode with the charges
+      ['Sea', 'Air', 'Land'].forEach(mode => {
+        if (quote.chargesByMode[mode] && quote.chargesByMode[mode].length > 0) {
+          const variant = {
+            id: this.generateId(mode),
+            label: `${I18n.t('variantOption')} 1`,
+            expanded: true,
+            ...this.getDefaultFields(mode),
+            charges: quote.chargesByMode[mode].map(c => ({
+              category: c.category,
+              amount: c.amount,
+              displayType: c.displayType || 'fixed',
+              rangeMax: c.rangeMax || ''
+            }))
+          };
+          
+          // Migrate route details for each mode
+          if (mode === 'Sea') {
+            variant.departurePort = quote.departurePort || '';
+            variant.poe = quote.poe || '';
+            variant.containerDetails = quote.containerDetails || '';
+            variant.volume = quote.seaVolume || '';
+            variant.transitTime = quote.seaTransitTime || '';
+          } else if (mode === 'Air') {
+            variant.departureAirportName = quote.departureAirportName || '';
+            variant.departureAirportIATA = quote.departureAirportIATA || '';
+            variant.arrivalAirportName = quote.arrivalAirportName || '';
+            variant.arrivalAirportIATA = quote.arrivalAirportIATA || '';
+            variant.airlineName = quote.airlineName || '';
+            variant.cargoWeight = quote.airCargoWeight || '';
+            variant.volume = quote.airVolume || '';
+            variant.acw = quote.airACW || '';
+            variant.transitTime = quote.airTransitTime || '';
+          } else if (mode === 'Land') {
+            variant.truckType = quote.truckType || 'Dedicated';
+            variant.volume = quote.landVolume || '';
+            variant.transitTime = quote.landTransitTime || '';
+          }
+          
+          this.variants[mode].push(variant);
+        }
+      });
+    }
+  },
+  
+  // Get variants data for saving to quote
+  getVariantsForSave() {
+    // Save all current form values first
+    ['Sea', 'Air', 'Land'].forEach(mode => {
+      this.saveAllVariants(mode);
+    });
+    
+    // Return a copy of the variants
+    return JSON.parse(JSON.stringify(this.variants));
   }
 };
 
@@ -6320,18 +9277,25 @@ const QuotesUI = {
     let list = [...State.quotes];
     
     if (State.quoteFilters.search) {
-      const term = State.quoteFilters.search.toLowerCase();
+      const term = State.quoteFilters.search.trim();
       list = list.filter(quote => {
-        const text = [
+        const fields = [
+          // Identifiers
           quote.quoteCode,
+          // Client info
           quote.clientName,
           quote.clientOrganization,
+          // Locations
           quote.origin,
           quote.destination,
+          // Type/Mode/Status (bilingual)
           quote.type,
+          quote.status,
+          quote.recipientType,
+          // Modes as string
           ...(quote.modes || [])
-        ].filter(Boolean).join(' ').toLowerCase();
-        return text.includes(term);
+        ];
+        return SearchHelper.matchesAny(fields, term);
       });
     }
     
@@ -6349,7 +9313,7 @@ const QuotesUI = {
     
     // Row 1: Client Name (left) — Quote Code (right) - matching job card layout
     const row1 = $.el('div', { className: 'quote-card-header' });
-    row1.appendChild($.el('span', { className: 'quote-card-client', textContent: quote.clientName || 'No client name' }));
+    row1.appendChild($.el('span', { className: 'quote-card-client', textContent: quote.clientName || I18n.t('noClientName') }));
     row1.appendChild($.el('span', { className: 'quote-card-code', textContent: quote.quoteCode || '' }));
     card.appendChild(row1);
     
@@ -6364,23 +9328,24 @@ const QuotesUI = {
     // Row 3: Route
     card.appendChild($.el('p', { 
       className: 'quote-card-route',
-      textContent: `${quote.origin || '-'} to ${quote.destination || '-'}` 
+      textContent: `${quote.origin || '-'} → ${quote.destination || '-'}` 
     }));
     
     // Row 4: Modes (left) — Type (right)
     const row4 = $.el('div', { className: 'quote-card-row' });
     
-    // Mode badges
+    // Mode badges - translated
     const modesContainer = $.el('span', { className: 'quote-card-modes' });
     if (quote.modes && quote.modes.length > 0) {
       quote.modes.forEach(mode => {
-        modesContainer.appendChild($.el('span', { className: 'mode-badge', textContent: mode }));
+        const modeText = I18n.modeText(mode);
+        modesContainer.appendChild($.el('span', { className: 'mode-badge', textContent: modeText }));
       });
     }
     row4.appendChild(modesContainer);
     
-    // Type label
-    const typeLabel = quote.type || '-';
+    // Type label - translated
+    const typeLabel = I18n.typeText(quote.type) || '-';
     row4.appendChild($.el('span', { className: 'quote-card-type', textContent: typeLabel }));
     card.appendChild(row4);
     
@@ -6389,7 +9354,9 @@ const QuotesUI = {
       const linkedJob = State.getJob(quote.convertedToJobId);
       if (linkedJob) {
         const linkedRow = $.el('div', { className: 'quote-card-linked' });
-        linkedRow.textContent = `Converted to ${linkedJob.jobCode}`;
+        linkedRow.textContent = (State.lang === 'tr') 
+          ? `${linkedJob.jobCode} taşımasına dönüştürüldü`
+          : `Converted to ${linkedJob.jobCode}`;
         card.appendChild(linkedRow);
       }
     }
@@ -6408,7 +9375,7 @@ const QuotesUI = {
     
     // ===== HEADER: Quote Code + Client Name =====
     const titleContainer = $.el('div', { className: 'move-details-header' });
-    const titleText = `${quote.quoteCode || ''} - ${quote.clientName || 'No client name'}`;
+    const titleText = `${quote.quoteCode || ''} - ${quote.clientName || I18n.t('noClientName')}`;
     titleContainer.appendChild($.el('h3', { textContent: titleText }));
     container.appendChild(titleContainer);
     
@@ -6428,9 +9395,9 @@ const QuotesUI = {
     quoteCard.appendChild($.el('h4', { className: 'details-card-title', textContent: (State.lang === 'tr') ? 'TEKLİF BİLGİLERİ' : 'QUOTE INFORMATION' }));
     const quoteGrid = $.el('div', { className: 'details-card-grid' });
     
-    this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'TİP' : 'TYPE', quote.type || '-');
-    this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'MODLAR' : 'MODES', (quote.modes || []).join(', ') || '-');
-    this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'SİGORTA' : 'INSURANCE', quote.insurance ? 'Yes' : 'No');
+    this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'TİP' : 'TYPE', I18n.typeText(quote.type) || '-');
+    this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'MODLAR' : 'MODES', I18n.modesText(quote.modes) || '-');
+    this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'SİGORTA' : 'INSURANCE', quote.insurance ? ((State.lang === 'tr') ? 'Evet' : 'Yes') : ((State.lang === 'tr') ? 'Hayır' : 'No'));
     this.addDetailItem(quoteGrid, (State.lang === 'tr') ? 'GEÇERLİLİK' : 'VALID UNTIL', quote.validUntil ? Utils.formatDate(quote.validUntil) : '-');
     
     quoteCard.appendChild(quoteGrid);
@@ -6540,44 +9507,72 @@ const QuotesUI = {
     const section = $.el('div', { className: 'details-section quote-charges-section' });
     
     const modeColors = { Sea: 'sea', Air: 'air', Land: 'land' };
+    const quoteCurrency = quote.quoteCurrency || 'USD';
+    
+    // Build header with relevant info
+    let headerText = '';
+    let subInfo = '';
+    
+    if (mode === 'Sea') {
+      const vol = quote.seaVolume || quote.estimatedVolume || 0;
+      const container = quote.containerDetails || 'LCL';
+      headerText = (State.lang === 'tr') 
+        ? `DENİZYOLU (${container}) tahmini toplam hacim: ${vol} cbm`
+        : `SEA FREIGHT (${container}) est. total volume: ${vol} cbm`;
+      subInfo = `${quote.departurePort || quote.origin || '-'} → POE ${quote.poe || quote.destination || '-'}`;
+      if (quote.seaTransitTime) subInfo += (State.lang === 'tr') 
+        ? `\nTahmini transit süresi: ${quote.seaTransitTime} gün`
+        : `\nEstimated port-to-port transit time: ${quote.seaTransitTime} days`;
+    } else if (mode === 'Air') {
+      const acw = quote.airACW || 0;
+      headerText = (State.lang === 'tr') 
+        ? `HAVAYOLU - ${acw.toFixed(1)} kg (ACW)`
+        : `AIR FREIGHT - ${acw.toFixed(1)} kg (ACW)`;
+      const airline = quote.airlineCarrier ? `via ${quote.airlineCarrier}` : '';
+      subInfo = `${quote.departureAirportName || quote.origin || '-'} → ${quote.arrivalAirportName || quote.destination || '-'}`;
+      if (airline) subInfo += `\n${airline}`;
+      if (quote.airTransitTime) subInfo += (State.lang === 'tr') 
+        ? ` - Tahmini transit süresi: ${quote.airTransitTime} gün`
+        : ` - Estimated transit time: ${quote.airTransitTime} days`;
+    } else if (mode === 'Land') {
+      const vol = quote.landVolume || quote.estimatedVolume || 0;
+      const truck = quote.truckType || 'Dedicated';
+      headerText = (State.lang === 'tr') 
+        ? `KARAYOLU (${truck}) tahmini toplam hacim: ${vol} cbm`
+        : `LAND FREIGHT (${truck}) est. total volume: ${vol} cbm`;
+      subInfo = `${quote.origin || '-'} → ${quote.destination || '-'}`;
+      if (quote.landTransitTime) subInfo += (State.lang === 'tr') 
+        ? `\nTahmini transit süresi: ${quote.landTransitTime} gün`
+        : `\nEstimated transit time: ${quote.landTransitTime} days`;
+    }
+    
     const header = $.el('h4', { 
       className: `details-section-title mode-${modeColors[mode] || 'default'}`,
-      textContent: `${mode.toUpperCase()} FREIGHT CHARGES`
+      textContent: headerText
     });
     section.appendChild(header);
     
-    const info = $.el('div', { className: 'quote-charges-info' });
-    if (mode === 'Sea') {
-      const vol = quote.seaVolume || quote.estimatedVolume || 0;
-      info.textContent = `Container: ${quote.containerDetails || 'N/A'} | Volume: ${vol} cbm | Route: ${quote.departurePort || '-'} to POE ${quote.poe || '-'} | Transit: ${quote.seaTransitTime ? quote.seaTransitTime + ' days' : 'TBD'}`;
-    } else if (mode === 'Air') {
-      const vol = quote.airVolume || quote.estimatedVolume || 0;
-      const acw = quote.airACW || 0;
-      info.textContent = `Weight: ${quote.airCargoWeight || 0} kg | Volume: ${vol} cbm | ACW: ${acw.toFixed(1)} kg | Route: ${quote.departureAirportName || '-'} to ${quote.arrivalAirportName || '-'} | Transit: ${quote.airTransitTime ? quote.airTransitTime + ' days' : 'TBD'}`;
-    } else if (mode === 'Land') {
-      const vol = quote.landVolume || quote.estimatedVolume || 0;
-      info.textContent = `Truck: ${quote.truckType || 'Dedicated'} | Volume: ${vol} cbm | Route: ${quote.origin || '-'} to ${quote.destination || '-'} | Transit: ${quote.landTransitTime ? quote.landTransitTime + ' days' : 'TBD'}`;
+    if (subInfo) {
+      const info = $.el('div', { className: 'quote-charges-info', style: 'white-space: pre-line;' });
+      info.textContent = subInfo;
+      section.appendChild(info);
     }
-    section.appendChild(info);
     
     const table = $.el('table', { className: 'quote-charges-table' });
-    let totalsByCurrency = {};
     
     charges.forEach(charge => {
       const row = $.el('tr');
+      const amountDisplay = QuoteUtils.formatChargeAmount(charge);
       row.innerHTML = `
         <td class="charge-category">${charge.category}</td>
-        <td class="charge-amount">${charge.currency} ${parseFloat(charge.amount).toFixed(2)}</td>
+        <td class="charge-amount">${amountDisplay}</td>
       `;
       table.appendChild(row);
-      
-      if (!totalsByCurrency[charge.currency]) totalsByCurrency[charge.currency] = 0;
-      totalsByCurrency[charge.currency] += parseFloat(charge.amount) || 0;
     });
     
-    const totalText = Object.entries(totalsByCurrency)
-      .map(([curr, amt]) => `${curr} ${amt.toFixed(2)}`)
-      .join(' + ');
+    // Calculate totals (returns null if any variable charges exist)
+    const totals = QuoteUtils.calculateTotals(charges);
+    const totalText = QuoteUtils.formatTotals(totals);
     
     if (totalText) {
       const totalRow = $.el('tr', { className: 'total-row' });
@@ -6607,7 +9602,7 @@ const QuotesUI = {
     
     const container = $.get('quoteDetails');
     $.clear(container);
-    container.appendChild($.el('p', { textContent: 'Select a quote to see details.' }));
+    container.appendChild($.el('p', { textContent: I18n.t('selectQuoteToSee') }));
     
     const editBtn = $.get('editQuoteBtn');
     if (editBtn) editBtn.disabled = true;
@@ -6625,16 +9620,21 @@ const QuotesUI = {
   if (!confirmed) return;
   
   // Convert quote charges to job chargeItems
+  // Only fixed charges get amount, variable charges get description only (amount = 0)
   const chargeItems = [];
   if (quote.chargesByMode) {
     Object.keys(quote.chargesByMode).forEach(mode => {
       const charges = quote.chargesByMode[mode] || [];
       charges.forEach(charge => {
+        const displayType = charge.displayType || (charge.isPerAcw ? 'ratePerKgACW' : 'fixed');
+        const isFixed = displayType === 'fixed';
+        
         chargeItems.push({
           category: 'Moving',
           description: charge.description || charge.category || mode,
-          amount: charge.amount || 0,
-          currency: charge.currency || quote.quoteCurrency || 'USD'
+          amount: isFixed ? (charge.amount || 0) : 0, // Only fixed charges transfer amount
+          currency: charge.currency || quote.quoteCurrency || 'USD',
+          notes: isFixed ? '' : `Quote rate: ${displayType}` // Note the original rate type
         });
       });
     });
@@ -6703,6 +9703,7 @@ const QuotesUI = {
     }
     
     form.reset();
+    VariantsManager.reset(); // Reset variants for fresh form
     this.clearAllChargeLists();
     this.clearChecklists();
     this.hideAllModeSections();
@@ -6710,6 +9711,8 @@ const QuotesUI = {
     if (quote) {
       $.get('quoteModalTitle').textContent = 'Edit Quote';
       State.selectedQuoteId = quote.id;
+      // Load variants from quote before populating form
+      VariantsManager.loadFromQuote(quote);
       this.populateFormForEdit(quote);
     } else {
       $.get('quoteModalTitle').textContent = 'Create New Quote';
@@ -6730,16 +9733,15 @@ const QuotesUI = {
   hideAllModeSections() {
     ['Sea', 'Air', 'Land'].forEach(mode => {
       const fieldsSection = $.get(`${mode.toLowerCase()}FieldsSection`);
-      const chargesSection = $.get(`${mode.toLowerCase()}ChargesSection`);
       if (fieldsSection) $.hide(fieldsSection);
-      if (chargesSection) $.hide(chargesSection);
     });
   },
 
   clearAllChargeLists() {
-    ['seaChargesList', 'airChargesList', 'landChargesList'].forEach(id => {
-      const list = $.get(id);
-      if (list) $.clear(list);
+    // Clear variant containers
+    ['seaVariantsContainer', 'airVariantsContainer', 'landVariantsContainer'].forEach(id => {
+      const container = $.get(id);
+      if (container) $.clear(container);
     });
   },
 
@@ -6748,7 +9750,7 @@ const QuotesUI = {
     if (includesContainer) {
       $.clear(includesContainer);
       includesContainer.appendChild($.el('p', { 
-        textContent: 'Select mode and type to see available items',
+        textContent: I18n.t('selectModeAndType'),
         style: 'color: #9ca3af; font-size: 13px; font-style: italic;'
       }));
     }
@@ -6757,7 +9759,7 @@ const QuotesUI = {
     if (additionalContainer) {
       $.clear(additionalContainer);
       additionalContainer.appendChild($.el('p', { 
-        textContent: 'Select type to see available items',
+        textContent: I18n.t('selectTypeToSee'),
         style: 'color: #9ca3af; font-size: 13px; font-style: italic;'
       }));
     }
@@ -6791,19 +9793,19 @@ const QuotesUI = {
       if (cb) cb.checked = (quote.modes || []).includes(mode);
     });
     
-    // Show/hide mode sections WITHOUT auto-populating charges
+    // Show/hide mode sections and render variants
     const selectedModes = (quote.modes || []);
     ['Sea', 'Air', 'Land'].forEach(mode => {
       const fieldsSection = $.get(`${mode.toLowerCase()}FieldsSection`);
-      const chargesSection = $.get(`${mode.toLowerCase()}ChargesSection`);
       const shouldShow = selectedModes.includes(mode);
       if (fieldsSection) {
-        if (shouldShow) $.show(fieldsSection);
-        else $.hide(fieldsSection);
-      }
-      if (chargesSection) {
-        if (shouldShow) $.show(chargesSection);
-        else $.hide(chargesSection);
+        if (shouldShow) {
+          $.show(fieldsSection);
+          // Render the loaded variants
+          VariantsManager.renderVariants(mode);
+        } else {
+          $.hide(fieldsSection);
+        }
       }
     });
     
@@ -6816,23 +9818,8 @@ const QuotesUI = {
     // Apply context-aware field visibility
     this.updateContextAwareFields(quote.type || 'Export', quote.recipientType || 'Client');
     
-    // Sea fields
-    if (form.departurePort) form.departurePort.value = quote.departurePort || '';
-    if (form.poe) form.poe.value = quote.poe || '';
-    if (form.containerDetails) form.containerDetails.value = quote.containerDetails || '';
-    if (form.seaTransitTime) form.seaTransitTime.value = quote.seaTransitTime || '';
-    if (form.seaVolume) form.seaVolume.value = quote.seaVolume || '';
-    
-    // Air fields
-    if (form.departureAirportName) form.departureAirportName.value = quote.departureAirportName || '';
-    if (form.departureAirportIATA) form.departureAirportIATA.value = quote.departureAirportIATA || '';
-    if (form.arrivalAirportName) form.arrivalAirportName.value = quote.arrivalAirportName || '';
-    if (form.arrivalAirportIATA) form.arrivalAirportIATA.value = quote.arrivalAirportIATA || '';
-    if (form.airlineName) form.airlineName.value = quote.airlineName || '';
-    if (form.airTransitTime) form.airTransitTime.value = quote.airTransitTime || '';
-    if (form.airCargoWeight) form.airCargoWeight.value = quote.airCargoWeight || '';
-    if (form.airVolume) form.airVolume.value = quote.airVolume || '';
-    if (form.airACW) form.airACW.value = quote.airACW || '';
+    // NOTE: Sea/Air/Land route details are now stored in variants, not in quote root
+    // The VariantsManager.loadFromQuote() handles migration from old structure
     
     // Air quote type
 if (quote.airQuoteType) {
@@ -6886,7 +9873,8 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
       Object.keys(quote.chargesByMode).forEach(mode => {
         const charges = quote.chargesByMode[mode] || [];
         charges.forEach(charge => {
-          this.addChargeRow(mode, charge.category, charge.amount, charge.currency);
+          const displayType = charge.displayType || (charge.isPerAcw ? 'ratePerKgACW' : 'fixed');
+          this.addChargeRow(mode, charge.category, charge.amount, '', displayType, charge.rangeMax || '');
         });
       });
     }
@@ -6896,15 +9884,28 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
     
     // Consignment instructions restoration
     const includeConsignmentCb = $.get('includeConsignmentInstructions');
-    const clientCategorySel = $.get('quoteClientCategory');
+    const officeSelect = $.get('quoteConsignmentOffice');
+    const foreignCb = $.get('includeForeignNational');
+    const turkishCb = $.get('includeReturningTurkish');
+    const diplomaticCb = $.get('includeDiplomatic');
+    
     if (includeConsignmentCb) {
       includeConsignmentCb.checked = quote.includeConsignmentInstructions || false;
       this.toggleConsignmentOptions(includeConsignmentCb.checked);
     }
-    if (clientCategorySel) {
-      clientCategorySel.value = quote.clientCategory || 'foreign_national';
-      this.updateConsignmentPreview();
+    if (officeSelect) {
+      officeSelect.value = quote.consignmentOffice || 'Istanbul';
     }
+    if (foreignCb) {
+      foreignCb.checked = quote.includeForeignNational || false;
+    }
+    if (turkishCb) {
+      turkishCb.checked = quote.includeReturningTurkish || false;
+    }
+    if (diplomaticCb) {
+      diplomaticCb.checked = quote.includeDiplomatic || false;
+    }
+    this.updateConsignmentPreview();
     
     // Set selected checkboxes after a brief delay to let DOM update
     setTimeout(() => {
@@ -6928,21 +9929,29 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
     
     ['Sea', 'Air', 'Land'].forEach(mode => {
       const fieldsSection = $.get(`${mode.toLowerCase()}FieldsSection`);
-      const chargesSection = $.get(`${mode.toLowerCase()}ChargesSection`);
       
       const shouldShow = selectedModes.includes(mode);
       
       if (fieldsSection) {
-        if (shouldShow) $.show(fieldsSection);
-        else $.hide(fieldsSection);
-      }
-      if (chargesSection) {
-        if (shouldShow) $.show(chargesSection);
-        else $.hide(chargesSection);
-      }
-      
-      if (shouldShow && type) {
-        this.autoPopulateCharges(mode, type);
+        if (shouldShow) {
+          $.show(fieldsSection);
+          // Initialize variants for this mode if not already done
+          if (VariantsManager.variants[mode].length === 0) {
+            VariantsManager.initMode(mode);
+            // Auto-populate default charges for the first variant
+            if (type && VariantsManager.variants[mode].length > 0) {
+              const firstVariant = VariantsManager.variants[mode][0];
+              VariantsManager.populateDefaultCharges(mode, firstVariant.id, type, recipientType);
+            }
+          } else {
+            // Just render existing variants
+            VariantsManager.renderVariants(mode);
+          }
+        } else {
+          $.hide(fieldsSection);
+          // Clear variants for this mode when disabled
+          VariantsManager.clearMode(mode);
+        }
       }
     });
     
@@ -7010,53 +10019,93 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
     }
   },
 
-  // Update the consignment preview based on selected category
+  // Update the consignment preview based on selected office and checkboxes
   updateConsignmentPreview() {
     const preview = $.get('consignmentPreview');
-    const categorySelect = $.get('quoteClientCategory');
-    if (!preview || !categorySelect) return;
+    const officeSelect = $.get('quoteConsignmentOffice');
+    if (!preview) return;
     
-    const category = categorySelect.value;
-    const data = CONSIGNMENT_INSTRUCTIONS[category];
+    const office = officeSelect?.value || 'Istanbul';
     
-    if (!data) {
-      preview.innerHTML = '<p style="color: #6b7280; font-style: italic;">Select a category to preview the requirements.</p>';
-      return;
+    // Build preview HTML
+    let html = '<div style="margin-bottom: 16px;">';
+    html += '<strong>CONSIGNMENT INSTRUCTION</strong><br>';
+    html += '<span style="color: #6b7280; font-size: 11px;">(for express release Bill of Lading)</span><br><br>';
+    html += CONSIGNMENT_INSTRUCTIONS.getConsigneeTemplate(office).replace(/\n/g, '<br>');
+    html += '</div>';
+    
+    // Check which requirement types are selected
+    const includeForeign = $.get('includeForeignNational')?.checked;
+    const includeTurkish = $.get('includeReturningTurkish')?.checked;
+    const includeDiplomatic = $.get('includeDiplomatic')?.checked;
+    
+    if (includeForeign) {
+      const data = CONSIGNMENT_INSTRUCTIONS.foreign_national;
+      html += this.formatRequirementSection(data);
     }
     
-    let html = `<strong>${data.title}</strong><br><br>`;
-    html += `<p style="margin-bottom: 8px;">${data.description}</p>`;
-    
-    if (data.note) {
-      html += `<p style="margin-bottom: 8px; color: #b45309; font-style: italic;">${data.note}</p>`;
+    if (includeTurkish) {
+      const data = CONSIGNMENT_INSTRUCTIONS.returning_turkish;
+      html += this.formatRequirementSection(data);
     }
     
-    html += '<strong>Required documents:</strong><ul style="margin: 8px 0; padding-left: 20px;">';
-    data.documents.forEach(doc => {
-      html += `<li style="margin: 4px 0;">${doc}</li>`;
-    });
-    html += '</ul>';
+    if (includeDiplomatic) {
+      const data = CONSIGNMENT_INSTRUCTIONS.diplomatic;
+      html += this.formatRequirementSection(data);
+    }
+    
+    if (!includeForeign && !includeTurkish && !includeDiplomatic) {
+      html += '<p style="color: #6b7280; font-style: italic; font-size: 11px;">No import requirement sections selected. Only consignment address will be included.</p>';
+    }
     
     preview.innerHTML = html;
   },
-
-  // Get consignment instructions text for PDF export
-  getConsignmentInstructionsText(clientName, category) {
-    const data = CONSIGNMENT_INSTRUCTIONS[category];
-    if (!data) return '';
-    
-    let text = CONSIGNMENT_INSTRUCTIONS.consignee_template.replace('[CLIENT_NAME]', clientName || 'Full Name of Client (as in passport)');
-    text += '\n\n\n';
-    text += data.title + '\n\n';
-    text += data.description + '\n\n';
+  
+  formatRequirementSection(data) {
+    let html = '<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">';
+    html += `<strong>${data.title}</strong><br><br>`;
+    html += `<p style="margin-bottom: 8px; font-size: 11px;">${data.description}</p>`;
     
     if (data.note) {
-      text += data.note + '\n\n';
+      html += `<p style="margin-bottom: 8px; color: #b45309; font-style: italic; font-size: 11px;">${data.note}</p>`;
     }
     
-    text += 'Required documents for import clearance:\n\n';
+    html += '<strong style="font-size: 11px;">Required documents:</strong><ul style="margin: 8px 0; padding-left: 20px; font-size: 11px;">';
     data.documents.forEach(doc => {
-      text += '- ' + doc + '\n';
+      html += `<li style="margin: 4px 0;">${doc}</li>`;
+    });
+    html += '</ul></div>';
+    
+    return html;
+  },
+
+  // Get consignment instructions text for PDF export
+  getConsignmentInstructionsText(quote) {
+    const office = quote.consignmentOffice || 'Istanbul';
+    let text = CONSIGNMENT_INSTRUCTIONS.getConsigneeTemplate(office);
+    
+    // Add selected requirement sections
+    const sections = [];
+    if (quote.includeForeignNational) sections.push('foreign_national');
+    if (quote.includeReturningTurkish) sections.push('returning_turkish');
+    if (quote.includeDiplomatic) sections.push('diplomatic');
+    
+    sections.forEach(key => {
+      const data = CONSIGNMENT_INSTRUCTIONS[key];
+      if (!data) return;
+      
+      text += '\n\n\n';
+      text += data.title + '\n\n';
+      text += data.description + '\n\n';
+      
+      if (data.note) {
+        text += data.note + '\n\n';
+      }
+      
+      text += 'Required documents for import clearance:\n\n';
+      data.documents.forEach(doc => {
+        text += '- ' + doc + '\n';
+      });
     });
     
     return text;
@@ -7176,7 +10225,7 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
       
       if (selectedModes.length === 0 || !type) {
         includesContainer.appendChild($.el('p', { 
-          textContent: 'Select mode and type to see available items',
+          textContent: I18n.t('selectModeAndType'),
           style: 'color: #9ca3af; font-size: 13px; font-style: italic;'
         }));
       } else {
@@ -7225,7 +10274,7 @@ if (form.quoteCurrency) form.quoteCurrency.value = quote.quoteCurrency || 'USD';
       
       if (!type) {
         additionalContainer.appendChild($.el('p', { 
-          textContent: 'Select type to see available items',
+          textContent: I18n.t('selectTypeToSee'),
           style: 'color: #9ca3af; font-size: 13px; font-style: italic;'
         }));
       } else {
@@ -7266,77 +10315,94 @@ const items = QuoteUtils.getAdditionalChargesMayApply(type, selectedModes, hasIn
     container.appendChild(label);
   },
 
-  addChargeRow(mode, category = '', amount = '', currency = 'USD') {
+  addChargeRow(mode, category = '', amount = '', currency = '', displayType = 'fixed', rangeMax = '') {
   const listId = `${mode.toLowerCase()}ChargesList`;
   const container = $.get(listId);
   if (!container) return;
   
-  const quoteCurrency = $.get('quoteCurrency')?.value || currency || 'USD';
-  const recipientType = this.getRecipientType();
-  
-  // Check if this is Air Freight charge for Agent - use per ACW format
-  const isAirFreightForAgent = mode === 'Air' && 
-                               recipientType === 'Agent' && 
-                               category.toLowerCase().includes('air freight') &&
-                               !category.toLowerCase().includes('terminal') &&
-                               !category.toLowerCase().includes('clearance');
-  
   const row = $.el('div', { 
     className: 'charge-row',
-    style: 'display: grid; grid-template-columns: 2fr 1fr 40px; gap: 8px; margin-bottom: 8px; align-items: center;'
+    style: 'display: grid; grid-template-columns: 2fr 110px 1fr 32px; gap: 8px; margin-bottom: 8px; align-items: center;'
   });
   
-  // Mark row if it's air freight per ACW
-  if (isAirFreightForAgent) {
-    row.dataset.perAcw = 'true';
-  }
-  
+  // Category input
   const categoryInput = $.el('input', { 
     type: 'text', 
-    placeholder: 'Charge category',
+    placeholder: (State.lang === 'tr') ? 'Masraf açıklaması' : 'Charge description',
     className: 'charge-category-input',
     value: category
   });
   
-  // For Air Freight Agent quotes, show rate per kg ACW instead of total amount
-  let amountInput;
-  if (isAirFreightForAgent) {
-    const amountWrapper = $.el('div', { style: 'display: flex; align-items: center; gap: 4px;' });
-    amountInput = $.el('input', { 
-      type: 'number', 
-      step: '0.01',
-      placeholder: 'Rate',
-      className: 'charge-amount-input charge-rate-input',
-      value: amount,
-      style: 'flex: 1;'
-    });
-    const suffix = $.el('span', { 
-      textContent: `${quoteCurrency}/kg`,
-      style: 'font-size: 11px; color: #6b7280; white-space: nowrap;'
-    });
-    amountWrapper.appendChild(amountInput);
-    amountWrapper.appendChild(suffix);
-    row.appendChild(categoryInput);
-    row.appendChild(amountWrapper);
-  } else {
-    amountInput = $.el('input', { 
-      type: 'number', 
-      step: '0.01',
-      placeholder: `Amount (${quoteCurrency})`,
-      className: 'charge-amount-input',
-      value: amount
-    });
-    row.appendChild(categoryInput);
-    row.appendChild(amountInput);
-  }
+  // Display type selector (Fixed, /kg ACW, /CBM, Range)
+  const typeSelect = $.el('select', { className: 'charge-type-select', style: 'padding: 6px; font-size: 13px;' });
+  const typeOptions = [
+    { value: 'fixed', label: (State.lang === 'tr') ? 'Sabit' : 'Fixed' },
+    { value: 'ratePerKgACW', label: '/kg ACW' },
+    { value: 'ratePerCBM', label: '/CBM' },
+    { value: 'range', label: (State.lang === 'tr') ? 'Aralık' : 'Range' }
+  ];
+  typeOptions.forEach(opt => {
+    const option = $.el('option', { value: opt.value, textContent: opt.label });
+    if (opt.value === displayType) option.selected = true;
+    typeSelect.appendChild(option);
+  });
   
+  // Amount container - simplified, no currency labels
+  const amountContainer = $.el('div', { className: 'charge-amount-container', style: 'display: flex; gap: 4px; align-items: center;' });
+  
+  const updateAmountInputs = () => {
+    $.clear(amountContainer);
+    const type = typeSelect.value;
+    
+    if (type === 'range') {
+      const minInput = $.el('input', { 
+        type: 'number', 
+        step: '0.01',
+        placeholder: 'Min',
+        className: 'charge-amount-input',
+        value: amount,
+        style: 'width: 65px;'
+      });
+      const dash = $.el('span', { textContent: '–', style: 'margin: 0 2px; color: #6b7280;' });
+      const maxInput = $.el('input', { 
+        type: 'number', 
+        step: '0.01',
+        placeholder: 'Max',
+        className: 'charge-range-max',
+        value: rangeMax,
+        style: 'width: 65px;'
+      });
+      amountContainer.appendChild(minInput);
+      amountContainer.appendChild(dash);
+      amountContainer.appendChild(maxInput);
+    } else {
+      // Fixed, ratePerKgACW, ratePerCBM - all just need a single amount/rate input
+      const amountInput = $.el('input', { 
+        type: 'number', 
+        step: '0.01',
+        placeholder: type === 'fixed' ? ((State.lang === 'tr') ? 'Tutar' : 'Amount') : ((State.lang === 'tr') ? 'Oran' : 'Rate'),
+        className: 'charge-amount-input',
+        value: amount,
+        style: 'flex: 1;'
+      });
+      amountContainer.appendChild(amountInput);
+    }
+  };
+  
+  typeSelect.addEventListener('change', updateAmountInputs);
+  updateAmountInputs();
+  
+  // Delete button
   const deleteBtn = $.el('button', { 
     type: 'button', 
     textContent: '×',
-    style: 'background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 16px;'
+    style: 'background: #ef4444; color: white; border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; font-size: 16px; line-height: 1;'
   });
   deleteBtn.addEventListener('click', () => row.remove());
   
+  row.appendChild(categoryInput);
+  row.appendChild(typeSelect);
+  row.appendChild(amountContainer);
   row.appendChild(deleteBtn);
   
   container.appendChild(row);
@@ -7361,28 +10427,21 @@ const items = QuoteUtils.getAdditionalChargesMayApply(type, selectedModes, hasIn
     
     const quoteCurrency = form.quoteCurrency?.value || 'USD';
 
-const chargesByMode = {};
-modes.forEach(mode => {
-  const listId = `${mode.toLowerCase()}ChargesList`;
-  const container = $.get(listId);
-  if (!container) return;
-  
-  chargesByMode[mode] = [];
-  container.querySelectorAll('.charge-row').forEach(row => {
-    const category = row.querySelector('.charge-category-input')?.value.trim();
-    const amount = parseFloat(row.querySelector('.charge-amount-input')?.value) || 0;
-    const isPerAcw = row.dataset.perAcw === 'true';
+    // Get variants from VariantsManager
+    const variants = VariantsManager.getVariantsForSave();
     
-    if (category) {
-      chargesByMode[mode].push({ 
-        category, 
-        amount, 
-        currency: quoteCurrency,
-        isPerAcw: isPerAcw
-      });
-    }
-  });
-});
+    // Add currency to all charges in variants
+    ['Sea', 'Air', 'Land'].forEach(mode => {
+      if (variants[mode]) {
+        variants[mode].forEach(variant => {
+          if (variant.charges) {
+            variant.charges.forEach(charge => {
+              charge.currency = quoteCurrency;
+            });
+          }
+        });
+      }
+    });
     
     const selectedIncludes = [];
     document.querySelectorAll('#quotationIncludesChecklist input[type="checkbox"]:checked').forEach(cb => {
@@ -7462,7 +10521,10 @@ vehicleCondition: form.querySelector('input[name="quoteVehicleCondition"]:checke
       estimatedVolume: parseFloat(form.seaVolume?.value) || parseFloat(form.airVolume?.value) || parseFloat(form.landVolume?.value) || 0,
       // Consignment instructions
       includeConsignmentInstructions: $.get('includeConsignmentInstructions')?.checked || false,
-      clientCategory: $.get('quoteClientCategory')?.value || 'foreign_national'
+      consignmentOffice: $.get('quoteConsignmentOffice')?.value || 'Istanbul',
+      includeForeignNational: $.get('includeForeignNational')?.checked || false,
+      includeReturningTurkish: $.get('includeReturningTurkish')?.checked || false,
+      includeDiplomatic: $.get('includeDiplomatic')?.checked || false
     };
     
     // Handle per-mode insurance
@@ -7690,10 +10752,11 @@ const QuoteExport = {
       
       chargeRows = charges.map(c => {
         const replacedCategory = QuoteUtils.replacePlaceholders(c.category, formData);
+        const amountDisplay = QuoteUtils.formatChargeAmount(c);
         return `
           <tr>
             <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
-            <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)}</td>
+            <td class="charge-amount">${amountDisplay}</td>
           </tr>
         `;
       }).join('');
@@ -7747,53 +10810,29 @@ const QuoteExport = {
       // Check if this is agent or client quote type
       const isAgentQuote = quote.airQuoteType === 'agent';
       
-      if (isAgentQuote) {
-  // Agent mode: charges with isPerAcw flag show "per ACW", others show normal amounts
-  chargeRows = charges.map(c => {
-    const replacedCategory = QuoteUtils.replacePlaceholders(c.category, formData);
-    // Use the isPerAcw flag set during form submission
-    const showPerAcw = c.isPerAcw === true;
-    
-    if (showPerAcw) {
-      return `
-        <tr>
-          <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
-          <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)} per kg ACW</td>
-        </tr>
-      `;
-    } else {
-      return `
-        <tr>
-          <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
-          <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)}</td>
-        </tr>
-      `;
-    }
-  }).join('');
-  // No total row for agent quotes
-      } else {
-        // Client mode: show actual values with total
-        const totals = QuoteUtils.calculateTotals(charges);
-        totalText = QuoteUtils.formatTotals(totals);
-        
-        chargeRows = charges.map(c => {
-          const replacedCategory = QuoteUtils.replacePlaceholders(c.category, formData);
-          return `
-            <tr>
-              <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
-              <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)}</td>
-            </tr>
-          `;
-        }).join('');
-        
-        if (totalText) {
-          chargeRows += `
-            <tr class="total-row">
-              <td class="charge-category">TOTAL (${mode})</td>
-              <td class="charge-amount">${totalText}</td>
-            </tr>
-          `;
-        }
+      // Use displayType for all charge formatting (works for both agent and client)
+      const totals = QuoteUtils.calculateTotals(charges);
+      totalText = QuoteUtils.formatTotals(totals);
+      
+      chargeRows = charges.map(c => {
+        const replacedCategory = QuoteUtils.replacePlaceholders(c.category, formData);
+        const amountDisplay = QuoteUtils.formatChargeAmount(c);
+        return `
+          <tr>
+            <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
+            <td class="charge-amount">${amountDisplay}</td>
+          </tr>
+        `;
+      }).join('');
+      
+      // Only show total if we have fixed charges and totals exist
+      if (totalText) {
+        chargeRows += `
+          <tr class="total-row">
+            <td class="charge-category">TOTAL (${mode})</td>
+            <td class="charge-amount">${totalText}</td>
+          </tr>
+        `;
       }
       
     } else if (mode === 'Land') {
@@ -7821,10 +10860,11 @@ const QuoteExport = {
       
       chargeRows = charges.map(c => {
         const replacedCategory = QuoteUtils.replacePlaceholders(c.category, formData);
+        const amountDisplay = QuoteUtils.formatChargeAmount(c);
         return `
           <tr>
             <td class="charge-category">${Utils.escapeHtml(replacedCategory)}</td>
-            <td class="charge-amount">${c.currency} ${parseFloat(c.amount).toFixed(2)}</td>
+            <td class="charge-amount">${amountDisplay}</td>
           </tr>
         `;
       }).join('');
@@ -7925,15 +10965,18 @@ const QuoteExport = {
   },
   
   buildConsignmentSection(quote) {
-    // Only include if the checkbox was checked and we have a category
-    if (!quote.includeConsignmentInstructions || !quote.clientCategory) return '';
+    // Only include if the checkbox was checked
+    if (!quote.includeConsignmentInstructions) return '';
     
-    const text = QuotesUI.getConsignmentInstructionsText(quote.clientName, quote.clientCategory);
+    // Check if any requirement type is selected or just consignment address
+    const hasRequirements = quote.includeForeignNational || quote.includeReturningTurkish || quote.includeDiplomatic;
+    
+    const text = QuotesUI.getConsignmentInstructionsText(quote);
     if (!text) return '';
     
     return `
       <div class="terms-section" style="margin-top: 24px; page-break-inside: avoid;">
-        <div class="section-header">IMPORT REQUIREMENTS & CONSIGNMENT INSTRUCTIONS:</div>
+        <div class="section-header">${hasRequirements ? 'IMPORT REQUIREMENTS & CONSIGNMENT INSTRUCTIONS:' : 'CONSIGNMENT INSTRUCTIONS:'}</div>
         <div class="terms-content" style="white-space: pre-wrap; font-size: 9pt; line-height: 1.5;">${Utils.escapeHtml(text)}</div>
       </div>
     `;
@@ -8042,7 +11085,7 @@ const StorageUI = {
   getFilteredRecords() {
     const locationFilter = $.get('storageLocationFilter')?.value || '';
     const statusFilter = $.get('storageStatusFilter')?.value || '';
-    const searchTerm = $.get('storageSearchInput')?.value?.toLowerCase() || '';
+    const searchTerm = $.get('storageSearchInput')?.value?.trim() || '';
     
     return State.storageRecords.filter(storage => {
       // Location filter
@@ -8051,17 +11094,28 @@ const StorageUI = {
       // Status filter
       if (statusFilter && storage.status !== statusFilter) return false;
       
-      // Search filter
+      // Search filter with bilingual support
       if (searchTerm) {
-        const searchableText = [
+        // Get linked job code if exists
+        const linkedJob = storage.linkedJobId ? State.getJob(storage.linkedJobId) : null;
+        const linkedJobCode = linkedJob ? linkedJob.jobCode : '';
+        
+        const fields = [
+          // Identifiers
           storage.storageCode,
+          linkedJobCode,
+          // Client info
           storage.clientName,
           storage.organizationName,
+          // Location
           this.getLocationName(storage.location),
-          storage.notes
-        ].filter(Boolean).join(' ').toLowerCase();
+          // Contents (bilingual)
+          ...(storage.contents || []),
+          // Status (bilingual)
+          storage.status
+        ];
         
-        if (!searchableText.includes(searchTerm)) return false;
+        if (!SearchHelper.matchesAny(fields, searchTerm)) return false;
       }
       
       return true;
@@ -8076,15 +11130,17 @@ const StorageUI = {
   // Get storage status based on inventory
   getInventoryStatus(storage) {
     if (!storage.inventory || storage.inventory.length === 0) {
-      return storage.status === 'Closed' ? 'Fully Retrieved' : 'In Storage';
+      return storage.status === 'Closed' 
+        ? I18n.t('statusFullyRetrieved') 
+        : I18n.t('statusInStorage');
     }
     
     const totalItems = storage.inventory.length;
     const retrievedItems = storage.inventory.filter(item => item.status === 'Retrieved').length;
     
-    if (retrievedItems === 0) return 'In Storage';
-    if (retrievedItems === totalItems) return 'Fully Retrieved';
-    return 'Partially Retrieved';
+    if (retrievedItems === 0) return I18n.t('statusInStorage');
+    if (retrievedItems === totalItems) return I18n.t('statusFullyRetrieved');
+    return I18n.t('statusPartiallyRetrieved');
   },
 
   // Calculate days in storage
@@ -8140,18 +11196,18 @@ const StorageUI = {
     };
   },
 
-  // Render active storage list
+  // Render active storage list (now renders ALL filtered records, not just active)
   renderActiveStorage() {
     const container = $.get('activeStorageList');
     if (!container) return;
     $.clear(container);
 
-    const records = this.getFilteredRecords().filter(s => s.status === 'Active');
+    const records = this.getFilteredRecords();
 
     if (records.length === 0) {
       container.appendChild($.el('p', { 
         className: 'storage-empty-message',
-        textContent: I18n.t('noActiveStorage')
+        textContent: I18n.t('noStorageRecords')
       }));
       return;
     }
@@ -8161,25 +11217,12 @@ const StorageUI = {
     });
   },
 
-  // Render completed storage list
+  // Render completed storage list - now empty since we use single list
   renderCompletedStorage() {
     const container = $.get('completedStorageList');
     if (!container) return;
     $.clear(container);
-
-    const records = this.getFilteredRecords().filter(s => s.status === 'Closed');
-
-    if (records.length === 0) {
-      container.appendChild($.el('p', { 
-        className: 'storage-empty-message',
-        textContent: I18n.t('noCompletedStorage')
-      }));
-      return;
-    }
-
-    records.forEach(storage => {
-      container.appendChild(this.createStorageCard(storage));
-    });
+    // No longer rendering separate completed section - all handled by filter dropdown
   },
 
   // Create a storage card for the list
@@ -8197,7 +11240,7 @@ const StorageUI = {
     const statusClass = storage.status === 'Active' ? 'storage-card-status-active' : 'storage-card-status-closed';
     header.appendChild($.el('span', { 
       className: `storage-card-status ${statusClass}`, 
-      textContent: storage.status 
+      textContent: I18n.storageStatusText(storage.status)
     }));
     card.appendChild(header);
     
@@ -8235,7 +11278,7 @@ const StorageUI = {
     if (storage.dateEntered) {
       const days = this.getDaysInStorage(storage);
       const daysSpan = $.el('span');
-      daysSpan.textContent = `${days} days`;
+      daysSpan.textContent = `${days} ${I18n.t('unitDays')}`;
       meta.appendChild(daysSpan);
     }
     
@@ -8247,7 +11290,7 @@ const StorageUI = {
       if (linkedJob) {
         const linkedDiv = $.el('div', { className: 'storage-card-linked' });
         const linkedLabel = $.el('span', { className: 'storage-card-linked-job' });
-        linkedLabel.textContent = `Linked to ${linkedJob.jobCode}`;
+        linkedLabel.textContent = (State.lang === 'tr') ? `${linkedJob.jobCode} ile bağlantılı` : `Linked to ${linkedJob.jobCode}`;
         linkedDiv.appendChild(linkedLabel);
         card.appendChild(linkedDiv);
       }
@@ -8280,7 +11323,7 @@ const StorageUI = {
     const header = $.el('div', { className: 'move-details-header' });
     header.appendChild($.el('h3', { textContent: storage.storageCode, style: 'color: var(--color-accent);' }));
     const statusClass = storage.status === 'Active' ? 'storage-card-status-active' : 'storage-card-status-closed';
-    header.appendChild($.el('span', { className: `storage-card-status ${statusClass}`, textContent: storage.status }));
+    header.appendChild($.el('span', { className: `storage-card-status ${statusClass}`, textContent: I18n.storageStatusText(storage.status) }));
     panel.appendChild(header);
     
     // ===== CLIENT INFORMATION CARD =====
@@ -8322,7 +11365,15 @@ const StorageUI = {
     const locationGrid = $.el('div', { className: 'details-card-grid' });
     
     this.addDetailItem(locationGrid, (State.lang === 'tr') ? 'KONUM' : 'LOCATION', this.getLocationName(storage.location));
-    this.addDetailItem(locationGrid, (State.lang === 'tr') ? 'İÇERİK' : 'CONTENTS', (storage.contents || []).join(', ') || '-');
+    // Translate contents (HHE -> Ev Eşyası, Auto -> Araç)
+    const contentsText = (storage.contents || []).map(c => {
+      if (State.lang === 'tr') {
+        if (c === 'HHE') return 'Ev Eşyası';
+        if (c === 'Auto') return 'Araç';
+      }
+      return c;
+    }).join(', ') || '-';
+    this.addDetailItem(locationGrid, (State.lang === 'tr') ? 'İÇERİK' : 'CONTENTS', contentsText);
     this.addDetailItem(locationGrid, (State.lang === 'tr') ? 'TOPLAM CBM' : 'TOTAL CBM', storage.totalCBM || '0');
     this.addDetailItem(locationGrid, (State.lang === 'tr') ? 'BRÜT AĞIRLIK' : 'GROSS WEIGHT', storage.grossWeight ? `${storage.grossWeight} kg` : '-');
     
@@ -8347,7 +11398,7 @@ const StorageUI = {
     billingSection.appendChild($.el('h4', { className: 'details-section-title', textContent: (State.lang === 'tr') ? 'FATURALANDIRMA BİLGİLERİ' : 'BILLING INFORMATION' }));
     const billingGrid = $.el('div', { className: 'details-card-grid' });
     
-    this.addDetailItem(billingGrid, (State.lang === 'tr') ? 'FATURALANDIRMA TİPİ' : 'BILLING TYPE', storage.billingType);
+    this.addDetailItem(billingGrid, (State.lang === 'tr') ? 'FATURALANDIRMA TİPİ' : 'BILLING TYPE', I18n.billingTypeText(storage.billingType));
     
     if (storage.billingType === 'Flat Rate') {
       this.addDetailItem(billingGrid, (State.lang === 'tr') ? 'ÜCRET' : 'RATE', `${storage.flatRate || 0} ${storage.flatRateCurrency || 'TRY'}`);
@@ -8368,20 +11419,20 @@ const StorageUI = {
       const costBox = $.el('div', { className: 'storage-cost-box' });
       
       const costHeader = $.el('div', { className: 'storage-cost-header' });
-      costHeader.appendChild($.el('h5', { textContent: (State.lang === 'tr') ? 'Tahmini Maliyet' : 'Estimated Cost' }));
-      costHeader.appendChild($.el('span', { className: 'storage-cost-days', textContent: `${cost.days} ${(State.lang === 'tr') ? 'gün toplam' : 'days total'}` }));
+      costHeader.appendChild($.el('h5', { textContent: I18n.t('estimatedCostLabel') }));
+      costHeader.appendChild($.el('span', { className: 'storage-cost-days', textContent: `${cost.days} ${I18n.t('totalDays')}` }));
       costBox.appendChild(costHeader);
       
       if (cost.freeDays > 0) {
         const freeRow = $.el('div', { className: 'storage-cost-row' });
-        freeRow.appendChild($.el('span', { textContent: I18n.t('freeDays') }));
-        freeRow.appendChild($.el('span', { textContent: `${cost.freeDays} days` }));
+        freeRow.appendChild($.el('span', { textContent: I18n.t('freeDaysLabel') }));
+        freeRow.appendChild($.el('span', { textContent: `${cost.freeDays} ${I18n.t('unitDays')}` }));
         costBox.appendChild(freeRow);
       }
       
       const billableRow = $.el('div', { className: 'storage-cost-row' });
-      billableRow.appendChild($.el('span', { textContent: I18n.t('billableDays') }));
-      billableRow.appendChild($.el('span', { textContent: `${cost.billableDays} days` }));
+      billableRow.appendChild($.el('span', { textContent: I18n.t('billableDaysLabel') }));
+      billableRow.appendChild($.el('span', { textContent: `${cost.billableDays} ${I18n.t('unitDays')}` }));
       costBox.appendChild(billableRow);
       
       if (cost.period !== 'flat') {
@@ -8389,15 +11440,15 @@ const StorageUI = {
         rateRow.appendChild($.el('span', { textContent: `${cost.rate} ${cost.currency} × ${cost.cbm} CBM` }));
         if (cost.period === 'Monthly') {
           const months = Math.ceil(cost.billableDays / 30);
-          rateRow.appendChild($.el('span', { textContent: `× ${months} month${months !== 1 ? 's' : ''}` }));
+          rateRow.appendChild($.el('span', { textContent: `× ${months} ${I18n.t('unitMonth')}` }));
         } else {
-          rateRow.appendChild($.el('span', { textContent: `× ${cost.billableDays} days` }));
+          rateRow.appendChild($.el('span', { textContent: `× ${cost.billableDays} ${I18n.t('unitDays')}` }));
         }
         costBox.appendChild(rateRow);
       }
       
       const totalRow = $.el('div', { className: 'storage-cost-row total' });
-      totalRow.appendChild($.el('span', { textContent: I18n.t('totalCost') }));
+      totalRow.appendChild($.el('span', { textContent: I18n.t('totalCostLabel') }));
       totalRow.appendChild($.el('span', { textContent: `${cost.total.toLocaleString()} ${cost.currency}` }));
       costBox.appendChild(totalRow);
       
@@ -8566,8 +11617,8 @@ const StorageUI = {
     
     // Type selector tabs
     const typeTabs = $.el('div', { className: 'inventory-type-tabs' });
-    const hheTab = $.el('button', { type: 'button', className: 'inventory-type-tab active', textContent: 'HHE Items' });
-    const autoTab = $.el('button', { type: 'button', className: 'inventory-type-tab', textContent: 'Auto/Vehicle' });
+    const hheTab = $.el('button', { type: 'button', className: 'inventory-type-tab active', textContent: (State.lang === 'tr') ? 'Ev Eşyaları' : 'HHE Items' });
+    const autoTab = $.el('button', { type: 'button', className: 'inventory-type-tab', textContent: (State.lang === 'tr') ? 'Araç' : 'Auto/Vehicle' });
     typeTabs.appendChild(hheTab);
     typeTabs.appendChild(autoTab);
     bulkSection.appendChild(typeTabs);
@@ -8576,7 +11627,9 @@ const StorageUI = {
     const hheForm = $.el('div', { className: 'hhe-bulk-form' });
     const hheLabel = $.el('p', { 
       className: 'inventory-form-hint',
-      textContent: 'Enter items one per line. Format: description (optional: qty x CBM)'
+      textContent: (State.lang === 'tr') 
+        ? 'Her satıra bir öğe girin. Format: açıklama (isteğe bağlı: adet x CBM)'
+        : 'Enter items one per line. Format: description (optional: qty x CBM)'
     });
     hheForm.appendChild(hheLabel);
     
@@ -8590,7 +11643,7 @@ const StorageUI = {
     const hheAddBtn = $.el('button', { 
       type: 'button', 
       className: 'storage-add-btn',
-      textContent: 'Add HHE Items'
+      textContent: (State.lang === 'tr') ? 'Ev Eşyası Ekle' : 'Add HHE Items'
     });
     hheForm.appendChild(hheAddBtn);
     bulkSection.appendChild(hheForm);
@@ -8613,7 +11666,7 @@ const StorageUI = {
     const autoAddBtn = $.el('button', { 
       type: 'button', 
       className: 'storage-add-btn',
-      textContent: 'Add Vehicle'
+      textContent: (State.lang === 'tr') ? 'Araç Ekle' : 'Add Vehicle'
     });
     autoForm.appendChild(autoAddBtn);
     bulkSection.appendChild(autoForm);
@@ -8755,7 +11808,7 @@ const StorageUI = {
     const statusClass = (item.status || 'In Storage').toLowerCase().replace(/\s+/g, '-');
     row.appendChild($.el('span', { 
       className: `storage-item-status storage-item-status-${statusClass}`,
-      textContent: item.status || 'In Storage'
+      textContent: I18n.storageStatusText(item.status || 'In Storage')
     }));
     
     // Actions
@@ -9047,7 +12100,7 @@ const StorageUI = {
         const infoRows = [
           [I18n.t('storageCode'), storage.storageCode],
           [I18n.t('location'), this.getLocationName(storage.location)],
-          [I18n.t('status'), storage.status],
+          [I18n.t('status'), I18n.storageStatusText(storage.status)],
           [I18n.t('daysInStorage'), this.getDaysInStorage(storage)]
         ];
         
@@ -9177,8 +12230,11 @@ const AgentsUI = {
       if (agent.type && agent.type !== 'Agent') {
         const badgeClass = agent.type === 'Customs Broker' ? 'agent-type-badge-customs' :
                           agent.type === 'Sea Freight Broker' ? 'agent-type-badge-sea' : 'agent-type-badge-air';
-        const shortLabel = agent.type === 'Customs Broker' ? 'Customs' :
-                          agent.type === 'Sea Freight Broker' ? 'Sea' : 'Air';
+        const shortLabel = agent.type === 'Customs Broker' 
+          ? ((State.lang === 'tr') ? 'Gümrük' : 'Customs')
+          : agent.type === 'Sea Freight Broker' 
+            ? ((State.lang === 'tr') ? 'Deniz' : 'Sea') 
+            : ((State.lang === 'tr') ? 'Hava' : 'Air');
         nameRow.appendChild($.el('span', { 
           className: `agent-type-badge ${badgeClass}`,
           textContent: shortLabel
@@ -9217,8 +12273,8 @@ const AgentsUI = {
         card.appendChild($.el('p', {
           className: 'agent-moves-summary',
           textContent: usageCount === 1
-            ? ((State.lang === 'tr') ? '1 işte kullanıldı' : 'Used in 1 job')
-            : ((State.lang === 'tr') ? `${usageCount} işte kullanıldı` : `Used in ${usageCount} jobs`)
+            ? ((State.lang === 'tr') ? '1 taşıma' : '1 move')
+            : ((State.lang === 'tr') ? `${usageCount} taşıma` : `${usageCount} moves`)
         }));
       }
       
@@ -9273,9 +12329,11 @@ const AgentsUI = {
     if (isBroker) {
       const badgeClass = agent.type === 'Customs Broker' ? 'agent-type-badge-customs' :
                         agent.type === 'Sea Freight Broker' ? 'agent-type-badge-sea' : 'agent-type-badge-air';
+      const typeKey = agent.type === 'Customs Broker' ? 'typeCustomsBroker' :
+                      agent.type === 'Sea Freight Broker' ? 'typeSeaFreightBroker' : 'typeAirFreightBroker';
       nameWithType.appendChild($.el('span', { 
         className: `agent-type-badge ${badgeClass}`,
-        textContent: agent.type
+        textContent: I18n.t(typeKey)
       }));
     }
     headerRow.appendChild(nameWithType);
@@ -10441,7 +13499,7 @@ scheduleExtraJobCardCollapsible(dateStr, ej) {
   stepCard(job, step, dateStr) {
     const def = CONFIG.STEP_DEFINITIONS[step.id] || {};
     const card = $.el('div', { className: 'schedule-step-card' });
-    card.appendChild($.el('h4', { textContent: `${job.jobCode || ''} – ${job.clientName || 'No client name'}` }));
+    card.appendChild($.el('h4', { textContent: `${job.jobCode || ''} – ${job.clientName || I18n.t('noClientName')}` }));
     card.appendChild($.el('p', { textContent: I18n.stepText(step) }));
     card.appendChild($.el('p', {
       textContent: `${Utils.location(job.originCity, job.originCountry)} → ${Utils.location(job.destinationCity, job.destinationCountry)}`
@@ -11121,12 +14179,21 @@ function toggleQuoteVehicleFields() {
 
 const Forms = {
   populateCountrySelects() {
+    const countries = CONFIG.getCountryList();
     ['originCountrySelect', 'destinationCountrySelect', 'agentCountrySelect'].forEach(id => {
       const select = $.get(id);
-      CONFIG.COUNTRIES.forEach(country => {
-        select.appendChild($.el('option', { value: country, textContent: country }));
+      if (!select) return;
+      // Clear existing options except first (placeholder)
+      while (select.options.length > 1) select.remove(1);
+      countries.forEach(c => {
+        select.appendChild($.el('option', { value: c.value, textContent: c.label }));
       });
     });
+  },
+
+  refreshCountrySelects() {
+    // Called on language change to update country labels
+    this.populateCountrySelects();
   },
 
   refreshAgentSelects() {
@@ -11891,13 +14958,23 @@ if (includeConsignmentCheckbox) {
   });
 }
 
-// Client category change for consignment preview
-const quoteClientCategory = $.get('quoteClientCategory');
-if (quoteClientCategory) {
-  quoteClientCategory.addEventListener('change', () => {
+// Office change for consignment preview
+const quoteConsignmentOffice = $.get('quoteConsignmentOffice');
+if (quoteConsignmentOffice) {
+  quoteConsignmentOffice.addEventListener('change', () => {
     QuotesUI.updateConsignmentPreview();
   });
 }
+
+// Requirement type checkboxes
+['includeForeignNational', 'includeReturningTurkish', 'includeDiplomatic'].forEach(id => {
+  const cb = $.get(id);
+  if (cb) {
+    cb.addEventListener('change', () => {
+      QuotesUI.updateConsignmentPreview();
+    });
+  }
+});
 
 // Add charge buttons for each mode
 ['Sea', 'Air', 'Land'].forEach(mode => {
