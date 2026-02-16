@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="style.css" />
   </head>
 
-<body>
+ <body>
 <!-- TOP NAVIGATION -->
 <header class="top-header">
   <div class="header-left">
@@ -170,7 +170,7 @@
 
           <div>
             <label data-i18n="docDateLabel">Document Date</label>
-            <input type="date" id="docDateInput">
+            <input type="text" id="docDateInput" data-i18n-placeholder="docDatePlaceholder" placeholder="dd/mm/yyyy">
           </div>
 
           <div>
@@ -604,9 +604,9 @@
       <label data-i18n="moveTypeLabel">Move Type</label>
       <select name="tradeDirection">
         <option value="" data-i18n="selectType">Select type</option>
-        <option value="Import" data-i18n="importType">Import</option>
-        <option value="Export" data-i18n="exportType">Export</option>
-        <option value="Local" data-i18n="localType">Local</option>
+        <option value="Import" data-i18n="typeImport">Import</option>
+        <option value="Export" data-i18n="typeExport">Export</option>
+        <option value="Local" data-i18n="typeLocal">Local</option>
       </select>
 
       <label data-i18n="statusRequiredLabel">Status (required)</label>
@@ -899,19 +899,98 @@
         Please select at least one mode (Sea, Air, or Land) to see mode-specific fields and charges.
       </div>
 
-      <!-- SEA FIELDS SECTION - Now contains variants -->
+      <!-- SEA FIELDS SECTION -->
       <div id="seaFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h4 style="margin: 0; font-size: 14px; color: #0369a1;">Sea Freight Options</h4>
-          <button type="button" id="addSeaVariantBtn" class="btn-secondary" style="background: #0369a1; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">+ Add Option</button>
-        </div>
-        <div id="seaVariantsContainer"></div>
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #0369a1;">Sea Freight Details</h4>
         
-        <!-- Sea Insurance - shared across all variants -->
-        <div class="insurance-toggle-section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #bae6fd;">
+        <div id="seaDeparturePortField">
+          <label>Departure Port</label>
+          <input name="departurePort" type="text" placeholder="e.g. Istanbul">
+        </div>
+        
+        <label>Port of Entry (POE)</label>
+        <input name="poe" type="text" placeholder="e.g. Dubai">
+        
+        <label data-i18n="containerDetailsLabel">Container Details</label>
+        <input name="containerDetails" type="text" placeholder="e.g. 1x20ft FCL">
+        
+        <label data-i18n="seaVolumeLabel">Sea Cargo Volume (cbm)</label>
+        <input name="seaVolume" type="number" step="0.01" placeholder="e.g. 14.5">
+        
+        <div id="seaTransitTimeField">
+          <label>Estimated Transit Time (days)</label>
+          <input name="seaTransitTime" type="number" placeholder="e.g. 15">
+        </div>
+      </div>
+
+ <!-- AIR FIELDS SECTION -->
+<div id="airFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px;">
+  <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #7c3aed;">Air Freight Details</h4>
+  
+  <div id="airDepartureFields">
+    <label>Departure Airport Name</label>
+    <input name="departureAirportName" type="text" placeholder="e.g. Istanbul Ataturk">
+    
+    <label>Departure Airport IATA Code</label>
+    <input name="departureAirportIATA" type="text" placeholder="e.g. IST" maxlength="3" style="text-transform: uppercase;">
+  </div>
+  
+  <label>Arrival Airport Name</label>
+  <input name="arrivalAirportName" type="text" placeholder="e.g. Dubai International">
+  
+  <label>Arrival Airport IATA Code</label>
+  <input name="arrivalAirportIATA" type="text" placeholder="e.g. DXB" maxlength="3" style="text-transform: uppercase;">
+  
+  <div id="airAirlineField">
+    <label>Airline</label>
+    <input name="airlineName" type="text" placeholder="e.g. Turkish Airlines">
+  </div>
+  
+  <label>Actual Cargo Weight (kg)</label>
+  <input name="airCargoWeight" type="number" step="0.1" placeholder="e.g. 500">
+  
+  <label data-i18n="airVolumeLabel">Air Cargo Volume (cbm)</label>
+  <input name="airVolume" type="number" step="0.01" placeholder="e.g. 5.0">
+  
+  <label data-i18n="acwLabel">Chargeable Weight / ACW (kg)</label>
+  <input name="airACW" type="number" step="0.1" placeholder="e.g. 835">
+  <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">Enter the chargeable weight (ACW) manually</p>
+  
+  <div id="airTransitTimeField">
+    <label>Estimated Transit Time (days)</label>
+    <input name="airTransitTime" type="number" placeholder="e.g. 3">
+  </div>
+</div>
+
+      <!-- LAND FIELDS SECTION -->
+      <div id="landFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #059669;">Land Freight Details</h4>
+        
+        <label>Truck Type</label>
+        <div class="mode-group">
+          <label><input type="radio" name="truckType" value="Dedicated" checked> Dedicated</label>
+          <label><input type="radio" name="truckType" value="Consolidated"> Consolidated</label>
+        </div>
+        
+        <label data-i18n="landVolumeLabel">Land Cargo Volume (cbm)</label>
+        <input name="landVolume" type="number" step="0.01" placeholder="e.g. 14.5">
+        
+        <label>Estimated Transit Time (days)</label>
+        <input name="landTransitTime" type="number" placeholder="e.g. 7">
+      </div>
+
+      <!-- SEA CHARGES SECTION -->
+      <div id="seaChargesSection" class="mode-charges-section hidden" style="margin-top: 24px; padding: 16px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #0369a1;">Sea Freight Charges</h4>
+        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on recipient and type. You can edit or add more.</p>
+        <div id="seaChargesList" style="margin-bottom: 12px;"></div>
+        <button type="button" id="addSeaChargeBtn" class="btn-secondary" style="margin-bottom: 16px;">+ Add Charge</button>
+        
+        <!-- Sea Insurance -->
+        <div class="insurance-toggle-section">
           <label class="insurance-toggle-label">
             <input type="checkbox" name="seaInsurance" id="seaInsuranceCheck">
-            <span>Include Transit Insurance (applies to all Sea options)</span>
+            <span>Include Transit Insurance</span>
           </label>
           <div id="seaInsuranceFields" class="insurance-fields hidden">
             <div class="insurance-fields-grid">
@@ -928,48 +1007,46 @@
         </div>
       </div>
 
- <!-- AIR FIELDS SECTION - Now contains variants -->
-<div id="airFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-    <h4 style="margin: 0; font-size: 14px; color: #7c3aed;">Air Freight Options</h4>
-    <button type="button" id="addAirVariantBtn" class="btn-secondary" style="background: #7c3aed; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">+ Add Option</button>
-  </div>
-  <div id="airVariantsContainer"></div>
-  
-  <!-- Air Insurance - shared across all variants -->
-  <div class="insurance-toggle-section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #c4b5fd;">
-    <label class="insurance-toggle-label">
-      <input type="checkbox" name="airInsurance" id="airInsuranceCheck">
-      <span>Include Transit Insurance (applies to all Air options)</span>
-    </label>
-    <div id="airInsuranceFields" class="insurance-fields hidden">
-      <div class="insurance-fields-grid">
-        <div>
-          <label>Declared Value</label>
-          <input name="airInsuranceValue" type="number" step="0.01" placeholder="e.g. 50000">
-        </div>
-        <div>
-          <label>Rate (%)</label>
-          <input name="airInsuranceRate" type="number" step="0.1" value="1.5" placeholder="1.5">
+      <!-- AIR CHARGES SECTION -->
+      <div id="airChargesSection" class="mode-charges-section hidden" style="margin-top: 16px; padding: 16px; background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #7c3aed;">Air Freight Charges</h4>
+        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on recipient and type. You can edit or add more.</p>
+        <div id="airChargesList" style="margin-bottom: 12px;"></div>
+        <button type="button" id="addAirChargeBtn" class="btn-secondary" style="margin-bottom: 16px;">+ Add Charge</button>
+        
+        <!-- Air Insurance -->
+        <div class="insurance-toggle-section">
+          <label class="insurance-toggle-label">
+            <input type="checkbox" name="airInsurance" id="airInsuranceCheck">
+            <span>Include Transit Insurance</span>
+          </label>
+          <div id="airInsuranceFields" class="insurance-fields hidden">
+            <div class="insurance-fields-grid">
+              <div>
+                <label>Declared Value</label>
+                <input name="airInsuranceValue" type="number" step="0.01" placeholder="e.g. 50000">
+              </div>
+              <div>
+                <label>Rate (%)</label>
+                <input name="airInsuranceRate" type="number" step="0.1" value="1.5" placeholder="1.5">
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
-      <!-- LAND FIELDS SECTION - Now contains variants -->
-      <div id="landFieldsSection" class="mode-specific-fields hidden" style="margin-top: 16px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h4 style="margin: 0; font-size: 14px; color: #059669;">Land Freight Options</h4>
-          <button type="button" id="addLandVariantBtn" class="btn-secondary" style="background: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">+ Add Option</button>
-        </div>
-        <div id="landVariantsContainer"></div>
+      <!-- LAND CHARGES SECTION -->
+      <div id="landChargesSection" class="mode-charges-section hidden" style="margin-top: 16px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #059669;">Land Freight Charges</h4>
+        <p style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">Default charges auto-populated based on recipient and type. You can edit or add more.</p>
+        <div id="landChargesList" style="margin-bottom: 12px;"></div>
+        <button type="button" id="addLandChargeBtn" class="btn-secondary" style="margin-bottom: 16px;">+ Add Charge</button>
         
-        <!-- Land Insurance - shared across all variants -->
-        <div class="insurance-toggle-section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #a7f3d0;">
+        <!-- Land Insurance -->
+        <div class="insurance-toggle-section">
           <label class="insurance-toggle-label">
             <input type="checkbox" name="landInsurance" id="landInsuranceCheck">
-            <span>Include Transit Insurance (applies to all Land options)</span>
+            <span>Include Transit Insurance</span>
           </label>
           <div id="landInsuranceFields" class="insurance-fields hidden">
             <div class="insurance-fields-grid">
