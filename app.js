@@ -1,4 +1,14 @@
 // ============================================================
+// SUPABASE CONFIGURATION
+// ============================================================
+
+const SUPABASE_URL = 'https://bjryicnxhaapteifmzav.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqcnlpY254aGFhcHRlaWZtemF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MTI5ODQsImV4cCI6MjA4NTA4ODk4NH0.RofWDTRDhl1D4_7BXY51BOcoQP5W-bTgC8sBVeeQcKw';
+
+// Supabase client - will be initialized after library loads
+let supabaseClient = null;
+
+// ============================================================
 // CONFIGURATION
 // ============================================================
 
@@ -11,8 +21,7 @@ const CONFIG = {
     LANG: 'istex_lang',
     RESOURCE_LIBRARY: 'istex_resource_library',
     QUOTES: 'istex_quotes',
-    STORAGE: 'istex_storage',
-    INVOICES: 'istex_invoices'
+    STORAGE: 'istex_storage'
   },
   
   // Booking types - determines workflow and customer relationship
@@ -26,9 +35,6 @@ const CONFIG = {
   
   // Quote statuses
   QUOTE_STATUSES: ['Draft', 'Sent', 'Approved', 'Rejected', 'Expired'],
-  
-  // Invoice statuses
-  INVOICE_STATUSES: ['Draft', 'Sent', 'Paid', 'Cancelled'],
   
   // Storage statuses
   STORAGE_STATUSES: ['Active', 'Closed'],
@@ -244,6 +250,19 @@ const CONFIG = {
     }
     return '';
   },
+  
+  // Helper to get BOTH language versions of country name (for search)
+  getCountryNameBilingual(country) {
+    if (typeof country === 'string') {
+      const found = this.COUNTRIES.find(c => c.en === country || c.tr === country);
+      if (found) return `${found.en} ${found.tr}`;
+      return country;
+    }
+    if (country && typeof country === 'object') {
+      return `${country.en} ${country.tr}`;
+    }
+    return '';
+  },
 
   // Get sorted country list for dropdowns
   getCountryList() {
@@ -269,30 +288,6 @@ const CONFIG = {
     air_cargo_packing: { label: "Air Cargo Packing", fields: ["date","time","personnel","vehicle","address","notes"], autoFillAddress: "origin" },
     air_cargo_delivery_to_address: { label: "Air Cargo Delivery to Address", fields: ["date","time","personnel","vehicle","pickupAirport","deliveryAddress","notes"], autoFillDeliveryAddress: "destination" },
     air_cargo_delivery_to_airport: { label: "Air Cargo Delivery to Airport", fields: ["date","time","personnel","vehicle","deliveryAirport","pickupAddress","notes"], autoFillPickupAddress: "origin" }
-  },
-
-  STEP_SCENARIOS: {
-    "Import|Sea": ["container_pickup","container_unloading","container_delivery","delivery_to_residence"],
-    "Import|Land": ["delivery_to_residence"],
-    "Import|Air": ["air_cargo_delivery_to_address"],
-    "Import|Land/Sea": ["container_pickup","container_unloading","container_delivery","delivery_to_residence"],
-    "Import|Air/Sea": ["container_pickup","container_unloading","container_delivery","air_cargo_delivery_to_address","delivery_to_residence"],
-    "Import|Air/Land": ["air_cargo_delivery_to_address","delivery_to_residence"],
-    "Import|Air/Land/Sea": ["container_pickup","container_unloading","container_delivery","air_cargo_delivery_to_address","delivery_to_residence"],
-    "Export|Sea": ["survey","packing","container_pickup","container_loading","container_delivery"],
-    "Export|Land": ["survey","packing"],
-    "Export|Air": ["survey","air_cargo_packing","air_cargo_delivery_to_airport"],
-    "Export|Land/Sea": ["survey","packing","container_pickup","container_loading","container_delivery"],
-    "Export|Air/Sea": ["survey","packing","container_pickup","container_loading","container_delivery","air_cargo_packing","air_cargo_delivery_to_airport"],
-    "Export|Air/Land": ["survey","packing","air_cargo_packing","air_cargo_delivery_to_airport"],
-    "Export|Air/Land/Sea": ["survey","packing","air_cargo_packing","air_cargo_delivery_to_airport","container_pickup","container_loading","container_delivery"],
-    "Local|Sea": ["survey","packing","delivery_to_residence"],
-    "Local|Land": ["survey","packing","delivery_to_residence"],
-    "Local|Air": ["survey","packing","delivery_to_residence"],
-    "Local|Land/Sea": ["survey","packing","delivery_to_residence"],
-    "Local|Air/Sea": ["survey","packing","delivery_to_residence"],
-    "Local|Air/Land": ["survey","packing","delivery_to_residence"],
-    "Local|Air/Land/Sea": ["survey","packing","delivery_to_residence"]
   },
 
   // include Custom so user can type a manual task name
@@ -325,15 +320,7 @@ const CONFIG = {
   STORAGE_INVENTORY_TYPES: ['HHE', 'Auto'],
 
   // Currencies
-  CURRENCIES: ['TRY', 'USD', 'EUR'],
-
-  // very simple address keyword rules (you can expand later)
-  OFFICE_RULES: {
-    Istanbul: ["istanbul", "gebze", "kocaeli"],
-    Ankara: ["ankara"],
-    Adana: ["adana", "mersin"],
-    Izmir: ["izmir", "aydın", "manisa"]
-  }
+  CURRENCIES: ['TRY', 'USD', 'EUR']
 };
 
 const DEFAULT_RESOURCE_LIBRARY = {
@@ -775,72 +762,11 @@ ${officeData.notify}`;
 };
 
 // ============================================================
-// TURKISH TRANSLATION SYSTEM
+// TURKISH CHECKLIST TRANSLATIONS
 // ============================================================
 
 const TR_SYSTEM = {
-  // ===============================
-  // MOVE TYPES (Trade Direction)
-  // ===============================
-  trade_Import: "İthalat",
-  trade_Export: "İhracat",
-  trade_Local: "Yurtiçi",
-
-  // ===============================
-  // TRANSPORT MODES
-  // ===============================
-  mode_Sea: "Denizyolu",
-  mode_Land: "Karayolu",
-  mode_Air: "Havayolu",
-
-  // ===============================
-  // MOVE STATUS
-  // ===============================
-  status_Planned: "Planlandı",
-  status_Ongoing: "Devam Ediyor",
-  status_Completed: "Tamamlandı",
-  status_Cancelled: "İptal Edildi",
-
-  // ===============================
-  // MOVE STEPS
-  // ===============================
-  step_packing: "Paketleme",
-  step_survey: "Survey",
-  step_delivery_to_residence: "Adrese Teslimat",
-  step_container_pickup: "Konteyner Alımı",
-  step_container_delivery: "Konteyner Teslimi",
-  step_container_loading: "Konteyner Yükleme",
-  step_container_unloading: "Konteyner Boşaltma",
-  step_air_cargo_packing: "Hava Kargo Paketleme",
-  step_air_cargo_delivery_to_address: "Hava Kargo Adrese Teslimat",
-  step_air_cargo_delivery_to_airport: "Hava Kargo Havalimanına Teslimat",
-
-  // ===============================
-  // EXTRA JOB TYPES
-  // ===============================
-  job_Custom: "Özel",
-  job_Packing: "Paketleme",
-  job_Survey: "Survey",
-  job_DeliveryToResidence: "Adrese Teslimat",
-  job_ContainerDelivery: "Konteyner Teslimi",
-  job_ContainerPickup: "Konteyner Alımı",
-  job_ContainerUnloading: "Konteyner Boşaltma",
-  job_ContainerLoading: "Konteyner Yükleme",
-  job_AirCargoPacking: "Hava Kargo Paketleme",
-  job_AirCargoDeliveryToAddress: "Hava Kargo Adrese Teslimat",
-  job_AirCargoDeliveryToAirport: "Hava Kargo Havalimanına Teslimat",
-  job_DeliveryToPort: "Limana Teslimat",
-  job_PickupFromPort: "Limandan Alım",
-  job_AirCargoPickup: "Hava Kargo Alımı",
-  job_AirCargoDelivery: "Hava Kargo Teslimat",
-  job_WarehouseCleaning: "Depo Temizliği",
-  job_TruckPreparation: "Tır Hazırlama",
-  job_VehicleDelivery: "Araç Teslimatı",
-  job_VehiclePickup: "Araç Alımı",
-
-  // ===============================
-  // CHECKLIST ITEMS
-  // ===============================
+  // Checklist items (used by TR.checklist for Turkish UI)
   chk_QuoteSent: "Teklif gönderildi",
   chk_MoveReserved: "Taşıma rezerve edildi",
   chk_SurveyDone: "Survey tamamlandı",
@@ -885,62 +811,10 @@ const TR_SYSTEM = {
 };
 
 // ============================================================
-// TRANSLATION HELPER
+// TRANSLATION HELPER (Checklist only - other methods migrated to I18n)
 // ============================================================
 
 const TR = {
-  get(key, fallback = '') {
-    return TR_SYSTEM.get(key, fallback);
-  },
-
-  trade(type) {
-    const map = { Import: 'trade_Import', Export: 'trade_Export', Local: 'trade_Local' };
-    const key = map[String(type || '')];
-    return key ? this.get(key, type || '-') : (type || '-');
-  },
-
-  mode(mode) {
-    const map = { Sea: 'mode_Sea', Land: 'mode_Land', Air: 'mode_Air' };
-    const key = map[String(mode || '')];
-    return key ? this.get(key, mode || '-') : (mode || '-');
-  },
-
-  modes(modes) {
-    const arr = Array.isArray(modes) ? modes : [];
-    if (!arr.length) return '-';
-    return arr.map(m => this.mode(m)).join(' + ');
-  },
-
-  status(status) {
-    const map = {
-      Planned: 'status_Planned',
-      Ongoing: 'status_Ongoing',
-      Completed: 'status_Completed',
-      Cancelled: 'status_Cancelled'
-    };
-    const key = map[String(status || '')];
-    return key ? this.get(key, status || '-') : (status || '-');
-  },
-
-  step(step) {
-    const id = step && step.id ? String(step.id) : '';
-    const key = `step_${id}`;
-    const fallback = (step && step.label) ? step.label : (id || '-');
-    return this.get(key, fallback);
-  },
-
-  extraJobType(taskType) {
-    const t = String(taskType || '').trim();
-    if (!t) return '-';
-    
-    // Convert to key format (remove spaces)
-    const key = 'job_' + t.replace(/\s+/g, '');
-    const translated = this.get(key);
-    
-    // If found, use it; otherwise return original
-    return (translated !== key) ? translated : t;
-  },
-
   checklist(text) {
     const raw = String(text || '').trim();
     if (!raw) return '';
@@ -982,7 +856,7 @@ const TR = {
     };
 
     const key = map[raw];
-    return key ? this.get(key, raw) : raw;
+    return key ? TR_SYSTEM.get(key, raw) : raw;
   }
 };
 // ============================================================
@@ -1245,7 +1119,6 @@ const I18n = {
       noDocumentsFound: 'No documents found.',
       documentsSearchTab: 'Documents Search',
       resourceLibraryTab: 'Resource Library',
-      openLinkWin: 'Open Link',
       recentMoves: 'Recent Moves',
       noMovesLinked: 'No moves linked yet.',
       location: 'Location',
@@ -1557,7 +1430,6 @@ const I18n = {
       lblContainerDetails: 'Container Details',
       lblVolumeCBM: 'Volume (CBM)',
       lblGrossWeight: 'Gross Weight (kg)',
-      lblCargoWeight: 'Cargo Weight (kg)',
       lblCalculatedACW: 'Calculated ACW (kg)',
       lblHouseholdGoods: 'Household Goods (HHE)',
       lblVehicle: 'Vehicle / Auto',
@@ -1686,7 +1558,6 @@ const I18n = {
       // Move Details Labels
       lblVolume: 'Volume',
       lblContainer: 'Container',
-      lblCargoWeight: 'Cargo Weight',
       lblChargeableWeight: 'Chargeable Weight (ACW)',
       lblTruckType: 'Truck Type',
       
@@ -1789,7 +1660,50 @@ const I18n = {
       totalCostLabel: 'Total Cost',
       billingInfoLabel: 'Billing Information',
       billingTypeLabel: 'Billing Type',
-      rateLabel: 'Rate'
+      rateLabel: 'Rate',
+      // Day of week abbreviations
+      dowMon: 'Mon',
+      dowTue: 'Tue',
+      dowWed: 'Wed',
+      dowThu: 'Thu',
+      dowFri: 'Fri',
+      dowSat: 'Sat',
+      dowSun: 'Sun',
+      // Filter labels
+      filterAll: 'All',
+      typeAll: 'All Types',
+      typeImport: 'Import',
+      typeExport: 'Export',
+      typeLocal: 'Local',
+      payAll: 'All',
+      payPaid: 'Paid',
+      payUnpaid: 'Unpaid',
+      // Button labels
+      btnAddAgent: 'Add Agent',
+      btnAddNewMove: 'New Move',
+      btnEditMove: 'Edit Move',
+      btnExportData: 'Export Data',
+      btnImportData: 'Import Data',
+      btnImportNow: 'Import',
+      // Section titles
+      dayDetailsTitle: 'Day Details',
+      moveDetailsTitle: 'Move Details',
+      scheduleTitle: 'Schedule',
+      modalAddAgentTitle: 'Add Agent',
+      modalCreateMoveTitle: 'Create Move',
+      // Misc
+      addNoteLabel: 'Add Note',
+      docsAllMoves: 'All Moves',
+      hintAgentsAppear: 'Agents will appear here',
+      hintSelectDay: 'Select a day to see details',
+      hintSelectMove: 'Select a move to see details',
+      importHint: 'Select a JSON file to import',
+      importNote: 'This will replace all existing data',
+      footerCopyright: '© Istanbul Ekspres',
+      deleteConfirm: 'Confirm Delete',
+      lblCargoWeightShort: 'Cargo Weight',
+      dateFormatHint: '(DD/MM/YYYY)',
+      dateFormatPlaceholder: 'dd/mm/yyyy'
     },
     tr: {
       langShort: 'TR',
@@ -2096,9 +2010,6 @@ const I18n = {
       noMovesYet: 'Henüz taşıma yok.',
       dataToolsTitle: 'Veri Araçları (Sadece Geliştirici)',
       importAreaHint: 'Önceki bir dışa aktarımdan JSON yapıştırın ve "İçe Aktar" tıklayın.',
-      newNotePlaceholder: 'Yeni not girin...',
-      docNamePlaceholder: 'Belge adı',
-      docUrlPlaceholder: 'URL (opsiyonel)',
       importData: 'Yükle',
       exportData: 'İndir',
       importNow: 'Şimdi Yükle',
@@ -2359,7 +2270,6 @@ const I18n = {
       lblContainerDetails: 'Konteyner Detayları',
       lblVolumeCBM: 'Hacim (CBM)',
       lblGrossWeight: 'Brüt Ağırlık (kg)',
-      lblCargoWeight: 'Kargo Ağırlığı (kg)',
       lblCalculatedACW: 'Hesaplanan ACW (kg)',
       lblHouseholdGoods: 'Ev Eşyaları (HHE)',
       lblVehicle: 'Araç / Otomobil',
@@ -2591,7 +2501,50 @@ const I18n = {
       totalCostLabel: 'Toplam Maliyet',
       billingInfoLabel: 'Faturalama Bilgileri',
       billingTypeLabel: 'Faturalama Tipi',
-      rateLabel: 'Ücret'
+      rateLabel: 'Ücret',
+      // Day of week abbreviations
+      dowMon: 'Pzt',
+      dowTue: 'Sal',
+      dowWed: 'Çar',
+      dowThu: 'Per',
+      dowFri: 'Cum',
+      dowSat: 'Cmt',
+      dowSun: 'Paz',
+      // Filter labels
+      filterAll: 'Tümü',
+      typeAll: 'Tüm Tipler',
+      typeImport: 'İthalat',
+      typeExport: 'İhracat',
+      typeLocal: 'Yurtiçi',
+      payAll: 'Tümü',
+      payPaid: 'Ödendi',
+      payUnpaid: 'Ödenmedi',
+      // Button labels
+      btnAddAgent: 'Acente Ekle',
+      btnAddNewMove: 'Yeni Taşıma',
+      btnEditMove: 'Taşımayı Düzenle',
+      btnExportData: 'Veriyi Dışa Aktar',
+      btnImportData: 'Veri İçe Aktar',
+      btnImportNow: 'İçe Aktar',
+      // Section titles
+      dayDetailsTitle: 'Gün Detayları',
+      moveDetailsTitle: 'Taşıma Detayları',
+      scheduleTitle: 'Takvim',
+      modalAddAgentTitle: 'Acente Ekle',
+      modalCreateMoveTitle: 'Taşıma Oluştur',
+      // Misc
+      addNoteLabel: 'Not Ekle',
+      docsAllMoves: 'Tüm Taşımalar',
+      hintAgentsAppear: 'Acenteler burada görünecek',
+      hintSelectDay: 'Detayları görmek için bir gün seçin',
+      hintSelectMove: 'Detayları görmek için bir taşıma seçin',
+      importHint: 'İçe aktarmak için bir JSON dosyası seçin',
+      importNote: 'Bu işlem mevcut tüm verileri değiştirecektir',
+      footerCopyright: '© İstanbul Ekspres',
+      deleteConfirm: 'Silme Onayı',
+      status: 'Durum',
+      dateFormatHint: '(GG/AA/YYYY)',
+      dateFormatPlaceholder: 'gg/aa/yyyy'
     }
   },
 
@@ -2612,10 +2565,28 @@ const I18n = {
     if (map[status]) return this.t(map[status]);
     return status || '-';
   },
+  
+  // Bilingual status text for search (returns both EN and TR)
+  statusTextBilingual(status) {
+    const key = `status${String(status || '').trim()}`;
+    const en = (this.dict.en && this.dict.en[key]) ? this.dict.en[key] : status;
+    const tr = (this.dict.tr && this.dict.tr[key]) ? this.dict.tr[key] : status;
+    return `${en} ${tr}`;
+  },
 
   typeText(type) {
     const map = { Import: 'importType', Export: 'exportType', Local: 'localType' };
     return map[type] ? this.t(map[type]) : (type || '-');
+  },
+  
+  // Bilingual type text for search (returns both EN and TR)
+  typeTextBilingual(type) {
+    const map = { Import: 'importType', Export: 'exportType', Local: 'localType' };
+    if (!map[type]) return type || '';
+    const key = map[type];
+    const en = this.dict.en[key] || type;
+    const tr = this.dict.tr[key] || type;
+    return `${en} ${tr}`;
   },
 
   modeText(mode) {
@@ -2623,11 +2594,28 @@ const I18n = {
     const map = { Sea: 'modeSea', Land: 'modeLand', Air: 'modeAir' };
     return map[m] ? this.t(map[m]) : (m || '-');
   },
+  
+  // Bilingual mode text for search
+  modeTextBilingual(mode) {
+    const m = String(mode || '');
+    const map = { Sea: 'modeSea', Land: 'modeLand', Air: 'modeAir' };
+    if (!map[m]) return m || '';
+    const key = map[m];
+    const en = this.dict.en[key] || m;
+    const tr = this.dict.tr[key] || m;
+    return `${en} ${tr}`;
+  },
 
   modesText(modes) {
     const arr = Array.isArray(modes) ? modes : [];
     if (!arr.length) return (State.lang === 'tr') ? 'Mod yok' : 'No mode';
     return arr.map(m => this.modeText(m)).join(' + ');
+  },
+  
+  // Bilingual modes text for search
+  modesTextBilingual(modes) {
+    const arr = Array.isArray(modes) ? modes : [];
+    return arr.map(m => this.modeTextBilingual(m)).join(' ');
   },
 
   stepText(step) {
@@ -2648,6 +2636,48 @@ const I18n = {
       'Partially Retrieved': 'statusPartiallyRetrieved'
     };
     return map[status] ? this.t(map[status]) : (status || '-');
+  },
+  
+  // Bilingual storage status for search
+  storageStatusTextBilingual(status) {
+    const map = {
+      'Active': 'statusActive',
+      'Closed': 'statusClosed',
+      'In Storage': 'statusInStorage',
+      'Fully Retrieved': 'statusFullyRetrieved',
+      'Partially Retrieved': 'statusPartiallyRetrieved'
+    };
+    if (!map[status]) return status || '';
+    const key = map[status];
+    const en = this.dict.en[key] || status;
+    const tr = this.dict.tr[key] || status;
+    return `${en} ${tr}`;
+  },
+
+  // Agent/Broker type translation
+  agentTypeText(type) {
+    const map = {
+      'Agent': 'typeAgent',
+      'Customs Broker': 'typeCustomsBroker',
+      'Sea Freight Broker': 'typeSeaFreightBroker',
+      'Air Freight Broker': 'typeAirFreightBroker'
+    };
+    return map[type] ? this.t(map[type]) : (type || '-');
+  },
+  
+  // Bilingual agent type for search
+  agentTypeTextBilingual(type) {
+    const map = {
+      'Agent': 'typeAgent',
+      'Customs Broker': 'typeCustomsBroker',
+      'Sea Freight Broker': 'typeSeaFreightBroker',
+      'Air Freight Broker': 'typeAirFreightBroker'
+    };
+    if (!map[type]) return type || '';
+    const key = map[type];
+    const en = this.dict.en[key] || type;
+    const tr = this.dict.tr[key] || type;
+    return `${en} ${tr}`;
   },
 
   // Booking type translation
@@ -2743,14 +2773,19 @@ checklistText(text) {
 },
   
   loadLang() {
-    const saved = Storage.load(CONFIG.STORAGE_KEYS.LANG, null);
-    if (saved === 'tr' || saved === 'en') return saved;
+    try {
+      const saved = localStorage.getItem(CONFIG.STORAGE_KEYS.LANG);
+      const parsed = saved ? JSON.parse(saved) : null;
+      if (parsed === 'tr' || parsed === 'en') return parsed;
+    } catch (e) {}
     return 'en';
   },
 
   saveLang(lang) {
     State.lang = lang;
-    Storage.save(CONFIG.STORAGE_KEYS.LANG, lang);
+    try {
+      localStorage.setItem(CONFIG.STORAGE_KEYS.LANG, JSON.stringify(lang));
+    } catch (e) {}
   },
 
   ensureToggle() {
@@ -3224,7 +3259,6 @@ const State = {
   jobs: [],
   agents: [],
   storageRecords: [],  // NEW - separate storage entity
-  invoices: [],        // NEW - for billing tab
   scheduleNotes: {},
   scheduleExtraJobs: {}, // { "YYYY-MM-DD": [ extraJob, ... ] }
   scheduleOfficeFilter: 'All', // NEW - for schedule office filter
@@ -3252,33 +3286,137 @@ const State = {
   storageFormMode: 'create',
   storageFilters: { location: '', status: 'Active' },
   
-  // NEW - invoice/billing state
-  selectedInvoiceId: null,
-  invoiceFormMode: 'create',
+  // Pagination state
+  pagination: {
+    jobs: { page: 1, perPage: 20 },
+    quotes: { page: 1, perPage: 20 },
+    storage: { page: 1, perPage: 20 },
+    agents: { page: 1, perPage: 20 }
+  },
 
   getJob(id) { return this.jobs.find(j => j.id === id); },
   getAgent(id) { return this.agents.find(a => a.id === id); },
   getAgentName(id) { const a = this.getAgent(id); return a ? a.name : ''; },
-  getStorage(id) { return this.storageRecords.find(s => s.id === id); },  // NEW
-  getInvoice(id) { return this.invoices.find(i => i.id === id); }         // NEW
+  getStorage(id) { return this.storageRecords.find(s => s.id === id); }
 };
 
 // ============================================================
-// STORAGE
+// AUTH - Authentication Management
+// ============================================================
+
+const Auth = {
+  currentUser: null,
+  currentProfile: null,
+  
+  async initialize() {
+    if (!supabaseClient) return false;
+    
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session?.user) {
+      this.currentUser = session.user;
+      await this.loadProfile();
+      return true;
+    }
+    return false;
+  },
+  
+  async loadProfile() {
+    if (!this.currentUser || !supabaseClient) return;
+    
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', this.currentUser.id)
+      .single();
+    
+    if (data) {
+      this.currentProfile = data;
+    }
+  },
+  
+  async login(email, password) {
+    if (!supabaseClient) {
+      return { error: { message: 'Database not connected' } };
+    }
+    
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (error) return { error };
+    
+    this.currentUser = data.user;
+    await this.loadProfile();
+    return { data };
+  },
+  
+  async logout() {
+    if (!supabaseClient) return;
+    
+    await supabaseClient.auth.signOut();
+    this.currentUser = null;
+    this.currentProfile = null;
+  },
+  
+  isLoggedIn() {
+    return this.currentUser !== null;
+  },
+  
+  getRole() {
+    return this.currentProfile?.role || 'staff';
+  },
+  
+  isAdmin() {
+    return this.getRole() === 'admin';
+  },
+  
+  isManager() {
+    return this.getRole() === 'admin' || this.getRole() === 'manager';
+  }
+};
+
+// ============================================================
+// STORAGE - Data Persistence (Supabase + localStorage fallback)
 // ============================================================
 
 const Storage = {
+  isOnline: false,
+  
+  // Initialize and check connection
+  async init() {
+    if (supabaseClient) {
+      try {
+        const { data, error } = await supabaseClient.from('agents').select('id').limit(1);
+        this.isOnline = !error;
+      } catch (e) {
+        this.isOnline = false;
+      }
+    }
+    return this.isOnline;
+  },
+  
+  // Simple localStorage wrappers (used by I18n and other sync code)
   save(key, data) {
+    return this.saveLocal(key, data);
+  },
+  
+  load(key, defaultValue = null) {
+    return this.loadLocal(key, defaultValue);
+  },
+  
+  // Local storage helpers (fallback)
+  saveLocal(key, data) {
     try {
       localStorage.setItem(key, JSON.stringify(data));
       return true;
     } catch (e) {
-      console.error('Storage error:', e);
+      console.error('Local storage error:', e);
       return false;
     }
   },
 
-  load(key, defaultValue = null) {
+  loadLocal(key, defaultValue = null) {
     try {
       const item = localStorage.getItem(key);
       return item ? JSON.parse(item) : defaultValue;
@@ -3286,58 +3424,530 @@ const Storage = {
       return defaultValue;
     }
   },
-
-  saveResourceLibrary() { 
-  this.save(CONFIG.STORAGE_KEYS.RESOURCE_LIBRARY, State.resourceLibrary); 
-},
-
-loadResourceLibrary() {
-  const saved = this.load(CONFIG.STORAGE_KEYS.RESOURCE_LIBRARY, null);
-  if (saved && Array.isArray(saved.categories)) {
-    State.resourceLibrary = saved;
-  } else {
-    // Initialize with default empty categories
-    State.resourceLibrary = JSON.parse(JSON.stringify(DEFAULT_RESOURCE_LIBRARY));
-    this.saveResourceLibrary();
-  }
-},
   
-  saveJobs() { this.save(CONFIG.STORAGE_KEYS.JOBS, State.jobs); },
-  saveAgents() { this.save(CONFIG.STORAGE_KEYS.AGENTS, State.agents); },
-  saveScheduleNotes() { this.save(CONFIG.STORAGE_KEYS.SCHEDULE_NOTES, State.scheduleNotes); },
-  saveScheduleExtraJobs() { this.save(CONFIG.STORAGE_KEYS.SCHEDULE_EXTRA_JOBS, State.scheduleExtraJobs); },
-  saveQuotes() { this.save(CONFIG.STORAGE_KEYS.QUOTES, State.quotes); },
-  saveStorageRecords() { this.save(CONFIG.STORAGE_KEYS.STORAGE, State.storageRecords); },  // NEW
-  saveInvoices() { this.save(CONFIG.STORAGE_KEYS.INVOICES, State.invoices); },            // NEW
-
-  loadQuotes() {
-    State.quotes = this.load(CONFIG.STORAGE_KEYS.QUOTES, []);
+  // ==================== AGENTS ====================
+  async saveAgents() {
+    // Always save to localStorage as backup
+    this.saveLocal(CONFIG.STORAGE_KEYS.AGENTS, State.agents);
+    
+    if (!this.isOnline || !supabaseClient) return;
+    
+    // Sync to Supabase
+    for (const agent of State.agents) {
+      const record = this.agentToRecord(agent);
+      const { error } = await supabaseClient
+        .from('agents')
+        .upsert(record, { onConflict: 'id' });
+      if (error) console.error('Error saving agent:', error);
+    }
+  },
+  
+  async loadAgents() {
+    if (this.isOnline && supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('agents')
+        .select('*')
+        .order('name');
+      
+      if (!error && data) {
+        State.agents = data.map(r => this.recordToAgent(r));
+        this.saveLocal(CONFIG.STORAGE_KEYS.AGENTS, State.agents);
+        return;
+      }
+    }
+    // Fallback to localStorage
+    State.agents = this.loadLocal(CONFIG.STORAGE_KEYS.AGENTS, []);
+  },
+  
+  async deleteAgent(id) {
+    if (this.isOnline && supabaseClient) {
+      await supabaseClient.from('agents').delete().eq('id', id);
+    }
+    State.agents = State.agents.filter(a => a.id !== id);
+    this.saveLocal(CONFIG.STORAGE_KEYS.AGENTS, State.agents);
+  },
+  
+  agentToRecord(agent) {
+    return {
+      id: agent.id,
+      type: agent.type || 'Agent',
+      name: agent.name,
+      city: agent.city,
+      country: agent.country,
+      is_fidi: agent.isFIDI || false,
+      is_iam: agent.isIAM || false,
+      notes: agent.notes,
+      contacts: agent.contacts || []
+    };
+  },
+  
+  recordToAgent(record) {
+    return {
+      id: record.id,
+      type: record.type || 'Agent',
+      name: record.name,
+      city: record.city,
+      country: record.country,
+      isFIDI: record.is_fidi || false,
+      isIAM: record.is_iam || false,
+      notes: record.notes,
+      contacts: record.contacts || []
+    };
+  },
+  
+  // ==================== MOVES (JOBS) ====================
+  async saveJobs() {
+    this.saveLocal(CONFIG.STORAGE_KEYS.JOBS, State.jobs);
+    
+    if (!this.isOnline || !supabaseClient) return;
+    
+    for (const job of State.jobs) {
+      const record = this.jobToRecord(job);
+      const { error } = await supabaseClient
+        .from('moves')
+        .upsert(record, { onConflict: 'id' });
+      if (error) console.error('Error saving move:', error);
+    }
+  },
+  
+  async loadJobs() {
+    if (this.isOnline && supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('moves')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) {
+        State.jobs = data.map(r => this.recordToJob(r));
+        this.saveLocal(CONFIG.STORAGE_KEYS.JOBS, State.jobs);
+        return;
+      }
+    }
+    State.jobs = this.loadLocal(CONFIG.STORAGE_KEYS.JOBS, []);
+  },
+  
+  async deleteJob(id) {
+    if (this.isOnline && supabaseClient) {
+      await supabaseClient.from('moves').delete().eq('id', id);
+    }
+    State.jobs = State.jobs.filter(j => j.id !== id);
+    this.saveLocal(CONFIG.STORAGE_KEYS.JOBS, State.jobs);
+  },
+  
+  jobToRecord(job) {
+    return {
+      id: job.id,
+      job_code: job.jobCode,
+      client_name: job.clientName,
+      client_organization: job.clientOrganization,
+      client_type: job.clientType,
+      client_email: job.clientEmail,
+      client_phone: job.clientPhone,
+      trade_direction: job.tradeDirection,
+      booking_type: job.bookingType,
+      modes: job.modes || [],
+      contents: job.contents,
+      origin_city: job.originCity,
+      origin_country: job.originCountry,
+      origin_address: job.originAddress,
+      origin_agent_id: job.originAgentId || null,
+      destination_city: job.destinationCity,
+      destination_country: job.destinationCountry,
+      destination_address: job.destinationAddress,
+      destination_agent_id: job.destinationAgentId || null,
+      customs_broker_id: job.customsBrokerId || null,
+      sea_freight_broker_id: job.seaFreightBrokerId || null,
+      air_freight_broker_id: job.airFreightBrokerId || null,
+      estimated_volume: job.estimatedVolume,
+      sea_volume: job.seaVolume,
+      air_cargo_weight: job.airCargoWeight,
+      land_volume: job.landVolume,
+      land_gross_weight: job.landGrossWeight,
+      vehicle_type: job.vehicleType,
+      vehicle_make: job.vehicleMake,
+      vehicle_model: job.vehicleModel,
+      vehicle_year: job.vehicleYear,
+      vehicle_vin: job.vehicleVIN,
+      vehicle_condition: job.vehicleCondition,
+      status: job.status,
+      steps: job.steps || [],
+      checklist: job.checklist || [],
+      documents: job.documents || [],
+      media: job.media || [],
+      notes: job.notes || [],
+      payment_received: job.paymentReceived || false,
+      tag: job.tag,
+      has_storage: job.hasStorage || false
+    };
+  },
+  
+  recordToJob(record) {
+    return {
+      id: record.id,
+      jobCode: record.job_code,
+      clientName: record.client_name,
+      clientOrganization: record.client_organization,
+      clientType: record.client_type,
+      clientEmail: record.client_email,
+      clientPhone: record.client_phone,
+      tradeDirection: record.trade_direction,
+      bookingType: record.booking_type,
+      modes: record.modes || [],
+      contents: record.contents,
+      originCity: record.origin_city,
+      originCountry: record.origin_country,
+      originAddress: record.origin_address,
+      originAgentId: record.origin_agent_id,
+      destinationCity: record.destination_city,
+      destinationCountry: record.destination_country,
+      destinationAddress: record.destination_address,
+      destinationAgentId: record.destination_agent_id,
+      customsBrokerId: record.customs_broker_id,
+      seaFreightBrokerId: record.sea_freight_broker_id,
+      airFreightBrokerId: record.air_freight_broker_id,
+      estimatedVolume: record.estimated_volume,
+      seaVolume: record.sea_volume,
+      airCargoWeight: record.air_cargo_weight,
+      landVolume: record.land_volume,
+      landGrossWeight: record.land_gross_weight,
+      vehicleType: record.vehicle_type,
+      vehicleMake: record.vehicle_make,
+      vehicleModel: record.vehicle_model,
+      vehicleYear: record.vehicle_year,
+      vehicleVIN: record.vehicle_vin,
+      vehicleCondition: record.vehicle_condition,
+      status: record.status,
+      steps: record.steps || [],
+      checklist: record.checklist || [],
+      documents: record.documents || [],
+      media: record.media || [],
+      notes: record.notes || [],
+      paymentReceived: record.payment_received || false,
+      tag: record.tag,
+      hasStorage: record.has_storage || false
+    };
+  },
+  
+  // ==================== QUOTES ====================
+  async saveQuotes() {
+    this.saveLocal(CONFIG.STORAGE_KEYS.QUOTES, State.quotes);
+    
+    if (!this.isOnline || !supabaseClient) return;
+    
+    for (const quote of State.quotes) {
+      const record = this.quoteToRecord(quote);
+      const { error } = await supabaseClient
+        .from('quotes')
+        .upsert(record, { onConflict: 'id' });
+      if (error) console.error('Error saving quote:', error);
+    }
+  },
+  
+  async loadQuotes() {
+    if (this.isOnline && supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('quotes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) {
+        State.quotes = data.map(r => this.recordToQuote(r));
+        State.quotes = State.quotes.map(q => Validator.normalizeQuote(q));
+        this.saveLocal(CONFIG.STORAGE_KEYS.QUOTES, State.quotes);
+        return;
+      }
+    }
+    State.quotes = this.loadLocal(CONFIG.STORAGE_KEYS.QUOTES, []);
     State.quotes = State.quotes.map(q => Validator.normalizeQuote(q));
   },
   
-  loadStorageRecords() {  // NEW
-    State.storageRecords = this.load(CONFIG.STORAGE_KEYS.STORAGE, []);
+  async deleteQuote(id) {
+    if (this.isOnline && supabaseClient) {
+      await supabaseClient.from('quotes').delete().eq('id', id);
+    }
+    State.quotes = State.quotes.filter(q => q.id !== id);
+    this.saveLocal(CONFIG.STORAGE_KEYS.QUOTES, State.quotes);
+  },
+  
+  quoteToRecord(quote) {
+    return {
+      id: quote.id,
+      quote_code: quote.quoteCode,
+      client_name: quote.clientName,
+      client_organization: quote.clientOrganization,
+      client_email: quote.clientEmail,
+      client_phone: quote.clientPhone,
+      origin: quote.origin,
+      destination: quote.destination,
+      type: quote.type,
+      modes: quote.modes || [],
+      contents: quote.contents,
+      estimated_volume: quote.estimatedVolume,
+      vehicle_type: quote.vehicleType,
+      vehicle_make: quote.vehicleMake,
+      vehicle_model: quote.vehicleModel,
+      vehicle_year: quote.vehicleYear,
+      vehicle_condition: quote.vehicleCondition,
+      agent_type: quote.agentType,
+      custom_includes: quote.customIncludes || [],
+      additional_charges: quote.additionalCharges || [],
+      agent_charges: quote.agentCharges || {},
+      insurance_included: quote.insuranceIncluded || false,
+      insurance_value: quote.insuranceValue,
+      insurance_premium: quote.insurancePremium,
+      status: quote.status,
+      valid_until: quote.validUntil,
+      converted_to_move_id: quote.convertedToMoveId
+    };
+  },
+  
+  recordToQuote(record) {
+    return {
+      id: record.id,
+      quoteCode: record.quote_code,
+      clientName: record.client_name,
+      clientOrganization: record.client_organization,
+      clientEmail: record.client_email,
+      clientPhone: record.client_phone,
+      origin: record.origin,
+      destination: record.destination,
+      type: record.type,
+      modes: record.modes || [],
+      contents: record.contents,
+      estimatedVolume: record.estimated_volume,
+      vehicleType: record.vehicle_type,
+      vehicleMake: record.vehicle_make,
+      vehicleModel: record.vehicle_model,
+      vehicleYear: record.vehicle_year,
+      vehicleCondition: record.vehicle_condition,
+      agentType: record.agent_type,
+      customIncludes: record.custom_includes || [],
+      additionalCharges: record.additional_charges || [],
+      agentCharges: record.agent_charges || {},
+      insuranceIncluded: record.insurance_included || false,
+      insuranceValue: record.insurance_value,
+      insurancePremium: record.insurance_premium,
+      status: record.status,
+      validUntil: record.valid_until,
+      convertedToMoveId: record.converted_to_move_id,
+      createdAt: record.created_at
+    };
+  },
+  
+  // ==================== STORAGE RECORDS ====================
+  async saveStorageRecords() {
+    this.saveLocal(CONFIG.STORAGE_KEYS.STORAGE, State.storageRecords);
+    
+    if (!this.isOnline || !supabaseClient) return;
+    
+    for (const storage of State.storageRecords) {
+      const record = this.storageToRecord(storage);
+      const { error } = await supabaseClient
+        .from('storage_records')
+        .upsert(record, { onConflict: 'id' });
+      if (error) console.error('Error saving storage:', error);
+    }
+  },
+  
+  async loadStorageRecords() {
+    if (this.isOnline && supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('storage_records')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) {
+        State.storageRecords = data.map(r => this.recordToStorage(r));
+        State.storageRecords = State.storageRecords.map(s => Validator.normalizeStorageRecord(s));
+        this.saveLocal(CONFIG.STORAGE_KEYS.STORAGE, State.storageRecords);
+        return;
+      }
+    }
+    State.storageRecords = this.loadLocal(CONFIG.STORAGE_KEYS.STORAGE, []);
     State.storageRecords = State.storageRecords.map(s => Validator.normalizeStorageRecord(s));
   },
   
-  loadInvoices() {  // NEW
-    State.invoices = this.load(CONFIG.STORAGE_KEYS.INVOICES, []);
-    State.invoices = State.invoices.map(i => Validator.normalizeInvoice(i));
+  async deleteStorageRecord(id) {
+    if (this.isOnline && supabaseClient) {
+      await supabaseClient.from('storage_records').delete().eq('id', id);
+    }
+    State.storageRecords = State.storageRecords.filter(s => s.id !== id);
+    this.saveLocal(CONFIG.STORAGE_KEYS.STORAGE, State.storageRecords);
+  },
+  
+  storageToRecord(storage) {
+    return {
+      id: storage.id,
+      storage_code: storage.storageCode,
+      client_name: storage.clientName,
+      organization_name: storage.organizationName,
+      linked_job_id: storage.linkedJobId || null,
+      location: storage.location,
+      date_entered: storage.dateEntered,
+      date_exited: storage.dateExited,
+      status: storage.status,
+      billing_type: storage.billingType,
+      rate_per_cbm: storage.ratePerCBM,
+      rate_currency: storage.rateCurrency,
+      billing_period: storage.billingPeriod,
+      flat_rate: storage.flatRate,
+      flat_rate_currency: storage.flatRateCurrency,
+      free_days: storage.freeDays,
+      inventory: storage.inventory || [],
+      notes: storage.notes
+    };
+  },
+  
+  recordToStorage(record) {
+    return {
+      id: record.id,
+      storageCode: record.storage_code,
+      clientName: record.client_name,
+      organizationName: record.organization_name,
+      linkedJobId: record.linked_job_id,
+      location: record.location,
+      dateEntered: record.date_entered,
+      dateExited: record.date_exited,
+      status: record.status,
+      billingType: record.billing_type,
+      ratePerCBM: record.rate_per_cbm,
+      rateCurrency: record.rate_currency,
+      billingPeriod: record.billing_period,
+      flatRate: record.flat_rate,
+      flatRateCurrency: record.flat_rate_currency,
+      freeDays: record.free_days,
+      inventory: record.inventory || [],
+      notes: record.notes
+    };
+  },
+  
+  // ==================== SCHEDULE ====================
+  async saveScheduleNotes() {
+    this.saveLocal(CONFIG.STORAGE_KEYS.SCHEDULE_NOTES, State.scheduleNotes);
+    
+    if (!this.isOnline || !supabaseClient) return;
+    
+    for (const [date, note] of Object.entries(State.scheduleNotes)) {
+      if (note && note.trim()) {
+        const { error } = await supabaseClient
+          .from('schedule_notes')
+          .upsert({ date, note }, { onConflict: 'date' });
+        if (error) console.error('Error saving schedule note:', error);
+      }
+    }
+  },
+  
+  async loadScheduleNotes() {
+    if (this.isOnline && supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('schedule_notes')
+        .select('*');
+      
+      if (!error && data) {
+        State.scheduleNotes = {};
+        data.forEach(row => {
+          State.scheduleNotes[row.date] = row.note;
+        });
+        this.saveLocal(CONFIG.STORAGE_KEYS.SCHEDULE_NOTES, State.scheduleNotes);
+        return;
+      }
+    }
+    State.scheduleNotes = this.loadLocal(CONFIG.STORAGE_KEYS.SCHEDULE_NOTES, {});
+  },
+  
+  async saveScheduleExtraJobs() {
+    this.saveLocal(CONFIG.STORAGE_KEYS.SCHEDULE_EXTRA_JOBS, State.scheduleExtraJobs);
+    
+    if (!this.isOnline || !supabaseClient) return;
+    
+    // First delete all, then insert fresh (simpler than diffing)
+    // This is fine for small datasets
+    for (const [date, jobs] of Object.entries(State.scheduleExtraJobs)) {
+      for (const job of jobs) {
+        const record = {
+          id: job.id,
+          date: date,
+          job_type: job.type,
+          custom_label: job.customLabel,
+          time: job.time,
+          office: job.office,
+          personnel: job.personnel,
+          vehicle: job.vehicle,
+          address: job.address,
+          notes: job.notes,
+          completed: job.completed || false
+        };
+        const { error } = await supabaseClient
+          .from('schedule_extra_jobs')
+          .upsert(record, { onConflict: 'id' });
+        if (error) console.error('Error saving extra job:', error);
+      }
+    }
+  },
+  
+  async loadScheduleExtraJobs() {
+    if (this.isOnline && supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('schedule_extra_jobs')
+        .select('*');
+      
+      if (!error && data) {
+        State.scheduleExtraJobs = {};
+        data.forEach(row => {
+          const date = row.date;
+          if (!State.scheduleExtraJobs[date]) {
+            State.scheduleExtraJobs[date] = [];
+          }
+          State.scheduleExtraJobs[date].push({
+            id: row.id,
+            type: row.job_type,
+            customLabel: row.custom_label,
+            time: row.time,
+            office: row.office,
+            personnel: row.personnel,
+            vehicle: row.vehicle,
+            address: row.address,
+            notes: row.notes,
+            completed: row.completed || false
+          });
+        });
+        this.saveLocal(CONFIG.STORAGE_KEYS.SCHEDULE_EXTRA_JOBS, State.scheduleExtraJobs);
+        return;
+      }
+    }
+    State.scheduleExtraJobs = this.loadLocal(CONFIG.STORAGE_KEYS.SCHEDULE_EXTRA_JOBS, {});
+  },
+  
+  // ==================== RESOURCE LIBRARY ====================
+  saveResourceLibrary() { 
+    this.saveLocal(CONFIG.STORAGE_KEYS.RESOURCE_LIBRARY, State.resourceLibrary); 
+    // Resource library is local-only for now (file uploads need R2)
   },
 
-  loadAll() {
-    State.agents = this.load(CONFIG.STORAGE_KEYS.AGENTS, []);
-    State.jobs = this.load(CONFIG.STORAGE_KEYS.JOBS, []);
-    State.scheduleNotes = this.load(CONFIG.STORAGE_KEYS.SCHEDULE_NOTES, {});
-    State.scheduleExtraJobs = this.load(CONFIG.STORAGE_KEYS.SCHEDULE_EXTRA_JOBS, {});
+  loadResourceLibrary() {
+    const saved = this.loadLocal(CONFIG.STORAGE_KEYS.RESOURCE_LIBRARY, null);
+    if (saved && Array.isArray(saved.categories)) {
+      State.resourceLibrary = saved;
+    } else {
+      State.resourceLibrary = JSON.parse(JSON.stringify(DEFAULT_RESOURCE_LIBRARY));
+      this.saveResourceLibrary();
+    }
+  },
+  
+  // ==================== LOAD ALL ====================
+  async loadAll() {
+    await this.init();
+    await this.loadAgents();
+    await this.loadJobs();
+    await this.loadQuotes();
+    await this.loadStorageRecords();
+    await this.loadScheduleNotes();
+    await this.loadScheduleExtraJobs();
     this.loadResourceLibrary();
-    this.loadQuotes();
-    this.loadStorageRecords();  // NEW
-    this.loadInvoices();        // NEW
     Validator.normalizeAll();
-    Validator.migrateEmbeddedStorage();  // NEW - migrate old embedded storage to new entity
   },
 
+  // ==================== EXPORT/IMPORT ====================
   exportData() {
     return {
       jobs: State.jobs,
@@ -3345,12 +3955,11 @@ loadResourceLibrary() {
       scheduleNotes: State.scheduleNotes,
       scheduleExtraJobs: State.scheduleExtraJobs,
       quotes: State.quotes,
-      storageRecords: State.storageRecords,  // NEW
-      invoices: State.invoices               // NEW
+      storageRecords: State.storageRecords
     };
   },
 
-  importData(data) {
+  async importData(data) {
     if (!data || !Array.isArray(data.jobs) || !Array.isArray(data.agents)) {
       throw new Error('Invalid import data');
     }
@@ -3359,16 +3968,14 @@ loadResourceLibrary() {
     State.scheduleNotes = data.scheduleNotes || {};
     State.scheduleExtraJobs = data.scheduleExtraJobs || {};
     State.quotes = data.quotes || [];
-    State.storageRecords = data.storageRecords || [];  // NEW
-    State.invoices = data.invoices || [];              // NEW
+    State.storageRecords = data.storageRecords || [];
     Validator.normalizeAll();
-    this.saveJobs();
-    this.saveAgents();
-    this.saveScheduleNotes();
-    this.saveScheduleExtraJobs();
-    this.saveQuotes();
-    this.saveStorageRecords();  // NEW
-    this.saveInvoices();        // NEW
+    await this.saveJobs();
+    await this.saveAgents();
+    await this.saveScheduleNotes();
+    await this.saveScheduleExtraJobs();
+    await this.saveQuotes();
+    await this.saveStorageRecords();
   }
 };
 
@@ -3470,7 +4077,6 @@ const Validator = {
   if (!Array.isArray(job.media)) job.media = [];
   if (typeof job.paymentReceived !== 'boolean') job.paymentReceived = false;
   if (!job.packDate) job.packDate = '';
-  if (!Array.isArray(job.removedAutoStepIds)) job.removedAutoStepIds = [];
 
   // Shipment contents (HHE, Vehicle)
   if (!Array.isArray(job.shipmentContents)) job.shipmentContents = ['HHE'];
@@ -3516,36 +4122,8 @@ const Validator = {
   if (typeof job.vehicleVIN !== 'string') job.vehicleVIN = '';
   if (typeof job.vehicleCondition !== 'string') job.vehicleCondition = 'Running';
 
-  // Storage - NOW A REFERENCE to separate Storage entity
-  if (typeof job.storageId !== 'string') job.storageId = '';  // Links to Storage entity
-  
-  // LEGACY: Keep old embedded storage fields for migration, but mark as deprecated
-  // These will be migrated to separate Storage entity
-  if (typeof job.hasStorage !== 'boolean') job.hasStorage = false;
-  if (typeof job.storageLocation !== 'string') job.storageLocation = '';
-  if (!Array.isArray(job.storageContents)) job.storageContents = [];
-  if (typeof job.storageCBM !== 'number') job.storageCBM = 0;
-  if (typeof job.storageDateEntered !== 'string') job.storageDateEntered = '';
-  if (typeof job.storageDateExited !== 'string') job.storageDateExited = '';
-  if (!Array.isArray(job.storageInventory)) job.storageInventory = [];
-  if (typeof job.storageBillingType !== 'string') job.storageBillingType = 'Per CBM';
-  if (typeof job.storageBillingRate !== 'number') job.storageBillingRate = 0;
-  if (typeof job.storageBillingCurrency !== 'string') job.storageBillingCurrency = 'TRY';
-  if (typeof job.storageBillingPeriod !== 'string') job.storageBillingPeriod = 'Monthly';
-  if (typeof job.storageFlatRate !== 'number') job.storageFlatRate = 0;
-  if (typeof job.storageFlatCurrency !== 'string') job.storageFlatCurrency = 'TRY';
-  if (typeof job.storageFreeDays !== 'number') job.storageFreeDays = 0;
-  if (typeof job.storageBillingNotes !== 'string') job.storageBillingNotes = '';
-
-  // Legacy field migration (if old jobs have weight/volume, migrate to primary mode)
-  if (job.weight && !job.airCargoWeight && job.modes && job.modes.includes('Air')) {
-    job.airCargoWeight = job.weight;
-  }
-  if (job.volume) {
-    if (job.modes && job.modes.includes('Sea') && !job.seaVolume) job.seaVolume = job.volume;
-    else if (job.modes && job.modes.includes('Air') && !job.airVolume) job.airVolume = job.volume;
-    else if (job.modes && job.modes.includes('Land') && !job.landVolume) job.landVolume = job.volume;
-  }
+  // Storage - reference to separate Storage entity
+  if (typeof job.storageId !== 'string') job.storageId = '';
 
   if (!Array.isArray(job.checklist) || job.checklist.length === 0) {
     const template = ChecklistUtils.getTemplate(job.tradeDirection, job.modes);
@@ -3762,111 +4340,11 @@ if (!quote.quoteCurrency) quote.quoteCurrency = 'USD';
     
     return storage;
   },
-  
-  // NEW: Invoice normalizer
-  normalizeInvoice(invoice) {
-    if (!invoice || typeof invoice !== 'object') invoice = {};
-    
-    // Identity
-    if (!invoice.id) invoice.id = Utils.makeId('invoice');
-    if (!invoice.invoiceNumber) invoice.invoiceNumber = Utils.invoiceNumber();
-    
-    // Links
-    if (typeof invoice.linkedJobId !== 'string') invoice.linkedJobId = '';
-    if (typeof invoice.linkedStorageId !== 'string') invoice.linkedStorageId = '';
-    if (typeof invoice.linkedQuoteId !== 'string') invoice.linkedQuoteId = '';
-    
-    // Client
-    if (typeof invoice.clientName !== 'string') invoice.clientName = '';
-    if (typeof invoice.clientAddress !== 'string') invoice.clientAddress = '';
-    
-    // Line items
-    if (!Array.isArray(invoice.lineItems)) invoice.lineItems = [];
-    invoice.lineItems = invoice.lineItems.map(item => {
-      if (!item.id) item.id = Utils.makeId('line');
-      if (typeof item.description !== 'string') item.description = '';
-      if (typeof item.quantity !== 'number') item.quantity = 1;
-      if (typeof item.rate !== 'number') item.rate = 0;
-      if (typeof item.amount !== 'number') item.amount = 0;
-      if (typeof item.source !== 'string') item.source = 'manual';  // quote, storage, manual
-      return item;
-    });
-    
-    // Totals
-    if (typeof invoice.subtotal !== 'number') invoice.subtotal = 0;
-    if (typeof invoice.taxRate !== 'number') invoice.taxRate = 0;
-    if (typeof invoice.taxAmount !== 'number') invoice.taxAmount = 0;
-    if (typeof invoice.total !== 'number') invoice.total = 0;
-    if (typeof invoice.currency !== 'string') invoice.currency = 'USD';
-    
-    // Status
-    if (typeof invoice.status !== 'string') invoice.status = 'Draft';  // Draft, Sent, Paid, Cancelled
-    
-    // Dates
-    if (typeof invoice.issueDate !== 'string') invoice.issueDate = '';
-    if (typeof invoice.dueDate !== 'string') invoice.dueDate = '';
-    if (typeof invoice.paidDate !== 'string') invoice.paidDate = '';
-    
-    // Meta
-    if (typeof invoice.notes !== 'string') invoice.notes = '';
-    if (typeof invoice.createdAt !== 'string') invoice.createdAt = new Date().toISOString();
-    
-    return invoice;
-  },
-  
-  // Migration: Convert embedded storage in jobs to separate Storage records
-  migrateEmbeddedStorage() {
-    let migrated = false;
-    
-    State.jobs.forEach(job => {
-      // Check if job has embedded storage data but no storageId reference
-      if (job.hasStorage && !job.storageId && (job.storageLocation || job.storageCBM > 0 || job.storageInventory.length > 0)) {
-        // Create new Storage record from embedded data
-        const storageRecord = this.normalizeStorageRecord({
-          linkedJobId: job.id,
-          clientName: job.clientName || '',
-          location: job.storageLocation || '',
-          contents: job.storageContents || [],
-          totalCBM: job.storageCBM || 0,
-          dateEntered: job.storageDateEntered || '',
-          dateExited: job.storageDateExited || '',
-          inventory: (job.storageInventory || []).map(item => ({
-            ...item,
-            type: 'HHE'  // Default existing items to HHE
-          })),
-          billingType: job.storageBillingType || 'Per CBM',
-          ratePerCBM: job.storageBillingRate || 0,
-          ratePeriod: job.storageBillingPeriod || 'Monthly',
-          rateCurrency: job.storageBillingCurrency || 'TRY',
-          flatRate: job.storageFlatRate || 0,
-          flatRateCurrency: job.storageFlatCurrency || 'TRY',
-          freeDays: job.storageFreeDays || 0,
-          billingNotes: job.storageBillingNotes || '',
-          status: job.storageDateExited ? 'Closed' : 'Active'
-        });
-        
-        // Add to storage records
-        State.storageRecords.push(storageRecord);
-        
-        // Link job to new storage record
-        job.storageId = storageRecord.id;
-        
-        migrated = true;
-        console.log(`Migrated storage for job ${job.jobCode} to storage record ${storageRecord.storageCode}`);
-      }
-    });
-    
-    if (migrated) {
-      Storage.saveJobs();
-      Storage.saveStorageRecords();
-    }
-  },
 
   normalizeAll() {
     State.agents = (State.agents || []).map(a => this.normalizeAgent(a));
     State.jobs = (State.jobs || []).map(j => this.normalizeJob(j));
     State.storageRecords = (State.storageRecords || []).map(s => this.normalizeStorageRecord(s));
-    State.invoices = (State.invoices || []).map(i => this.normalizeInvoice(i));
     this.normalizeScheduleExtraJobs();
   }
 };
@@ -3876,34 +4354,6 @@ if (!quote.quoteCurrency) quote.quoteCurrency = 'USD';
 // ============================================================
 
 const Steps = {
-  create(job) {
-    const { tradeDirection, modes } = job;
-    if (!tradeDirection || !modes || modes.length === 0) return [];
-
-    const modeKey = [...new Set(modes)].sort().join('/');
-    const scenarioKey = `${tradeDirection}|${modeKey}`;
-    const stepIds = CONFIG.STEP_SCENARIOS[scenarioKey] || [];
-    const removedStepIds = Array.isArray(job.removedAutoStepIds) ? job.removedAutoStepIds : [];
-
-    return stepIds.filter(stepId => !removedStepIds.includes(stepId)).map(stepId => {
-      const def = CONFIG.STEP_DEFINITIONS[stepId] || {};
-      const step = {
-        id: stepId, label: def.label || stepId,
-        date: '', time: '', personnel: '', vehicle: '', address: '',
-        portDetails: '', pickupAirport: '', deliveryAirport: '',
-        pickupAddress: '', deliveryAddress: '', notes: '',
-        office: '' // office per step (manual)
-      };
-
-      if (def.autoFillAddress === 'origin' && job.originFullAddress) step.address = job.originFullAddress;
-      if (def.autoFillAddress === 'destination' && job.destinationFullAddress) step.address = job.destinationFullAddress;
-      if (def.autoFillDeliveryAddress === 'destination' && job.destinationFullAddress) step.deliveryAddress = job.destinationFullAddress;
-      if (def.autoFillPickupAddress === 'origin' && job.originFullAddress) step.pickupAddress = job.originFullAddress;
-
-      return step;
-    });
-  },
-
   ensure(job) {
     // Initialize steps as empty array if not present (manual-only mode)
     if (!Array.isArray(job.steps)) {
@@ -3958,6 +4408,13 @@ const Utils = {
     const parts = str.split('-');
     return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : str;
   },
+  
+  // Format date for input display (empty string if no value)
+  formatDateForInput(str) {
+    if (!str) return '';
+    const parts = str.split('-');
+    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : '';
+  },
 
   parseDate(display) {
     if (!display) return '';
@@ -3968,6 +4425,40 @@ const Utils = {
     const [dd, mm, yyyy] = parts.map(p => parseInt(p, 10));
     if (isNaN(dd) || isNaN(mm) || isNaN(yyyy) || dd < 1 || dd > 31 || mm < 1 || mm > 12) return '';
     return `${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+  },
+  
+  // Create a date input that shows DD/MM/YYYY format
+  createDateInput(options = {}) {
+    const { value = '', className = '', id = '', required = false } = options;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = I18n.t('dateFormatPlaceholder');
+    input.value = this.formatDateForInput(value);
+    if (className) input.className = className;
+    if (id) input.id = id;
+    if (required) input.required = true;
+    input.setAttribute('data-date-input', 'true');
+    input.setAttribute('pattern', '\\d{2}/\\d{2}/\\d{4}');
+    input.setAttribute('maxlength', '10');
+    
+    // Auto-format as user types
+    input.addEventListener('input', (e) => {
+      let v = e.target.value.replace(/[^\d]/g, '');
+      if (v.length > 8) v = v.slice(0, 8);
+      if (v.length >= 4) {
+        v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+      } else if (v.length >= 2) {
+        v = v.slice(0, 2) + '/' + v.slice(2);
+      }
+      e.target.value = v;
+    });
+    
+    return input;
+  },
+  
+  // Get ISO date value from a date input
+  getDateInputValue(input) {
+    return this.parseDate(input.value);
   },
 
   formatTime(iso) {
@@ -4022,49 +4513,6 @@ const Utils = {
     });
     return `${prefix}${String(maxNum + 1).padStart(4, '0')}`;
   },
-  
-  // IEI-YEAR-#### for invoices (Istanbul Ekspres Invoice) - resets yearly
-  invoiceNumber() {
-    const year = new Date().getFullYear();
-    const prefix = `IEI-${year}-`;
-    let maxNum = 0;
-    (State.invoices || []).forEach(i => {
-      const num = i && i.invoiceNumber ? String(i.invoiceNumber) : '';
-      if (!num.startsWith(prefix)) return;
-      const tail = num.slice(prefix.length);
-      const n = parseInt(tail, 10);
-      if (!isNaN(n)) maxNum = Math.max(maxNum, n);
-    });
-    return `${prefix}${String(maxNum + 1).padStart(4, '0')}`;
-  },
-
-  // office detection by address keywords (simple rule-based)
-  detectOfficeFromAddress(address) {
-    const text = String(address || '').toLowerCase();
-    if (!text.trim()) return '';
-    for (const office of CONFIG.OFFICES) {
-      const rules = CONFIG.OFFICE_RULES[office] || [];
-      if (rules.some(k => text.includes(k))) return office;
-    }
-    return '';
-  },
-
-  // pick best address for steps, then detect office
-  detectOfficeForStep(step, job) {
-    const candidates = [
-      step.address,
-      step.pickupAddress,
-      step.deliveryAddress,
-      job && job.originFullAddress,
-      job && job.destinationFullAddress
-    ].filter(Boolean);
-
-    for (const addr of candidates) {
-      const office = this.detectOfficeFromAddress(addr);
-      if (office) return office;
-    }
-    return '';
-  },
 
   // helper to safely escape html in export layout
   escapeHtml(str) {
@@ -4076,11 +4524,20 @@ const Utils = {
       .replaceAll("'", '&#039;');
   },
 
-  // NEW: show "MOVEID – Client" when linked
+  // show "MOVEID – Client" when linked
   jobLabelById(jobId, fallbackCode = '') {
     const j = jobId ? State.getJob(jobId) : null;
     if (j) return `${j.jobCode || ''} – ${j.clientName || ''}`.trim();
     return fallbackCode || '';
+  },
+  
+  // Debounce helper - waits for user to stop typing before executing
+  debounce(fn, delay = 300) {
+    let timeoutId;
+    return function(...args) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn.apply(this, args), delay);
+    };
   }
 };
 
@@ -4143,38 +4600,10 @@ const QuoteUtils = {
     return result;
   },
 
-  getChargeCategories(mode, type, data, recipientType = 'Agent') {
-    const tpl = this.getTemplate(mode, type, recipientType);
-    if (!tpl) return { main: [], additional: [] };
-    return {
-      main: (tpl.chargeCategories || []).map(c => this.replacePlaceholders(c, data)),
-      additional: (tpl.additionalChargeCategories || []).map(c => this.replacePlaceholders(c, data))
-    };
-  },
-
   getBaseIncludes(mode, type, data, recipientType = 'Agent') {
     const tpl = this.getTemplate(mode, type, recipientType);
     if (!tpl) return [];
     return (tpl.includes || []).map(i => this.replacePlaceholders(i, data));
-  },
-
-  getConditionalIncludes(mode, type, data, selectedChargeCategories, recipientType = 'Agent') {
-    const tpl = this.getTemplate(mode, type, recipientType);
-    if (!tpl || !tpl.conditionalIncludes) return [];
-    
-    let items = [];
-    Object.keys(tpl.conditionalIncludes).forEach(chargeKey => {
-      const hasMatch = selectedChargeCategories.some(c => 
-        c.toLowerCase().includes(chargeKey.toLowerCase()) || 
-        chargeKey.toLowerCase().includes(c.toLowerCase().split(' ')[0])
-      );
-      if (hasMatch) {
-        items = items.concat(tpl.conditionalIncludes[chargeKey].map(i => 
-          this.replacePlaceholders(i, data)
-        ));
-      }
-    });
-    return items;
   },
 
   getAdditionalChargesMayApply(type, modes = [], hasInsurance = false, hasVehicle = false) {
@@ -5042,7 +5471,8 @@ const ScheduleExport = {
     const stepsForDay = Steps.getForDate(dateStr);
     stepsForDay.forEach(({ job, step }) => {
       const office = step.office || '';
-      const address = step.address || step.pickupAddress || step.deliveryAddress || '-';
+      // Check all address-type fields including portDetails and airports
+      const address = step.address || step.portDetails || step.pickupAddress || step.deliveryAddress || step.pickupAirport || step.deliveryAirport || '-';
       rows.push({
         office,
         time: step.time || '',
@@ -5210,13 +5640,79 @@ const ScheduleExport = {
 const JobsUI = {
   render() {
     const container = $.get('jobList');
-    const jobs = this.filter();
+    const allJobs = this.filter();
     $.clear(container);
-    if (jobs.length === 0) {
+    
+    if (allJobs.length === 0) {
       container.appendChild($.el('p', { textContent: I18n.t('noMovesMatch') }));
       return;
     }
-    jobs.forEach(job => container.appendChild(this.createCard(job)));
+    
+    // Pagination
+    const { page, perPage } = State.pagination.jobs;
+    const totalPages = Math.ceil(allJobs.length / perPage);
+    const startIdx = (page - 1) * perPage;
+    const pageJobs = allJobs.slice(startIdx, startIdx + perPage);
+    
+    // Render job cards
+    pageJobs.forEach(job => container.appendChild(this.createCard(job)));
+    
+    // Add pagination controls if more than one page
+    if (totalPages > 1) {
+      container.appendChild(this.createPaginationControls('jobs', page, totalPages, allJobs.length));
+    }
+  },
+  
+  createPaginationControls(type, currentPage, totalPages, totalItems) {
+    const wrapper = $.el('div', { className: 'pagination-controls' });
+    
+    // Info text
+    const { perPage } = State.pagination[type];
+    const start = (currentPage - 1) * perPage + 1;
+    const end = Math.min(currentPage * perPage, totalItems);
+    const infoText = (State.lang === 'tr') 
+      ? `${totalItems} kayıttan ${start}-${end} arası gösteriliyor`
+      : `Showing ${start}-${end} of ${totalItems}`;
+    wrapper.appendChild($.el('span', { className: 'pagination-info', textContent: infoText }));
+    
+    const buttons = $.el('div', { className: 'pagination-buttons' });
+    
+    // Previous button
+    const prevBtn = $.el('button', { 
+      type: 'button', 
+      textContent: '← ' + ((State.lang === 'tr') ? 'Önceki' : 'Previous'),
+      disabled: currentPage === 1
+    });
+    prevBtn.addEventListener('click', () => {
+      if (State.pagination[type].page > 1) {
+        State.pagination[type].page--;
+        this.render();
+      }
+    });
+    buttons.appendChild(prevBtn);
+    
+    // Page indicator
+    buttons.appendChild($.el('span', { 
+      className: 'pagination-current',
+      textContent: `${currentPage} / ${totalPages}` 
+    }));
+    
+    // Next button
+    const nextBtn = $.el('button', { 
+      type: 'button', 
+      textContent: ((State.lang === 'tr') ? 'Sonraki' : 'Next') + ' →',
+      disabled: currentPage === totalPages
+    });
+    nextBtn.addEventListener('click', () => {
+      if (State.pagination[type].page < totalPages) {
+        State.pagination[type].page++;
+        this.render();
+      }
+    });
+    buttons.appendChild(nextBtn);
+    
+    wrapper.appendChild(buttons);
+    return wrapper;
   },
 
   filter() {
@@ -5234,11 +5730,18 @@ const JobsUI = {
           job.clientName,
           job.originCity,
           job.originCountry,
+          CONFIG.getCountryNameBilingual(job.originCountry),      // Both EN and TR country names
           job.destinationCity,
           job.destinationCountry,
+          CONFIG.getCountryNameBilingual(job.destinationCountry), // Both EN and TR country names
           State.getAgentName(job.originAgentId),
           State.getAgentName(job.destinationAgentId),
-          job.tradeDirection
+          job.tradeDirection,
+          I18n.typeTextBilingual(job.tradeDirection),        // Both EN and TR (Import/İthalat, etc.)
+          job.status,
+          I18n.statusTextBilingual(job.status),              // Both EN and TR status
+          ...(job.modes || []),
+          I18n.modesTextBilingual(job.modes)                 // Both EN and TR modes (Sea/Deniz, etc.)
         ]
           .filter(Boolean)
           .join(' ')
@@ -6067,7 +6570,7 @@ stepCardCollapsible(step, idx, job) {
   // View section
   const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
   const officeComputed = step.office || '-';
-  const addrShort = (step.address || step.pickupAddress || step.deliveryAddress || '').trim();
+  const addrShort = (step.address || step.portDetails || step.pickupAddress || step.deliveryAddress || step.pickupAirport || step.deliveryAirport || '').trim();
   const addrView = addrShort ? (addrShort.length > 120 ? (addrShort.slice(0, 120) + '...') : addrShort) : '-';
 
   const rows = [
@@ -6100,8 +6603,9 @@ stepCardCollapsible(step, idx, job) {
 
   // Date input
   const dateDiv = $.el('div');
-  dateDiv.appendChild($.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' }));
-  dateDiv.appendChild($.el('input', { type: 'date', className: 'step-date-input', value: step.date || '' }));
+  const dateLabel = $.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' });
+  dateDiv.appendChild(dateLabel);
+  dateDiv.appendChild(Utils.createDateInput({ value: step.date, className: 'step-date-input' }));
   editBox.appendChild(dateDiv);
 
   // Time selector (24-hour dropdowns)
@@ -6184,8 +6688,8 @@ stepCardCollapsible(step, idx, job) {
 
   body.appendChild(editBox);
 
-  // Actions
-  const actions = $.el('div', { style: 'margin-top:12px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;' });
+  // Actions - spans full width in grid
+  const actions = $.el('div', { className: 'step-card-actions', style: 'margin-top:12px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; grid-column: 1 / -1;' });
 
   const editBtn = $.el('button', { type: 'button', textContent: I18n.t('edit') });
   const saveBtn = $.el('button', { type: 'button', className: 'hidden step-save-btn', textContent: I18n.t('save') });
@@ -6223,7 +6727,8 @@ stepCardCollapsible(step, idx, job) {
   });
 
   saveBtn.addEventListener('click', () => {
-    step.date = card.querySelector('.step-date-input').value || '';
+    const dateInput = card.querySelector('.step-date-input');
+    step.date = Utils.getDateInputValue(dateInput) || '';
     const timeSelector = card.querySelector('.step-time-selector');
     step.time = TimeHelpers.getTimeFromSelector(timeSelector);
     step.personnel = card.querySelector('.step-personnel-input').value.trim();
@@ -6522,7 +7027,7 @@ linkedExtraJobCollapsible(job, item) {
     const viewBox = $.el('div', { className: 'schedule-step-fields-view' });
 
     const officeComputed = step.office || '-';
-    const addrShort = (step.address || step.pickupAddress || step.deliveryAddress || '').trim();
+    const addrShort = (step.address || step.portDetails || step.pickupAddress || step.deliveryAddress || step.pickupAirport || step.deliveryAirport || '').trim();
     const addrView = addrShort ? (addrShort.length > 120 ? (addrShort.slice(0, 120) + '…') : addrShort) : '-';
 
     const rows = [
@@ -6641,7 +7146,8 @@ linkedExtraJobCollapsible(job, item) {
     });
 
     saveBtn.addEventListener('click', () => {
-      step.date = card.querySelector('.step-date-input').value || '';
+      const dateInput = card.querySelector('.step-date-input');
+      step.date = Utils.getDateInputValue(dateInput) || '';
       step.time = card.querySelector('.step-time-input').value || '';
       step.personnel = card.querySelector('.step-personnel-input').value.trim();
       step.vehicle = card.querySelector('.step-vehicle-input').value.trim();
@@ -6886,8 +7392,9 @@ linkedExtraJobCollapsible(job, item) {
 
     // Date
     const dateDiv = $.el('div');
-    dateDiv.appendChild($.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' }));
-    const dateInput = $.el('input', { type: 'date', id: 'moveAddJobDate' });
+    const dateLabel = $.el('label', { textContent: (State.lang === 'tr') ? 'Tarih' : 'Date' });
+    dateDiv.appendChild(dateLabel);
+    const dateInput = Utils.createDateInput({ id: 'moveAddJobDate' });
     dateDiv.appendChild(dateInput);
     form.appendChild(dateDiv);
 
@@ -6965,7 +7472,7 @@ linkedExtraJobCollapsible(job, item) {
     const cancelBtn = $.el('button', { type: 'button', textContent: I18n.t('cancel') });
 
     addBtn.addEventListener('click', () => {
-      const dateStr = dateInput.value || '';
+      const dateStr = Utils.getDateInputValue(dateInput) || '';
       const taskType = taskSelect.value || '';
       const customTaskName = customInput.value.trim();
       const time = timeInput.value || '';
@@ -7395,9 +7902,13 @@ const DocumentsTabUI = {
           job.jobCode,
           job.clientName,
           job.tradeDirection,
+          I18n.typeTextBilingual(job.tradeDirection),      // Both EN and TR type
           (job.modes && job.modes.length ? job.modes.join(' ') : ''),
+          I18n.modesTextBilingual(job.modes),              // Both EN and TR modes
           Utils.location(job.originCity, job.originCountry),
           Utils.location(job.destinationCity, job.destinationCountry),
+          CONFIG.getCountryNameBilingual(job.originCountry),      // Both EN and TR country
+          CONFIG.getCountryNameBilingual(job.destinationCountry), // Both EN and TR country
           State.getAgentName(job.originAgentId),
           State.getAgentName(job.destinationAgentId),
           doc.name,
@@ -8365,17 +8876,76 @@ const QuotesUI = {
     const container = $.get('quoteList');
     if (!container) return;
     
-    const quotes = this.filter();
+    const allQuotes = this.filter();
     $.clear(container);
     
-    if (quotes.length === 0) {
+    if (allQuotes.length === 0) {
       container.appendChild($.el('p', { 
         textContent: (State.lang === 'tr') ? 'Henuz teklif yok.' : 'No quotes yet.' 
       }));
       return;
     }
     
-    quotes.forEach(quote => container.appendChild(this.createCard(quote)));
+    // Pagination
+    const { page, perPage } = State.pagination.quotes;
+    const totalPages = Math.ceil(allQuotes.length / perPage);
+    const startIdx = (page - 1) * perPage;
+    const pageQuotes = allQuotes.slice(startIdx, startIdx + perPage);
+    
+    pageQuotes.forEach(quote => container.appendChild(this.createCard(quote)));
+    
+    // Add pagination controls if more than one page
+    if (totalPages > 1) {
+      container.appendChild(this.createPaginationControls('quotes', page, totalPages, allQuotes.length));
+    }
+  },
+  
+  createPaginationControls(type, currentPage, totalPages, totalItems) {
+    const wrapper = $.el('div', { className: 'pagination-controls' });
+    
+    const { perPage } = State.pagination[type];
+    const start = (currentPage - 1) * perPage + 1;
+    const end = Math.min(currentPage * perPage, totalItems);
+    const infoText = (State.lang === 'tr') 
+      ? `${totalItems} kayıttan ${start}-${end} arası gösteriliyor`
+      : `Showing ${start}-${end} of ${totalItems}`;
+    wrapper.appendChild($.el('span', { className: 'pagination-info', textContent: infoText }));
+    
+    const buttons = $.el('div', { className: 'pagination-buttons' });
+    
+    const prevBtn = $.el('button', { 
+      type: 'button', 
+      textContent: '← ' + ((State.lang === 'tr') ? 'Önceki' : 'Previous'),
+      disabled: currentPage === 1
+    });
+    prevBtn.addEventListener('click', () => {
+      if (State.pagination[type].page > 1) {
+        State.pagination[type].page--;
+        this.render();
+      }
+    });
+    buttons.appendChild(prevBtn);
+    
+    buttons.appendChild($.el('span', { 
+      className: 'pagination-current',
+      textContent: `${currentPage} / ${totalPages}` 
+    }));
+    
+    const nextBtn = $.el('button', { 
+      type: 'button', 
+      textContent: ((State.lang === 'tr') ? 'Sonraki' : 'Next') + ' →',
+      disabled: currentPage === totalPages
+    });
+    nextBtn.addEventListener('click', () => {
+      if (State.pagination[type].page < totalPages) {
+        State.pagination[type].page++;
+        this.render();
+      }
+    });
+    buttons.appendChild(nextBtn);
+    
+    wrapper.appendChild(buttons);
+    return wrapper;
   },
 
   filter() {
@@ -8391,7 +8961,11 @@ const QuotesUI = {
           quote.origin,
           quote.destination,
           quote.type,
-          ...(quote.modes || [])
+          I18n.typeTextBilingual(quote.type),           // Both EN and TR type
+          ...(quote.modes || []),
+          I18n.modesTextBilingual(quote.modes),         // Both EN and TR modes
+          quote.status,
+          I18n.statusTextBilingual(quote.status)        // Both EN and TR status
         ].filter(Boolean).join(' ').toLowerCase();
         return text.includes(term);
       });
@@ -8815,7 +9389,8 @@ const QuotesUI = {
       
       const threeMonths = new Date();
       threeMonths.setMonth(threeMonths.getMonth() + 3);
-      form.validUntil.value = threeMonths.toISOString().split('T')[0];
+      const isoDate = threeMonths.toISOString().split('T')[0];
+      form.validUntil.value = Utils.formatDateForInput(isoDate);
       
       form.termsAndConditions.value = 'Our quotation is based on stated weights and normal access conditions. It is subject to change if actual volume/weight differs or if there are unforeseen difficulties (e.g. inspections, force majeure delays, etc.)';
       
@@ -8881,7 +9456,7 @@ const QuotesUI = {
     if (recipientSelect) recipientSelect.value = quote.recipientType || 'Client';
     
     form.termsAndConditions.value = quote.termsAndConditions || '';
-    form.validUntil.value = quote.validUntil || '';
+    form.validUntil.value = Utils.formatDateForInput(quote.validUntil) || '';
     
     // Set mode checkboxes
     ['Sea', 'Air', 'Land'].forEach(mode => {
@@ -9595,7 +10170,7 @@ modes.forEach(mode => {
       selectedIncludes: selectedIncludes,
       selectedAdditionalCharges: selectedAdditionalCharges,
       termsAndConditions: form.termsAndConditions?.value.trim() || '',
-      validUntil: form.validUntil?.value || '',
+      validUntil: Utils.parseDate(form.validUntil?.value) || '',
       departurePort: form.departurePort?.value.trim() || '',
       poe: form.poe?.value.trim() || '',
       containerDetails: form.containerDetails?.value.trim() || '',
@@ -10184,12 +10759,18 @@ const StorageUI = {
     // Restore selected value
     select.value = currentValue;
     
-    select.onchange = () => this.render();
+    select.onchange = () => {
+      State.pagination.storage.page = 1; // Reset to page 1
+      this.render();
+    };
     
     // Status filter
     const statusSelect = $.get('storageStatusFilter');
     if (statusSelect) {
-      statusSelect.onchange = () => this.render();
+      statusSelect.onchange = () => {
+        State.pagination.storage.page = 1; // Reset to page 1
+        this.render();
+      };
     }
   },
 
@@ -10208,12 +10789,25 @@ const StorageUI = {
       
       // Search filter
       if (searchTerm) {
+        // Get linked job info for search
+        const linkedJob = storage.linkedJobId ? State.getJob(storage.linkedJobId) : null;
+        
         const searchableText = [
           storage.storageCode,
           storage.clientName,
           storage.organizationName,
+          storage.location,
           this.getLocationName(storage.location),
-          storage.notes
+          storage.notes,
+          storage.status,
+          I18n.storageStatusTextBilingual(storage.status),  // Both EN and TR status
+          // Include linked job info
+          linkedJob?.jobCode,
+          linkedJob?.clientName,
+          linkedJob?.tradeDirection,
+          I18n.typeTextBilingual(linkedJob?.tradeDirection),  // Both EN and TR type
+          CONFIG.getCountryNameBilingual(linkedJob?.originCountry),
+          CONFIG.getCountryNameBilingual(linkedJob?.destinationCountry)
         ].filter(Boolean).join(' ').toLowerCase();
         
         if (!searchableText.includes(searchTerm)) return false;
@@ -10303,9 +10897,9 @@ const StorageUI = {
     if (!container) return;
     $.clear(container);
 
-    const records = this.getFilteredRecords();
+    const allRecords = this.getFilteredRecords();
 
-    if (records.length === 0) {
+    if (allRecords.length === 0) {
       container.appendChild($.el('p', { 
         className: 'storage-empty-message',
         textContent: I18n.t('noStorageRecords')
@@ -10313,9 +10907,68 @@ const StorageUI = {
       return;
     }
 
-    records.forEach(storage => {
+    // Pagination
+    const { page, perPage } = State.pagination.storage;
+    const totalPages = Math.ceil(allRecords.length / perPage);
+    const startIdx = (page - 1) * perPage;
+    const pageRecords = allRecords.slice(startIdx, startIdx + perPage);
+
+    pageRecords.forEach(storage => {
       container.appendChild(this.createStorageCard(storage));
     });
+    
+    // Add pagination controls if more than one page
+    if (totalPages > 1) {
+      container.appendChild(this.createPaginationControls('storage', page, totalPages, allRecords.length));
+    }
+  },
+  
+  createPaginationControls(type, currentPage, totalPages, totalItems) {
+    const wrapper = $.el('div', { className: 'pagination-controls' });
+    
+    const { perPage } = State.pagination[type];
+    const start = (currentPage - 1) * perPage + 1;
+    const end = Math.min(currentPage * perPage, totalItems);
+    const infoText = (State.lang === 'tr') 
+      ? `${totalItems} kayıttan ${start}-${end} arası gösteriliyor`
+      : `Showing ${start}-${end} of ${totalItems}`;
+    wrapper.appendChild($.el('span', { className: 'pagination-info', textContent: infoText }));
+    
+    const buttons = $.el('div', { className: 'pagination-buttons' });
+    
+    const prevBtn = $.el('button', { 
+      type: 'button', 
+      textContent: '← ' + ((State.lang === 'tr') ? 'Önceki' : 'Previous'),
+      disabled: currentPage === 1
+    });
+    prevBtn.addEventListener('click', () => {
+      if (State.pagination[type].page > 1) {
+        State.pagination[type].page--;
+        this.render();
+      }
+    });
+    buttons.appendChild(prevBtn);
+    
+    buttons.appendChild($.el('span', { 
+      className: 'pagination-current',
+      textContent: `${currentPage} / ${totalPages}` 
+    }));
+    
+    const nextBtn = $.el('button', { 
+      type: 'button', 
+      textContent: ((State.lang === 'tr') ? 'Sonraki' : 'Next') + ' →',
+      disabled: currentPage === totalPages
+    });
+    nextBtn.addEventListener('click', () => {
+      if (State.pagination[type].page < totalPages) {
+        State.pagination[type].page++;
+        this.render();
+      }
+    });
+    buttons.appendChild(nextBtn);
+    
+    wrapper.appendChild(buttons);
+    return wrapper;
   },
 
   // Render completed storage list - now empty since we use single list
@@ -10753,10 +11406,10 @@ const StorageUI = {
     const autoForm = $.el('div', { className: 'auto-add-form hidden' });
     const autoFields = $.el('div', { className: 'auto-fields-row' });
     
-    const makeInput = $.el('input', { type: 'text', placeholder: 'Make (e.g. Toyota)', className: 'auto-field' });
-    const modelInput = $.el('input', { type: 'text', placeholder: 'Model (e.g. Camry)', className: 'auto-field' });
-    const yearInput = $.el('input', { type: 'number', placeholder: 'Year', className: 'auto-field auto-field-small' });
-    const vinInput = $.el('input', { type: 'text', placeholder: 'VIN (optional)', className: 'auto-field' });
+    const makeInput = $.el('input', { type: 'text', placeholder: (State.lang === 'tr') ? 'Marka (örn. Toyota)' : 'Make (e.g. Toyota)', className: 'auto-field' });
+    const modelInput = $.el('input', { type: 'text', placeholder: (State.lang === 'tr') ? 'Model (örn. Camry)' : 'Model (e.g. Camry)', className: 'auto-field' });
+    const yearInput = $.el('input', { type: 'number', placeholder: (State.lang === 'tr') ? 'Yıl' : 'Year', className: 'auto-field auto-field-small' });
+    const vinInput = $.el('input', { type: 'text', placeholder: (State.lang === 'tr') ? 'VIN (isteğe bağlı)' : 'VIN (optional)', className: 'auto-field' });
     
     autoFields.appendChild(makeInput);
     autoFields.appendChild(modelInput);
@@ -11025,8 +11678,8 @@ const StorageUI = {
       form.location.value = storage.location || '';
       form.totalCBM.value = storage.totalCBM || '';
       form.grossWeight.value = storage.grossWeight || '';
-      form.dateEntered.value = storage.dateEntered || '';
-      form.dateExited.value = storage.dateExited || '';
+      form.dateEntered.value = Utils.formatDateForInput(storage.dateEntered) || '';
+      form.dateExited.value = Utils.formatDateForInput(storage.dateExited) || '';
       form.billingType.value = storage.billingType || 'Per CBM';
       form.ratePerCBM.value = storage.ratePerCBM || '';
       form.rateCurrency.value = storage.rateCurrency || 'TRY';
@@ -11095,8 +11748,8 @@ const StorageUI = {
     storage.contents = Array.from(form.querySelectorAll('input[name="contents"]:checked')).map(cb => cb.value);
     storage.totalCBM = parseFloat(form.totalCBM.value) || 0;
     storage.grossWeight = parseFloat(form.grossWeight.value) || 0;
-    storage.dateEntered = form.dateEntered.value;
-    storage.dateExited = form.dateExited.value;
+    storage.dateEntered = Utils.parseDate(form.dateEntered.value) || '';
+    storage.dateExited = Utils.parseDate(form.dateExited.value) || '';
     storage.billingType = form.billingType.value;
     storage.ratePerCBM = parseFloat(form.ratePerCBM.value) || 0;
     storage.rateCurrency = form.rateCurrency.value;
@@ -11217,76 +11870,7 @@ const StorageUI = {
       }
     }
     
-    // Legacy embedded storage (for backwards compatibility)
-    if (job.hasStorage) {
-      const header = $.el('div', { className: 'storage-details-header' });
-      header.appendChild($.el('h4', { className: 'details-section-title', textContent: I18n.t('storageDetails') }));
-      
-      // Migration button
-      const migrateBtn = $.el('button', { 
-        type: 'button', 
-        className: 'btn-icon',
-        textContent: 'Migrate to Storage Tab'
-      });
-      migrateBtn.addEventListener('click', () => this.migrateJobStorage(job));
-      header.appendChild(migrateBtn);
-      section.appendChild(header);
-      
-      section.appendChild($.el('p', { 
-        style: 'color: var(--color-warning); font-size: 13px;',
-        textContent: 'This storage uses legacy embedded data. Click "Migrate" to move it to the Storage tab.'
-      }));
-    }
-    
     return section;
-  },
-
-  // Migrate embedded job storage to separate Storage entity
-  migrateJobStorage(job) {
-    if (!job.hasStorage) return;
-    
-    // Create new storage record from job data
-    const storage = Validator.normalizeStorageRecord({
-      linkedJobId: job.id,
-      clientName: job.clientName || '',
-      organizationName: job.organizationName || '',
-      location: job.storageLocation || '',
-      contents: job.storageContents || [],
-      totalCBM: job.storageCBM || 0,
-      dateEntered: job.storageDateEntered || '',
-      dateExited: job.storageDateExited || '',
-      inventory: (job.storageInventory || []).map(item => ({
-        ...item,
-        type: item.type || 'HHE'
-      })),
-      billingType: job.storageBillingType || 'Per CBM',
-      ratePerCBM: job.storageBillingRate || 0,
-      rateCurrency: job.storageBillingCurrency || 'TRY',
-      ratePeriod: job.storageBillingPeriod || 'Monthly',
-      flatRate: job.storageFlatRate || 0,
-      flatRateCurrency: job.storageFlatCurrency || 'TRY',
-      freeDays: job.storageFreeDays || 0,
-      billingNotes: job.storageBillingNotes || '',
-      status: job.storageDateExited ? 'Closed' : 'Active'
-    });
-    
-    // Add to storage records
-    State.storageRecords.push(storage);
-    
-    // Update job reference
-    job.storageId = storage.id;
-    
-    // Save
-    Storage.saveStorageRecords();
-    Storage.saveJobs();
-    
-    // Refresh view
-    JobsUI.showDetails(job);
-    
-    Modals.alert({ 
-      title: (State.lang === 'tr') ? 'Başarılı' : 'Success', 
-      message: (State.lang === 'tr') ? `Depo ${storage.storageCode} koduna taşındı` : `Storage migrated to ${storage.storageCode}` 
-    });
   }
 };
 
@@ -11297,7 +11881,7 @@ const StorageUI = {
 const AgentsUI = {
   render() {
     const container = $.get('agentList');
-    const agents = this.filter();
+    const allAgents = this.filter();
     $.clear(container);
     
     // Update tab active state
@@ -11314,77 +11898,141 @@ const AgentsUI = {
       addBtn.textContent = isAgentTab ? I18n.t('addAgent') : I18n.t('addBroker');
     }
     
-    if (agents.length === 0) {
+    if (allAgents.length === 0) {
       const emptyMsg = State.agentTypeFilter === 'Agent' ? I18n.t('noAgentsYet') : I18n.t('noBrokersYet');
       container.appendChild($.el('p', { textContent: emptyMsg }));
       return;
     }
     
-    agents.forEach(agent => {
-      const card = $.el('div', { className: 'agent-list-card' });
-      
-      // Name row with type badge for brokers
-      const nameRow = $.el('div', { className: 'agent-card-name-row' });
-      nameRow.appendChild($.el('h3', { textContent: agent.name }));
-      
-      // Add type badge for brokers
-      if (agent.type && agent.type !== 'Agent') {
-        const badgeClass = agent.type === 'Customs Broker' ? 'agent-type-badge-customs' :
-                          agent.type === 'Sea Freight Broker' ? 'agent-type-badge-sea' : 'agent-type-badge-air';
-        const shortLabel = agent.type === 'Customs Broker' 
-          ? ((State.lang === 'tr') ? 'Gümrük' : 'Customs')
-          : agent.type === 'Sea Freight Broker' 
-            ? ((State.lang === 'tr') ? 'Deniz' : 'Sea') 
-            : ((State.lang === 'tr') ? 'Hava' : 'Air');
-        nameRow.appendChild($.el('span', { 
-          className: `agent-type-badge ${badgeClass}`,
-          textContent: shortLabel
-        }));
-      }
-      card.appendChild(nameRow);
-      
-      card.appendChild($.el('p', { textContent: Utils.location(agent.city, agent.country) }));
-      
-      // For agents, show move count. For brokers, show job usage count
-      if (agent.type === 'Agent' || !agent.type) {
-        const moveCount = State.jobs.filter(
-          j => j.originAgentId === agent.id || j.destinationAgentId === agent.id
-        ).length;
-        card.appendChild($.el('p', {
-          className: 'agent-moves-summary',
-          textContent: moveCount === 1
-            ? ((State.lang === 'tr') ? '1 taşıma' : '1 move')
-            : ((State.lang === 'tr') ? `${moveCount} taşıma` : `${moveCount} moves`)
-        }));
-        
-        // FIDI/IAM badges for agents
-        if (agent.isFIDI || agent.isIAM) {
-          const badgesRow = $.el('div', { className: 'agent-card-badges' });
-          if (agent.isFIDI) badgesRow.appendChild($.el('span', { className: 'membership-badge fidi-badge', textContent: 'FIDI' }));
-          if (agent.isIAM) badgesRow.appendChild($.el('span', { className: 'membership-badge iam-badge', textContent: 'IAM' }));
-          card.appendChild(badgesRow);
-        }
-      } else {
-        // For brokers, show usage in jobs
-        const usageCount = State.jobs.filter(j => 
-          j.customsBrokerId === agent.id || 
-          j.seaFreightBrokerId === agent.id || 
-          j.airFreightBrokerId === agent.id
-        ).length;
-        card.appendChild($.el('p', {
-          className: 'agent-moves-summary',
-          textContent: usageCount === 1
-            ? ((State.lang === 'tr') ? '1 taşıma' : '1 move')
-            : ((State.lang === 'tr') ? `${usageCount} taşıma` : `${usageCount} moves`)
-        }));
-      }
-      
-      card.addEventListener('click', () => {
-        State.selectedAgentId = agent.id;
-        this.showDetails(agent);
-      });
-      container.appendChild(card);
+    // Pagination
+    const { page, perPage } = State.pagination.agents;
+    const totalPages = Math.ceil(allAgents.length / perPage);
+    const startIdx = (page - 1) * perPage;
+    const pageAgents = allAgents.slice(startIdx, startIdx + perPage);
+    
+    pageAgents.forEach(agent => {
+      container.appendChild(this.createAgentCard(agent));
     });
+    
+    // Add pagination controls if more than one page
+    if (totalPages > 1) {
+      container.appendChild(this.createPaginationControls('agents', page, totalPages, allAgents.length));
+    }
+  },
+  
+  createAgentCard(agent) {
+    const card = $.el('div', { className: 'agent-list-card' });
+    
+    // Name row with type badge for brokers
+    const nameRow = $.el('div', { className: 'agent-card-name-row' });
+    nameRow.appendChild($.el('h3', { textContent: agent.name }));
+    
+    // Add type badge for brokers
+    if (agent.type && agent.type !== 'Agent') {
+      const badgeClass = agent.type === 'Customs Broker' ? 'agent-type-badge-customs' :
+                        agent.type === 'Sea Freight Broker' ? 'agent-type-badge-sea' : 'agent-type-badge-air';
+      const shortLabel = agent.type === 'Customs Broker' 
+        ? ((State.lang === 'tr') ? 'Gümrük' : 'Customs')
+        : agent.type === 'Sea Freight Broker' 
+          ? ((State.lang === 'tr') ? 'Deniz' : 'Sea') 
+          : ((State.lang === 'tr') ? 'Hava' : 'Air');
+      nameRow.appendChild($.el('span', { 
+        className: `agent-type-badge ${badgeClass}`,
+        textContent: shortLabel
+      }));
+    }
+    card.appendChild(nameRow);
+    
+    card.appendChild($.el('p', { textContent: Utils.location(agent.city, agent.country) }));
+    
+    // For agents, show move count. For brokers, show job usage count
+    if (agent.type === 'Agent' || !agent.type) {
+      const moveCount = State.jobs.filter(
+        j => j.originAgentId === agent.id || j.destinationAgentId === agent.id
+      ).length;
+      card.appendChild($.el('p', {
+        className: 'agent-moves-summary',
+        textContent: moveCount === 1
+          ? ((State.lang === 'tr') ? '1 taşıma' : '1 move')
+          : ((State.lang === 'tr') ? `${moveCount} taşıma` : `${moveCount} moves`)
+      }));
+      
+      // FIDI/IAM badges for agents
+      if (agent.isFIDI || agent.isIAM) {
+        const badgesRow = $.el('div', { className: 'agent-card-badges' });
+        if (agent.isFIDI) badgesRow.appendChild($.el('span', { className: 'membership-badge fidi-badge', textContent: 'FIDI' }));
+        if (agent.isIAM) badgesRow.appendChild($.el('span', { className: 'membership-badge iam-badge', textContent: 'IAM' }));
+        card.appendChild(badgesRow);
+      }
+    } else {
+      // For brokers, show usage in jobs
+      const usageCount = State.jobs.filter(j => 
+        j.customsBrokerId === agent.id || 
+        j.seaFreightBrokerId === agent.id || 
+        j.airFreightBrokerId === agent.id
+      ).length;
+      card.appendChild($.el('p', {
+        className: 'agent-moves-summary',
+        textContent: usageCount === 1
+          ? ((State.lang === 'tr') ? '1 taşıma' : '1 move')
+          : ((State.lang === 'tr') ? `${usageCount} taşıma` : `${usageCount} moves`)
+      }));
+    }
+    
+    card.addEventListener('click', () => {
+      State.selectedAgentId = agent.id;
+      this.showDetails(agent);
+    });
+    
+    return card;
+  },
+  
+  createPaginationControls(type, currentPage, totalPages, totalItems) {
+    const wrapper = $.el('div', { className: 'pagination-controls' });
+    
+    const { perPage } = State.pagination[type];
+    const start = (currentPage - 1) * perPage + 1;
+    const end = Math.min(currentPage * perPage, totalItems);
+    const infoText = (State.lang === 'tr') 
+      ? `${totalItems} kayıttan ${start}-${end} arası gösteriliyor`
+      : `Showing ${start}-${end} of ${totalItems}`;
+    wrapper.appendChild($.el('span', { className: 'pagination-info', textContent: infoText }));
+    
+    const buttons = $.el('div', { className: 'pagination-buttons' });
+    
+    const prevBtn = $.el('button', { 
+      type: 'button', 
+      textContent: '← ' + ((State.lang === 'tr') ? 'Önceki' : 'Previous'),
+      disabled: currentPage === 1
+    });
+    prevBtn.addEventListener('click', () => {
+      if (State.pagination[type].page > 1) {
+        State.pagination[type].page--;
+        this.render();
+      }
+    });
+    buttons.appendChild(prevBtn);
+    
+    buttons.appendChild($.el('span', { 
+      className: 'pagination-current',
+      textContent: `${currentPage} / ${totalPages}` 
+    }));
+    
+    const nextBtn = $.el('button', { 
+      type: 'button', 
+      textContent: ((State.lang === 'tr') ? 'Sonraki' : 'Next') + ' →',
+      disabled: currentPage === totalPages
+    });
+    nextBtn.addEventListener('click', () => {
+      if (State.pagination[type].page < totalPages) {
+        State.pagination[type].page++;
+        this.render();
+      }
+    });
+    buttons.appendChild(nextBtn);
+    
+    wrapper.appendChild(buttons);
+    return wrapper;
   },
 
   filter() {
@@ -11402,7 +12050,14 @@ const AgentsUI = {
     if (State.agentSearch) {
       const term = State.agentSearch.toLowerCase();
       list = list.filter(agent => {
-        const text = [agent.name, agent.city, agent.country, agent.type]
+        const text = [
+          agent.name, 
+          agent.city, 
+          agent.country,
+          CONFIG.getCountryNameBilingual(agent.country),  // Both EN and TR country
+          agent.type,
+          I18n.agentTypeTextBilingual(agent.type)         // Both EN and TR type
+        ]
           .filter(Boolean)
           .join(' ')
           .toLowerCase();
@@ -13412,7 +14067,6 @@ const Forms = {
     job.documents = [];
     job.paymentReceived = false;
     job.packDate = '';
-    job.removedAutoStepIds = [];
     const templateKey = (job.tradeDirection || '').toUpperCase();
     const template = CONFIG.CHECKLIST_TEMPLATES[templateKey] || CONFIG.CHECKLIST_TEMPLATES.IMPORT || [];
     job.checklist = template.map(text => ({ text, done: false }));
@@ -13488,6 +14142,24 @@ const Forms = {
 };
 
 function initEventHandlers() {
+  // Mobile menu toggle
+  const mobileMenuBtn = $.get('mobileMenuBtn');
+  const headerNav = $.get('headerNav');
+  if (mobileMenuBtn && headerNav) {
+    mobileMenuBtn.addEventListener('click', () => {
+      headerNav.classList.toggle('mobile-open');
+      mobileMenuBtn.textContent = headerNav.classList.contains('mobile-open') ? '✕' : '☰';
+    });
+    
+    // Close mobile menu when nav item clicked
+    headerNav.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        headerNav.classList.remove('mobile-open');
+        mobileMenuBtn.textContent = '☰';
+      });
+    });
+  }
+
   $.get('navDashboard').addEventListener('click', () => Views.show('dashboard'));
   $.get('navMoves').addEventListener('click', () => Views.show('moves'));
   $.get('navAgents').addEventListener('click', () => Views.show('agents'));
@@ -13592,6 +14264,7 @@ function initEventHandlers() {
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       State.filters.status = btn.dataset.status;
+      State.pagination.jobs.page = 1; // Reset to page 1
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       JobsUI.render();
@@ -13600,16 +14273,19 @@ function initEventHandlers() {
 
   $.get('typeFilter').addEventListener('change', (e) => {
     State.filters.type = e.target.value;
+    State.pagination.jobs.page = 1; // Reset to page 1
     JobsUI.render();
   });
   $.get('paymentFilter').addEventListener('change', (e) => {
     State.filters.payment = e.target.value;
+    State.pagination.jobs.page = 1; // Reset to page 1
     JobsUI.render();
   });
-  $.get('searchInput').addEventListener('input', (e) => {
+  $.get('searchInput').addEventListener('input', Utils.debounce((e) => {
     State.filters.search = e.target.value.trim();
+    State.pagination.jobs.page = 1; // Reset to page 1
     JobsUI.render();
-  });
+  }, 300));
 
   // Checklist add button handlers
   const openAddChecklistBtn = $.get('openAddChecklistBtn');
@@ -13758,10 +14434,11 @@ function initEventHandlers() {
     });
   }
 
-  $.get('agentSearchInput').addEventListener('input', (e) => {
+  $.get('agentSearchInput').addEventListener('input', Utils.debounce((e) => {
     State.agentSearch = e.target.value.trim();
+    State.pagination.agents.page = 1; // Reset to page 1
     AgentsUI.render();
-  });
+  }, 300));
   
   // Agent/Broker type tab handlers
   document.querySelectorAll('.agent-type-tab').forEach(tab => {
@@ -13769,6 +14446,7 @@ function initEventHandlers() {
       const type = tab.dataset.type;
       State.agentTypeFilter = type;
       State.selectedAgentId = null;
+      State.pagination.agents.page = 1; // Reset to page 1
       AgentsUI.render();
       // Clear details panel
       const detailsPanel = $.get('agentDetailsPanel');
@@ -13881,7 +14559,7 @@ function initEventHandlers() {
   });
 
   const docsSearchInput = $.get('documentsSearchInput');
-  if (docsSearchInput) docsSearchInput.addEventListener('input', () => DocumentsTabUI.render());
+  if (docsSearchInput) docsSearchInput.addEventListener('input', Utils.debounce(() => DocumentsTabUI.render(), 300));
 
   const docsJobFilter = $.get('documentsJobFilter');
   if (docsJobFilter) docsJobFilter.addEventListener('change', () => DocumentsTabUI.render());
@@ -13960,10 +14638,11 @@ $.get('navQuotes').addEventListener('click', () => {
 // Quote search
 const quoteSearchInput = $.get('quoteSearchInput');
 if (quoteSearchInput) {
-  quoteSearchInput.addEventListener('input', (e) => {
+  quoteSearchInput.addEventListener('input', Utils.debounce((e) => {
     State.quoteFilters.search = e.target.value.trim();
+    State.pagination.quotes.page = 1; // Reset to page 1
     QuotesUI.render();
-  });
+  }, 300));
 }
 
 // Create/Edit Quote buttons
@@ -14149,9 +14828,10 @@ if (quoteContentsVehicle) {
 // Storage search
 const storageSearchInput = $.get('storageSearchInput');
 if (storageSearchInput) {
-  storageSearchInput.addEventListener('input', () => {
+  storageSearchInput.addEventListener('input', Utils.debounce(() => {
+    State.pagination.storage.page = 1; // Reset to page 1
     StorageUI.render();
-  });
+  }, 300));
 }
 
 // Create Storage button
@@ -14217,14 +14897,133 @@ if (storageBillingTypeSelect) {
 }
 
 
-function init() {
-  Storage.loadAll();
+// ============================================================
+// LOGIN UI
+// ============================================================
 
-  I18n.init();
+const LoginUI = {
+  show() {
+    const overlay = $.el('div', { className: 'login-overlay', id: 'loginOverlay' });
+    
+    const box = $.el('div', { className: 'login-box' });
+    
+    // Logo image
+    const logo = $.el('img', { 
+      src: 'logo.svg',
+      alt: 'Istanbul Ekspres',
+      className: 'login-logo-img'
+    });
+    box.appendChild(logo);
+    
+    // Form
+    const form = $.el('form', { id: 'loginForm', className: 'login-form' });
+    
+    // Email field
+    const emailGroup = $.el('div', { className: 'login-field' });
+    emailGroup.appendChild($.el('label', { textContent: 'E-mail / E-posta', htmlFor: 'loginEmail' }));
+    const emailInput = $.el('input', { 
+      type: 'email', 
+      id: 'loginEmail', 
+      name: 'email',
+      required: true
+    });
+    emailGroup.appendChild(emailInput);
+    form.appendChild(emailGroup);
+    
+    // Password field
+    const passGroup = $.el('div', { className: 'login-field' });
+    passGroup.appendChild($.el('label', { textContent: 'Password / Şifre', htmlFor: 'loginPassword' }));
+    const passInput = $.el('input', { 
+      type: 'password', 
+      id: 'loginPassword', 
+      name: 'password',
+      required: true,
+      placeholder: '••••••••'
+    });
+    passGroup.appendChild(passInput);
+    form.appendChild(passGroup);
+    
+    // Error message
+    const errorMsg = $.el('div', { id: 'loginError', className: 'login-error hidden' });
+    form.appendChild(errorMsg);
+    
+    // Submit button
+    const submitBtn = $.el('button', { 
+      type: 'submit', 
+      className: 'login-btn',
+      textContent: 'Sign In'
+    });
+    form.appendChild(submitBtn);
+    
+    // Form submit handler
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Signing in...';
+      
+      const email = emailInput.value.trim();
+      const password = passInput.value;
+      
+      const { error } = await Auth.login(email, password);
+      
+      if (error) {
+        errorMsg.textContent = error.message || 'Login failed. Please try again.';
+        errorMsg.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
+      } else {
+        // Success - hide login and load app
+        overlay.remove();
+        await loadAppData();
+      }
+    });
+    
+    box.appendChild(form);
+    
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    
+    // Focus email input
+    emailInput.focus();
+  },
+  
+  hide() {
+    const overlay = $.get('loginOverlay');
+    if (overlay) overlay.remove();
+  }
+};
+
+// ============================================================
+// APP INITIALIZATION
+// ============================================================
+
+async function loadAppData() {
+  // Show loading indicator
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) {
+    mainContent.style.opacity = '0.5';
+  }
+  
+  await Storage.loadAll();
 
   Forms.populateCountrySelects();
   Forms.refreshAgentSelects();
   initEventHandlers();
+  
+  // Initialize all HTML date inputs with auto-formatting
+  document.querySelectorAll('input[data-date-input="true"]').forEach(input => {
+    input.addEventListener('input', (e) => {
+      let v = e.target.value.replace(/[^\d]/g, '');
+      if (v.length > 8) v = v.slice(0, 8);
+      if (v.length >= 4) {
+        v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+      } else if (v.length >= 2) {
+        v = v.slice(0, 2) + '/' + v.slice(2);
+      }
+      e.target.value = v;
+    });
+  });
 
   I18n.applyStaticTexts();
 
@@ -14262,6 +15061,161 @@ function init() {
     const panel = $.get('agentDetailsPanel');
     $.clear(panel);
     panel.appendChild($.el('p', { textContent: I18n.t('noAgentsYet') }));
+  }
+  
+  // Restore opacity
+  if (mainContent) {
+    mainContent.style.opacity = '1';
+  }
+  
+  // Update connection status indicator
+  updateConnectionStatus();
+  
+  // Start idle timeout tracker
+  IdleTimeout.init();
+}
+
+function updateConnectionStatus() {
+  // Add a small indicator showing online/offline status
+  let indicator = $.get('connectionStatus');
+  if (!indicator) {
+    indicator = $.el('div', { 
+      id: 'connectionStatus',
+      className: 'connection-status'
+    });
+    document.querySelector('.top-header')?.appendChild(indicator);
+  }
+  
+  if (Storage.isOnline) {
+    indicator.className = 'connection-status online';
+    indicator.title = 'Connected to cloud';
+    indicator.textContent = '●';
+  } else {
+    indicator.className = 'connection-status offline';
+    indicator.title = 'Offline mode - using local data';
+    indicator.textContent = '○';
+  }
+  
+  // Add logout button if logged in and not already added
+  if (Auth.isLoggedIn() && !$.get('logoutBtn')) {
+    const logoutBtn = $.el('button', {
+      id: 'logoutBtn',
+      className: 'logout-btn',
+      title: 'Logout',
+      textContent: '⏻'
+    });
+    logoutBtn.addEventListener('click', async () => {
+      if (confirm('Are you sure you want to logout?')) {
+        await Auth.logout();
+        localStorage.clear();
+        location.reload();
+      }
+    });
+    document.querySelector('.top-header')?.appendChild(logoutBtn);
+  }
+}
+
+// ============================================================
+// AUTO-LOGOUT (Idle Timeout)
+// ============================================================
+
+const IdleTimeout = {
+  timeoutMinutes: 10,
+  timeoutId: null,
+  warningId: null,
+  
+  init() {
+    if (!Auth.isLoggedIn()) return;
+    
+    // Reset timer on any user activity
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      document.addEventListener(event, () => this.resetTimer(), { passive: true });
+    });
+    
+    this.resetTimer();
+  },
+  
+  resetTimer() {
+    // Clear existing timers
+    if (this.timeoutId) clearTimeout(this.timeoutId);
+    if (this.warningId) clearTimeout(this.warningId);
+    
+    // Hide warning if shown
+    const warning = $.get('idleWarning');
+    if (warning) warning.remove();
+    
+    // Set warning at 9 minutes (1 minute before logout)
+    this.warningId = setTimeout(() => {
+      this.showWarning();
+    }, (this.timeoutMinutes - 1) * 60 * 1000);
+    
+    // Set logout at 10 minutes
+    this.timeoutId = setTimeout(() => {
+      this.logout();
+    }, this.timeoutMinutes * 60 * 1000);
+  },
+  
+  showWarning() {
+    // Remove existing warning if any
+    const existing = $.get('idleWarning');
+    if (existing) existing.remove();
+    
+    const warning = $.el('div', {
+      id: 'idleWarning',
+      className: 'idle-warning'
+    });
+    warning.innerHTML = `
+      <p>You will be logged out in 1 minute due to inactivity.</p>
+      <button id="stayLoggedIn">Stay Logged In</button>
+    `;
+    document.body.appendChild(warning);
+    
+    $.get('stayLoggedIn').addEventListener('click', () => {
+      this.resetTimer();
+    });
+  },
+  
+  async logout() {
+    // Remove warning
+    const warning = $.get('idleWarning');
+    if (warning) warning.remove();
+    
+    await Auth.logout();
+    localStorage.removeItem('sb-bjryicnxhaapteifmzav-auth-token');
+    location.reload();
+  }
+};
+
+async function init() {
+  // Initialize language first (from localStorage, no auth needed)
+  I18n.init();
+  
+  // Initialize Supabase client
+  if (typeof window !== 'undefined' && window.supabase) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Check if already logged in
+    const isLoggedIn = await Auth.initialize();
+    
+    if (isLoggedIn) {
+      // Already has session, load app
+      await loadAppData();
+    } else {
+      // Show login screen
+      LoginUI.show();
+    }
+  } else {
+    // Supabase library not loaded - show error
+    document.body.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#1a1a2e;">
+        <div style="background:white;padding:40px;border-radius:12px;text-align:center;max-width:400px;">
+          <h2 style="color:#dc2626;margin:0 0 16px 0;">Connection Error</h2>
+          <p style="color:#666;margin:0 0 20px 0;">Unable to connect to the server. Please check your internet connection and try again.</p>
+          <button onclick="location.reload()" style="background:#3b82f6;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:16px;">Retry</button>
+        </div>
+      </div>
+    `;
   }
 }
 
